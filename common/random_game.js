@@ -7,7 +7,8 @@
 // choice prompt share one instance through getRandomGame(). Calls made
 // while an animation is already running are ignored. Counts the Random
 // Games played in the active Profile's "randomGames" (on "gamestarted",
-// never after "launcherror").
+// never after "launcherror"), and tells whether the game that just started
+// is one.
 // ============================================================
 
 import { animateWheelTo, sleep } from "./wheel_navigator.js";
@@ -43,6 +44,9 @@ export function createRandomGame(host, profileStore, { animateTo, skipAnimation 
     let launchInProgress = false;
     // The table this module just launched, until it starts or fails to launch.
     let pendingConfigId = null;
+    // Whether the last game that started is a Random Game, for the modules
+    // whose "gamestarted" listeners run after this one's.
+    let startedGameIsRandom = false;
 
     function playGame(game) {
         pendingConfigId = game.configId;
@@ -96,6 +100,7 @@ export function createRandomGame(host, profileStore, { animateTo, skipAnimation 
     host.on("gamestarted", safeHandler(SCRIPT_NAME, ev => {
         const isRandomGame = pendingConfigId !== null && ev.game && ev.game.configId === pendingConfigId;
         pendingConfigId = null;
+        startedGameIsRandom = isRandomGame;
         if (isRandomGame) profileStore.updateProfileData(data => { data.randomGames += 1; });
     }));
 
@@ -104,7 +109,7 @@ export function createRandomGame(host, profileStore, { animateTo, skipAnimation 
         pendingConfigId = null;
     }));
 
-    return { launch, getRandomGamesPlayed };
+    return { launch, getRandomGamesPlayed, isStartedGameRandom: () => startedGameIsRandom };
 }
 
 async function animateWheelThenPause(tables, index) {

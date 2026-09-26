@@ -25,6 +25,7 @@ import * as forceBackglass from "./addons/force_backglass.js";
 import * as playLaunchSound from "./addons/play_launch_sound.js";
 import * as sessionStatsTracker from "./addons/session_stats_tracker.js";
 import * as achievementsEngine from "./addons/achievements_engine.js";
+import * as challenges from "./addons/challenges.js";
 import * as ratingPrompt from "./addons/rating_prompt.js";
 import * as startupChoicePrompt from "./addons/startup_choice_prompt.js";
 
@@ -55,11 +56,12 @@ const SCRIPTS = [
     { key: "clock", module: clock },
     { key: "seamlessLaunchOverlay", module: seamlessLaunchOverlay },
 
-    // Game session: windows, sound, stats, achievements, rating.
+    // Game session: windows, sound, stats, achievements, Challenges, rating.
     { key: "forceBackglass", module: forceBackglass },
     { key: "playLaunchSound", module: playLaunchSound },
     { key: "sessionStatsTracker", module: sessionStatsTracker },
     { key: "achievements", module: achievementsEngine },
+    { key: "challenges", module: challenges },
     { key: "ratingPrompt", module: ratingPrompt },
 
     // Startup dialog.

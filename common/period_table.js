@@ -16,7 +16,8 @@ import { getProfileStore } from "./profile_store.js";
 
 const SCRIPT_NAME = "PeriodTable";
 
-function formatDateKey(date) {
+// Also the Challenges' day key: saved in profile.json, it must never change.
+export function formatDateKey(date) {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -28,8 +29,9 @@ function shiftDateKey(dateKey, days) {
     return formatDateKey(new Date(year, month - 1, day + days));
 }
 
-// A week runs Monday to Sunday and is keyed by its Monday's date.
-function getWeekKey(date) {
+// A week runs Monday to Sunday and is keyed by its Monday's date; the
+// Challenges share it.
+export function getWeekKey(date) {
     const dayOfWeek = date.getDay();
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     return formatDateKey(new Date(date.getFullYear(), date.getMonth(), date.getDate() + diffToMonday));

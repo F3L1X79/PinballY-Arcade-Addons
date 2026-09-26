@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import en from "../lang/en.js";
 
 const LANGUAGE_CODES = ["fr", "de", "es", "it", "pt"];
-const CHECKED_SECTIONS = ["achievements", "achievementList", "profiles", "clock"];
+const CHECKED_SECTIONS = ["achievements", "achievementList", "profiles", "clock", "challenges"];
 
 function keyPaths(section, prefix) {
     return Object.entries(section).flatMap(([key, value]) => {

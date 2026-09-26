@@ -4,15 +4,21 @@
 // every Achievement ID produced, and the Guest profile.json (play record,
 // Streaks and Periods Played, Random Games played, session stats and
 // Notified list) and cabinet.json (active Profile, Period Table locks)
-// written by the Profile store; no PinballY settings key is written. These
-// strings are players' saved progress: this test must keep passing
-// unchanged.
+// written by the Profile store; no PinballY settings key is written. A
+// second test locks the Challenges' saved data: the week's lock in
+// cabinet.json, a Profile's "challenge" record and its counted games in
+// profile.json, and the template ids. These strings are players' saved
+// progress: this test must keep passing unchanged.
 // ============================================================
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { createProfileStore } from "../common/profile_store.js";
+import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
+import { createRandomGame } from "../common/random_game.js";
+import { createChallenges } from "../common/challenge.js";
 
 // Wednesday 23 September 2026, 10:00 local time: its week starts Monday 21.
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -235,4 +241,70 @@ test("persisted files and Achievement IDs stay byte-identical", async () => {
     });
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
+});
+
+test("the Challenges' saved data stays byte-identical", () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    fake.addFolder(`${PROFILES_FOLDER}\\Alice`);
+    fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
+    const store = createProfileStore(fake);
+    const tableOfTheDay = createPeriodTable(fake, TABLE_OF_THE_DAY, store);
+    const tableOfTheWeek = createPeriodTable(fake, TABLE_OF_THE_WEEK, store);
+    const randomGame = createRandomGame(fake, store, { animateTo: async () => {}, skipAnimation: true });
+    // Always the first choice and the lowest target.
+    const challenges = createChallenges(fake, store, { tableOfTheDay, tableOfTheWeek, randomGame, random: () => 0 });
+    challenges.showUp();
+
+    const game = TABLES[0];
+    fake.gameStarted(game);
+    fake.advanceTime(90 * 1000);
+    fake.gameOver(game);
+
+    assert.deepEqual(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\cabinet.json`)).challenge, {
+        current: { week: "2026-09-21", template: "differentTables", param: null, target: 2 },
+        previous: null,
+    });
+    const { challenge } = JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`));
+    // The Period Tables are drawn with Math.random: their two facts are
+    // pinned by name only.
+    const [counted] = challenge.games;
+    assert.equal(typeof counted.isTableOfTheDay, "boolean");
+    assert.equal(typeof counted.isTableOfTheWeek, "boolean");
+    assert.deepEqual({ ...challenge, games: [{ ...counted, isTableOfTheDay: null, isTableOfTheWeek: null }] }, {
+        firstWeek: "2026-09-21",
+        week: "2026-09-21",
+        games: [{
+            configId: game.configId,
+            manufacturer: "Williams",
+            decade: 1990,
+            day: "2026-09-23",
+            seconds: 90,
+            randomGame: false,
+            isTableOfTheDay: null,
+            isTableOfTheWeek: null,
+            wasNeverPlayed: true,
+            wasDusty: false,
+        }],
+        completed: false,
+        completedCount: 0,
+        judgedWeek: "",
+        history: [],
+    });
+    assert.deepEqual(Object.keys(challenge), ["firstWeek", "week", "games", "completed", "completedCount", "judgedWeek", "history"]);
+
+    // A week where no template is feasible: fewer than 2 visible tables.
+    const empty = createFakePinballYHost({ now: NOW, tables: TABLES.slice(0, 1) });
+    empty.addFolder(`${PROFILES_FOLDER}\\Alice`);
+    empty.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
+    const emptyStore = createProfileStore(empty);
+    createChallenges(empty, emptyStore, {
+        tableOfTheDay: createPeriodTable(empty, TABLE_OF_THE_DAY, emptyStore),
+        tableOfTheWeek: createPeriodTable(empty, TABLE_OF_THE_WEEK, emptyStore),
+        randomGame: createRandomGame(empty, emptyStore, { animateTo: async () => {}, skipAnimation: true }),
+        random: () => 0,
+    }).showUp();
+    assert.deepEqual(JSON.parse(empty.readFile(`${PROFILES_FOLDER}\\cabinet.json`)).challenge, {
+        current: { week: "2026-09-21", template: "", param: null, target: 0 },
+        previous: null,
+    });
 });

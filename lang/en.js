@@ -271,4 +271,16 @@ export default {
     clock: {
         time: (hours, minutes) => `${hours % 12 || 12}:${String(minutes).padStart(2, "0")} ${hours < 12 ? "AM" : "PM"}`,
     },
+
+    // The Challenge Card, under the Profile badge (see common/challenge_card.js).
+    challenges: {
+        cardHeader: "Challenge of the week",
+        // One title per Challenge template, from its target and parameter.
+        titles: {
+            differentTables: (target) => `Play ${target} different tables`,
+        },
+        progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
+        daysLeft: (days) => `${days} days left`,
+        lastDay: "last day",
+    },
 };

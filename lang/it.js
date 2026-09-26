@@ -354,4 +354,15 @@ export default {
     clock: {
         time: (hours, minutes) => `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
     },
+
+    // The Challenge Card, under the Profile badge (see common/challenge_card.js).
+    challenges: {
+        cardHeader: "Sfida della settimana",
+        titles: {
+            differentTables: (target) => `Giocare ${target} tavoli diversi`,
+        },
+        progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
+        daysLeft: (days) => `ancora ${days} giorni`,
+        lastDay: "ultimo giorno",
+    },
 };

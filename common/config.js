@@ -51,6 +51,7 @@ const DEFAULTS = {
         ratingPrompt: true,
         profilePicker: true,
         clock: true,
+        challenges: true,
     },
 };
 
