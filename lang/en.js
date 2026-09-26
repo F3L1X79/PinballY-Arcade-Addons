@@ -282,5 +282,8 @@ export default {
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `${days} days left`,
         lastDay: "last day",
+        completed: "Challenge completed!",
+        toastHeader: "Challenge completed",
+        toastDescription: (count) => (count === 1 ? "First Challenge completed" : `${count} Challenges completed`),
     },
 };

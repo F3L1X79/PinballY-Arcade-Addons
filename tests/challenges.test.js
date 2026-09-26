@@ -3,7 +3,8 @@
 // on the fake PinballY host, with a real Profile store, real Period
 // Tables, a real Random Game module and a scripted random source: the
 // week's draw locked in cabinet.json, the games that count in each
-// Profile's profile.json, and what the card shows (and when it lights up).
+// Profile's profile.json, what the card shows (and when it lights up), and
+// the Challenge Toast on completion.
 // ============================================================
 
 import { test } from "node:test";
@@ -14,6 +15,7 @@ import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../commo
 import { createRandomGame } from "../common/random_game.js";
 import { createChallenges } from "../common/challenge.js";
 import { createChallengeCard, CHALLENGE_CARD_Z_INDEX } from "../common/challenge_card.js";
+import { createAchievementToasts } from "../common/achievement_toast.js";
 import lang from "../common/i18n.js";
 
 // Monday 21 September 2026, 20:00; its week is keyed "2026-09-21".
@@ -23,6 +25,8 @@ const NEXT_MONDAY = new Date(2026, 8, 28, 20, 0, 0);
 const WEEK = "2026-09-21";
 const MINUTE_MS = 60 * 1000;
 const HIGHLIGHT_OVER_MS = 5000;
+// Longer than a toast's whole life (rise, hold, fade).
+const ONE_TOAST_MS = 6000;
 
 const PROFILES = "C:\\PinballY\\Scripts\\profiles";
 const CABINET_FILE = `${PROFILES}\\cabinet.json`;
@@ -38,16 +42,18 @@ const scripted = values => () => (values.length > 0 ? values.shift() : 0);
 
 function setUp({ now = MONDAY, tables = TABLES, active = "Alice", randoms = [] } = {}) {
     const fake = createFakePinballYHost({ now, tables, layoutSize: { width: 1080, height: 1920 } });
+    fake.installGlobals();
     for (const name of ["Alice", "Bob"]) fake.addFolder(`${PROFILES}\\${name}`);
     fake.addFile(CABINET_FILE, JSON.stringify({ version: 1, activeProfile: active }));
     const store = createProfileStore(fake);
     const tableOfTheDay = createPeriodTable(fake, TABLE_OF_THE_DAY, store);
     const tableOfTheWeek = createPeriodTable(fake, TABLE_OF_THE_WEEK, store);
     const randomGame = createRandomGame(fake, store, { animateTo: async () => {}, skipAnimation: true });
+    const toasts = createAchievementToasts(fake);
     const challenges = createChallenges(fake, store,
-        { tableOfTheDay, tableOfTheWeek, randomGame, random: scripted([...randoms]) });
+        { tableOfTheDay, tableOfTheWeek, randomGame, toasts, random: scripted([...randoms]) });
     createChallengeCard(fake, challenges, store);
-    return { fake, store };
+    return { fake, store, toasts };
 }
 
 const readJson = (fake, path) => JSON.parse(fake.readFile(path));
@@ -66,6 +72,11 @@ const restingFrames = fake => {
     fake.advanceTime(HIGHLIGHT_OVER_MS);
     return card(fake).frames().length;
 };
+
+// Every toast drawn so far, its texts joined: header | title | description.
+const toastsDrawn = fake => fake.drawings()
+    .filter(drawing => drawing.zIndex !== CHALLENGE_CARD_Z_INDEX)
+    .map(drawing => drawing.texts.join(" | "));
 
 function play(fake, game, seconds) {
     fake.gameStarted(game);
@@ -246,4 +257,65 @@ test("the card keeps its size and sits under the Profile badge", () => {
     assert.equal(card(fake).position().align, "top right");
     assert.ok(card(fake).position().y < 0, "moved down, below the badge");
     assert.equal(Object.keys(card(fake).scale()).length, 1, "only one span set: it keeps its proportions");
+});
+
+test("reaching the target completes the Challenge once: completed count, Challenge Toast, completed card", () => {
+    // Target 2.
+    const { fake } = setUp({ randoms: [0, 0, 0] });
+    const title = TEXT.titles.differentTables(2);
+
+    play(fake, TABLES[0], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, false);
+    play(fake, TABLES[1], 90);
+
+    const challenge = profileChallenge(fake, "Alice");
+    assert.equal(challenge.completed, true);
+    assert.equal(challenge.completedCount, 1);
+    assert.deepEqual(toastsDrawn(fake), [[TEXT.toastHeader.toLocaleUpperCase(), title, TEXT.toastDescription(1)].join(" | ")]);
+    assert.ok(cardShows(fake, TEXT.completed));
+
+    play(fake, TABLES[2], 90);
+    fake.advanceTime(ONE_TOAST_MS);
+    assert.equal(profileChallenge(fake, "Alice").completedCount, 1, "completed once");
+    assert.equal(toastsDrawn(fake).length, 1, "one Challenge Toast");
+});
+
+test("the card shows the Challenge completed until the end of the week", () => {
+    const { fake, store } = setUp({ randoms: [0, 0, 0] });
+    play(fake, TABLES[0], 90);
+    play(fake, TABLES[1], 90);
+
+    store.switchTo("Bob");
+    assert.ok(cardShows(fake, TEXT.progress(0, 2, TEXT.daysLeft(7))), "Bob has not completed it");
+    store.switchTo("Alice");
+    fake.setNow(SUNDAY_NIGHT);
+    fake.fire("wheelmode");
+    assert.ok(cardShows(fake, TEXT.completed));
+});
+
+test("each Profile completes the Challenge on its own", () => {
+    const { fake, store } = setUp({ randoms: [0, 0, 0] });
+    play(fake, TABLES[0], 90);
+    play(fake, TABLES[1], 90);
+    store.switchTo("Bob");
+    play(fake, TABLES[2], 90);
+    play(fake, TABLES[3], 90);
+
+    assert.equal(profileChallenge(fake, "Alice").completedCount, 1);
+    assert.equal(profileChallenge(fake, "Bob").completedCount, 1);
+    fake.advanceTime(ONE_TOAST_MS);
+    assert.equal(toastsDrawn(fake).length, 2);
+});
+
+test("a game started on Sunday night completes that week's Challenge", () => {
+    const { fake } = setUp({ now: new Date(2026, 8, 27, 22, 0, 0), randoms: [0, 0, 0] });
+    play(fake, TABLES[0], 90);
+
+    fake.setNow(SUNDAY_NIGHT);
+    fake.gameStarted(TABLES[1]);
+    fake.advanceTime(5 * MINUTE_MS);
+    fake.gameOver(TABLES[1]);
+
+    assert.equal(profileChallenge(fake, "Alice").completedCount, 1);
+    assert.equal(toastsDrawn(fake).length, 1);
 });

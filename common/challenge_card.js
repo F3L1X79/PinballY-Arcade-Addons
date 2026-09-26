@@ -5,7 +5,8 @@
 // layer (see docs/adr/0003). Always the same size; hidden for Guest, when
 // there is no Challenge and while a game runs. When there is something new
 // (a Challenge to follow, a Profile switch, progress after a game) its
-// content changes in place and it lights up once. Redrawn at startup, on
+// content changes in place and it lights up once. Once the Challenge is
+// completed, it says so until the end of the week. Redrawn at startup, on
 // every Profile switch and on "wheelmode".
 // ============================================================
 
@@ -30,11 +31,13 @@ const TITLE = Object.freeze({ y: 34, size: 16 });
 const BAR = Object.freeze({ y: 66, height: 6 });
 const PROGRESS = Object.freeze({ y: 78, size: 12 });
 const FONT = "Segoe UI";
+// Also the Challenge Toast's accent.
+export const CHALLENGE_ACCENT_COLOR = 0xFF4FD1B0;
 const HIGHLIGHT = Object.freeze({ ms: 1200, glowRings: 8, glowMaxAlpha: 0x60 });
 const COLORS = Object.freeze({
     background: 0xEB141C28,
     border: 0xFF3E4C60,
-    accent: 0xFF4FD1B0,
+    accent: CHALLENGE_ACCENT_COLOR,
     accentLit: 0xFFB8FFF0,
     barTrack: 0xFF273246,
     title: 0xFFFFFFFF,
@@ -59,7 +62,7 @@ function drawGlow(dc) {
 }
 
 function drawCard(host, dc, view, lit) {
-    const { challenge, value, daysLeft } = view;
+    const { challenge, value, daysLeft, completed } = view;
     const TEXT = lang.challenges;
     if (lit) drawGlow(dc);
     dc.fillRect(CARD.x, CARD.y, CARD.width, CARD.height, COLORS.background);
@@ -77,7 +80,8 @@ function drawCard(host, dc, view, lit) {
     if (filled > 0) dc.fillRect(barX, CARD.y + BAR.y, filled, BAR.height, lit ? COLORS.accentLit : COLORS.accent);
 
     const daysText = daysLeft === 1 ? TEXT.lastDay : TEXT.daysLeft(daysLeft);
-    drawText(host, dc, TEXT.progress(value, challenge.target, daysText), { ...PROGRESS, color: COLORS.text });
+    drawText(host, dc, completed ? TEXT.completed : TEXT.progress(value, challenge.target, daysText),
+        { ...PROGRESS, weight: completed ? 600 : 400, color: completed ? COLORS.accent : COLORS.text });
 }
 
 export function createChallengeCard(host, challenges, profileStore) {

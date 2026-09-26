@@ -4,10 +4,13 @@
 // feasible templates other than the previous Challenge's, and locked in
 // cabinet.json with the previous one; each non-Guest Profile follows it
 // in its own profile.json ("challenge"), where the games that count are
-// kept with their facts, progress being recomputed from them. Created from
+// kept with their facts, progress being recomputed from them. The game
+// that first reaches the target completes the Challenge: the Profile's
+// completed count goes up and a Challenge Toast is submitted. Created from
 // the PinballY host, the Profile store, the Period Tables, the Random Game
-// module and a random source; the Add-ons share one instance through
-// getChallenges(). Listens to "gamestarted" / "gameover" to count games.
+// module, the Achievement Toast module and a random source; the Add-ons
+// share one instance through getChallenges(). Listens to "gamestarted" /
+// "gameover" to count games.
 // ============================================================
 
 import { safeHandler } from "./safe_handler.js";
@@ -16,6 +19,8 @@ import { getProfileStore } from "./profile_store.js";
 import { getTableOfTheDay, getTableOfTheWeek, formatDateKey, getWeekKey } from "./period_table.js";
 import { getRandomGame } from "./random_game.js";
 import { getDecadeStartYear } from "./decade.js";
+import { getAchievementToasts, TOAST_KIND } from "./achievement_toast.js";
+import lang from "./i18n.js";
 
 const SCRIPT_NAME = "Challenges";
 
@@ -54,7 +59,7 @@ const emptyProfileChallenge = () => ({
     firstWeek: "", week: "", games: [], completed: false, completedCount: 0, judgedWeek: "", history: [],
 });
 
-export function createChallenges(host, profileStore, { tableOfTheDay, tableOfTheWeek, randomGame, random = Math.random }) {
+export function createChallenges(host, profileStore, { tableOfTheDay, tableOfTheWeek, randomGame, toasts, random = Math.random }) {
     const randomIndex = length => Math.floor(random() * length);
     const randomInt = (min, max) => min + randomIndex(max - min + 1);
     const log = text => host.log(`[${SCRIPT_NAME}] ${text}`);
@@ -131,6 +136,7 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
             challenge: current,
             value: Math.min(current.target, progressOf(current, state.games)),
             daysLeft: daysLeftInWeek(host.now()),
+            completed: state.completed,
         };
     }
 
@@ -167,7 +173,7 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
 
     // Fires on table exit: the game counts when it lasted long enough, on
     // a table still visible, for a Profile following the Challenge of the
-    // week the game started in.
+    // week the game started in; the first one to reach the target completes it.
     host.on("gameover", safeHandler(SCRIPT_NAME, ev => {
         const started = ev.game && startedGames.get(ev.game.configId);
         if (!started) return;
@@ -180,14 +186,28 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         const { current, previous } = getLocks();
         const challenge = [current, previous].find(candidate => isChallenge(candidate) && candidate.week === week);
         if (!challenge) return;
+        let completedCount = 0;
         profileStore.updateProfileData(data => {
             const state = readProfileChallenge(data);
             if (state.week !== week || state.judgedWeek === week) return;
             const before = progressOf(challenge, state.games);
             const games = [...state.games, { ...started.facts, seconds }];
+            const progress = progressOf(challenge, games);
             data.challenge = { ...state, games };
-            if (progressOf(challenge, games) > before) progressedProfile = started.profileName;
+            if (progress > before) progressedProfile = started.profileName;
+            if (!state.completed && progress >= challenge.target) {
+                completedCount = state.completedCount + 1;
+                data.challenge = { ...data.challenge, completed: true, completedCount };
+            }
         }, started.profileName);
+        if (completedCount === 0) return;
+        log(`${started.profileName} completed the week ${week} Challenge.`);
+        toasts.submit({
+            kind: TOAST_KIND.CHALLENGE,
+            title: lang.challenges.titles[challenge.template](challenge.target, challenge.param),
+            description: lang.challenges.toastDescription(completedCount),
+            onShown() {},
+        });
     }));
 
     return { getCurrent, showUp, getActiveView };
@@ -195,14 +215,15 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
 
 let sharedChallenges = null;
 
-// One instance for every Add-on. The Random Game module is created first,
-// so its "gamestarted" listener has settled whether the game is a Random
-// Game before this one notes it.
+// One instance for every Add-on, sharing the Achievement Toasts' queue.
+// The Random Game module is created first, so its "gamestarted" listener
+// has settled whether the game is a Random Game before this one notes it.
 export function getChallenges() {
     if (!sharedChallenges) {
         const randomGame = getRandomGame();
         sharedChallenges = createChallenges(createPinballYHost(), getProfileStore(),
-            { tableOfTheDay: getTableOfTheDay(), tableOfTheWeek: getTableOfTheWeek(), randomGame });
+            { tableOfTheDay: getTableOfTheDay(), tableOfTheWeek: getTableOfTheWeek(), randomGame,
+                toasts: getAchievementToasts() });
     }
     return sharedChallenges;
 }

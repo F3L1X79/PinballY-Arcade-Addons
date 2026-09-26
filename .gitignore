@@ -1,5 +1,8 @@
-#AI-related
+#security
 .devcontainer
+.claude/settings.local.json
+
+#AI-related
 .agents/
 .claude/rules/
 .claude/skills/

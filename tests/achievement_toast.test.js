@@ -5,12 +5,14 @@
 // for the configured duration (4 s when out of range, with a log line), the
 // configured scale enlarges the whole card (1 when out of range, logged)
 // and the configured sound plays once per card, a failing one only logged.
+// A Challenge Toast shares the queue, with its own header and target icon.
 // ============================================================
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost } from "./fake_pinbally_host.js";
-import { createAchievementToasts } from "../common/achievement_toast.js";
+import { createAchievementToasts, TOAST_KIND } from "../common/achievement_toast.js";
+import lang from "../common/i18n.js";
 
 const ARRIVAL_GAP_MS = 350;
 const MAX_CARDS = 5;
@@ -113,4 +115,22 @@ test("the configured sound plays once per card, and a failing one never stops th
     assert.ok(shown, "the card still starts");
     assert.ok(cardsOnScreen(fake).includes("3"));
     assert.equal(fake.logLines().filter(line => line.includes("Windows Media Player unavailable")).length, 1);
+});
+
+test("a Challenge Toast shares the queue with the Achievement Toasts, with its own header and icon", () => {
+    const fake = createFakePinballYHost();
+    fake.installGlobals();
+    const toasts = createAchievementToasts(fake);
+    submitOne(toasts, "achievement");
+    toasts.submit({ kind: TOAST_KIND.CHALLENGE, title: "challenge", description: "", onShown() {} });
+    fake.advanceTime(SETTLE_MS);
+
+    assert.deepEqual(cardsOnScreen(fake), ["achievement", "challenge"], "both show, in order");
+    const byTitle = title => fake.drawingLayers().find(layer => layer.texts()[1] === title);
+    assert.equal(byTitle("achievement").texts()[0], lang.achievements.toastHeader.toLocaleUpperCase());
+    assert.equal(byTitle("challenge").texts()[0], lang.challenges.toastHeader.toLocaleUpperCase());
+    const [trophy] = byTitle("achievement").images();
+    const [target] = byTitle("challenge").images();
+    assert.match(trophy, /achievement_trophy\.png$/);
+    assert.match(target, /challenge_target\.png$/);
 });

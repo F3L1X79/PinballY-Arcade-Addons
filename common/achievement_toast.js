@@ -8,13 +8,15 @@
 // the oldest leaves first. Toasts wait while a game starts, runs or exits;
 // waiting ones start on "wheelmode". The hold duration and an optional
 // sound played with each card and the card's scale come from the player
-// settings.
+// settings. A Challenge Toast shares the queue and the card, with its own
+// accent colour, header and target icon instead of the trophy.
 // ============================================================
 
 import lang from "./i18n.js";
 import { safeHandler } from "./safe_handler.js";
 import { createPinballYHost } from "./pinbally_host.js";
 import config from "./config.js";
+import { CHALLENGE_ACCENT_COLOR } from "./challenge_card.js";
 
 const SCRIPT_NAME = "AchievementToast";
 
@@ -38,11 +40,11 @@ const BASE_LOOK = Object.freeze({
     stackGap: 10,
     paddingY: 22,
     paddingRight: 14,
-    goldBarWidth: 5,
+    accentBarWidth: 5,
     tileSize: 64,
     tileGap: 20,
     tileFrame: 3,
-    trophyInset: 10,
+    iconInset: 10,
     // One-pixel frames, so the glow widens with the tile.
     glowRings: 10,
     smallFont: 11,
@@ -59,15 +61,28 @@ const COLORS = Object.freeze({
     gradientTop: 0xFF2A3547,
     gradientBottom: 0xFF171D27,
     border: 0xFF3E4C60,
-    gold: 0xFFE8B84A,
     tile: 0xFF15181E,
     title: 0xFFFFFFFF,
     description: 0xFFA9B4C2,
     transparent: 0x00000000,
 });
 
+export const TOAST_KIND = Object.freeze({ ACHIEVEMENT: "achievement", CHALLENGE: "challenge" });
+
 // drawImage resolves relative paths from the PinballY folder, not Scripts/.
-const TROPHY_FILE = "Scripts\\assets\\achievement_trophy.png";
+const KIND_LOOKS = Object.freeze({
+    [TOAST_KIND.ACHIEVEMENT]: {
+        accent: 0xFFE8B84A,
+        iconFile: "Scripts\\assets\\achievement_trophy.png",
+        header: () => lang.achievements.toastHeader,
+    },
+    // The Challenge Card's accent, so the toast reads as the card's news.
+    [TOAST_KIND.CHALLENGE]: {
+        accent: CHALLENGE_ACCENT_COLOR,
+        iconFile: "Scripts\\assets\\challenge_target.png",
+        header: () => lang.challenges.toastHeader,
+    },
+});
 
 function mixColors(from, to, ratio) {
     let color = 0;
@@ -89,30 +104,31 @@ function fillGradient(dc, x, y, width, height, topColor, bottomColor) {
 const scaleLook = scale => Object.freeze(Object.fromEntries(
     Object.entries(BASE_LOOK).map(([name, size]) => [name, Math.round(size * scale)])));
 
-// Dark tile with a gold frame, a soft gold glow made of fading frames, and the trophy.
-function drawTile(dc, look, x, y, trophyPath) {
-    const { tileSize, glowRings, trophyInset } = look;
-    const goldRgb = COLORS.gold & 0xFFFFFF;
+// Dark tile with an accent frame, a soft accent glow made of fading frames, and the icon.
+function drawTile(dc, look, x, y, accent, iconPath) {
+    const { tileSize, glowRings, iconInset } = look;
+    const accentRgb = accent & 0xFFFFFF;
     for (let ring = glowRings; ring >= 1; ring--) {
         const alpha = Math.round(GLOW_MAX_ALPHA * (1 - ring / (glowRings + 1)));
-        dc.frameRect(x - ring, y - ring, tileSize + 2 * ring, tileSize + 2 * ring, 1, alpha * 2 ** 24 + goldRgb);
+        dc.frameRect(x - ring, y - ring, tileSize + 2 * ring, tileSize + 2 * ring, 1, alpha * 2 ** 24 + accentRgb);
     }
     dc.fillRect(x, y, tileSize, tileSize, COLORS.tile);
-    dc.frameRect(x, y, tileSize, tileSize, look.tileFrame, COLORS.gold);
-    dc.drawImage(trophyPath, x + trophyInset, y + trophyInset, tileSize - 2 * trophyInset, tileSize - 2 * trophyInset);
+    dc.frameRect(x, y, tileSize, tileSize, look.tileFrame, accent);
+    dc.drawImage(iconPath, x + iconInset, y + iconInset, tileSize - 2 * iconInset, tileSize - 2 * iconInset);
 }
 
 // Draws the card flush with the bottom-right corner of the layer's layout
 // (rotation-aware) and returns its height and the layout height.
 // Backgrounds use fillRect and frameRect: a StyledText holding only a
 // space draws no background.
-function drawCard(host, dc, look, toast, trophyPath) {
-    const { cardWidth, edgeMargin, goldBarWidth, tileSize, tileGap, smallFont } = look;
+function drawCard(host, dc, look, toast, programFolder) {
+    const { cardWidth, edgeMargin, accentBarWidth, tileSize, tileGap, smallFont } = look;
+    const kindLook = KIND_LOOKS[toast.kind || TOAST_KIND.ACHIEVEMENT];
     const size = dc.getSize();
-    const textLeft = goldBarWidth + tileGap + tileSize + tileGap;
+    const textLeft = accentBarWidth + tileGap + tileSize + tileGap;
     const textWidth = cardWidth - textLeft - look.paddingRight;
     const text = host.createStyledText({ textStyle: { font: FONT, size: smallFont, color: COLORS.description } });
-    text.add({ size: smallFont, weight: 600, color: COLORS.gold, text: lang.achievements.toastHeader.toLocaleUpperCase() + "\n" });
+    text.add({ size: smallFont, weight: 600, color: kindLook.accent, text: kindLook.header().toLocaleUpperCase() + "\n" });
     text.add({ size: look.titleFont, weight: 600, color: COLORS.title, text: toast.title + "\n" });
     text.add(toast.description);
     const textHeight = text.measure(textWidth).height;
@@ -122,8 +138,9 @@ function drawCard(host, dc, look, toast, trophyPath) {
 
     fillGradient(dc, x, y, cardWidth, height, COLORS.gradientTop, COLORS.gradientBottom);
     dc.frameRect(x, y, cardWidth, height, look.border, COLORS.border);
-    dc.fillRect(x, y, goldBarWidth, height, COLORS.gold);
-    drawTile(dc, look, x + goldBarWidth + tileGap, y + (height - tileSize) / 2, trophyPath);
+    dc.fillRect(x, y, accentBarWidth, height, kindLook.accent);
+    drawTile(dc, look, x + accentBarWidth + tileGap, y + (height - tileSize) / 2,
+        kindLook.accent, `${programFolder}\\${kindLook.iconFile}`);
     text.draw(dc, { x: x + textLeft, y: y + (height - textHeight) / 2, width: textWidth, height: textHeight });
     return { height, layoutHeight: size.height };
 }
@@ -153,7 +170,7 @@ export function createAchievementToasts(host, {
     // A sound that cannot play is logged and never stops the card.
     const playSound = safeHandler(SCRIPT_NAME, () => { if (soundFile) host.playSound(soundFile); });
     const waiting = [];
-    const trophyPath = `${host.getProgramFolder().replace(/\\+$/, "")}\\${TROPHY_FILE}`;
+    const programFolder = host.getProgramFolder().replace(/\\+$/, "");
     // Cards on screen, oldest first. Each one: its layer, its height, the
     // layout height, its lift above the bottom slot (layout pixels, up is
     // positive), its alpha and whether it is leaving.
@@ -229,7 +246,7 @@ export function createAchievementToasts(host, {
         const toast = waiting.shift();
         const layer = freeLayers.pop() || host.createDrawingLayer(TOAST_Z_INDEX);
         let drawn = null;
-        layer.draw(dc => { drawn = drawCard(host, dc, look, toast, trophyPath); });
+        layer.draw(dc => { drawn = drawCard(host, dc, look, toast, programFolder); });
         // Starts just below the bottom edge, then rises into place.
         const card = {
             layer, height: drawn.height, layoutHeight: drawn.layoutHeight,
@@ -252,7 +269,8 @@ export function createAchievementToasts(host, {
     // Fires on every return to the wheel: starts the toasts that waited for a game.
     host.on("wheelmode", safeShowNext);
 
-    // toast: { title, description, onShown }, onShown running when the toast starts.
+    // toast: { kind, title, description, onShown }, kind a TOAST_KIND (an
+    // Achievement when missing), onShown running when the toast starts.
     function submit(toast) {
         waiting.push(toast);
         safeShowNext();
