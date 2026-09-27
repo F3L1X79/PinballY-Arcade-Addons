@@ -372,7 +372,7 @@ export default {
             activeDays: (target) => `An ${target} verschiedenen Tagen spielen`,
             endurance: (target) => `${target} Minuten auf einem Tisch spielen`,
             marathon: (target) => `Insgesamt ${target} Minuten spielen`,
-            randomGames: (target) => `${target} zufällige Tische spielen`,
+            randomGames: (target) => `${target} zufällige Spiele spielen`,
             sameTableGames: (target) => `${target} Spiele auf demselben Tisch spielen`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
