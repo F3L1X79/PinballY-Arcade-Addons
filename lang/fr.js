@@ -365,6 +365,10 @@ export default {
         cardHeader: "Défi de la semaine",
         titles: {
             differentTables: (target) => `Jouer ${target} tables différentes`,
+            manufacturerTables: (target, manufacturer) => `Jouer ${target} tables ${manufacturer} différentes`,
+            decadeTables: (target, decade) => `Jouer ${target} tables différentes des années ${decade}`,
+            differentManufacturers: (target) => `Jouer des tables de ${target} fabricants différents`,
+            differentDecades: (target) => `Jouer des tables de ${target} décennies différentes`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `encore ${days} jours`,

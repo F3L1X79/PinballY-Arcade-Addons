@@ -13,7 +13,7 @@ import { createFakePinballYHost } from "./fake_pinbally_host.js";
 import { createProfileStore } from "../common/profile_store.js";
 import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
 import { createRandomGame } from "../common/random_game.js";
-import { createChallenges } from "../common/challenge.js";
+import { createChallenges, CHALLENGE_TEMPLATE_IDS } from "../common/challenge.js";
 import { createChallengeCard, CHALLENGE_CARD_Z_INDEX, CHALLENGE_VERDICT_MS } from "../common/challenge_card.js";
 import { createAchievementToasts } from "../common/achievement_toast.js";
 import lang from "../common/i18n.js";
@@ -138,13 +138,14 @@ test("a new week draws a new Challenge, never with the previous template", () =>
     fake.setNow(NEXT_MONDAY);
     fake.fire("wheelmode");
 
-    // differentTables is the only template yet: nothing left to draw.
+    // The first candidate left once differentTables is out: the 1990s,
+    // the only decade with 2 visible tables.
     assert.deepEqual(cabinetChallenge(fake), {
-        current: { week: "2026-09-28", template: "", param: null, target: 0 },
+        current: { week: "2026-09-28", template: "decadeTables", param: 1990, target: 2 },
         previous: lastWeek,
     });
     fake.advanceTime(CHALLENGE_VERDICT_MS);
-    assert.ok(!cardShown(fake), "no card once last week's verdict is gone");
+    assert.ok(cardShows(fake, TEXT.titles.decadeTables(2, 1990)));
 });
 
 test("a game counts from 60 seconds on a visible table, and progress counts distinct tables", () => {
@@ -357,11 +358,10 @@ test("a missed Challenge gets its verdict once, on the card, with the value reac
 
     fake.advanceTime(CHALLENGE_VERDICT_MS + ONE_TOAST_MS);
     assert.deepEqual(toastsDrawn(fake), [], "no toast for a missed Challenge");
-    // differentTables is the only template yet: no Challenge this week.
-    assert.ok(!cardShown(fake), "the verdict gives way to this week's Challenge");
+    assert.ok(cardShows(fake, TEXT.titles.decadeTables(2, 1990)), "the verdict gives way to this week's Challenge");
 
     fake.fire("wheelmode");
-    assert.ok(!cardShown(fake), "the verdict is shown once");
+    assert.ok(!cardShows(fake, verdictHeader), "the verdict is shown once");
     assert.equal(profileChallenge(fake, "Alice").history.length, 1);
 });
 
@@ -479,4 +479,132 @@ test("a previous week without a Challenge gets no verdict", () => {
     assert.ok(!cardShows(fake, verdictHeader));
     assert.ok(cardShows(fake, TEXT.progress(0, 3, TEXT.daysLeft(7))));
     assert.deepEqual(profileChallenge(fake, "Alice").history, []);
+});
+
+// Every Challenge a draw can give on this collection, as "template:param:target"
+// for the lowest and highest target, by walking the random source through
+// each template and option.
+function drawable(tables) {
+    const steps = Array.from({ length: 20 }, (_, index) => index / 20);
+    const drawn = new Set();
+    for (const templateRandom of steps) {
+        for (const optionRandom of steps) {
+            for (const targetRandom of [0, 0.99]) {
+                const { fake } = setUp({ tables, randoms: [templateRandom, optionRandom, targetRandom] });
+                const { template, param, target } = cabinetChallenge(fake).current;
+                drawn.add(`${template}:${param}:${target}`);
+            }
+        }
+    }
+    return [...drawn].sort();
+}
+const drawableTemplates = tables =>
+    drawable(tables).map(key => key.split(":")[0]).filter((id, index, ids) => ids.indexOf(id) === index);
+const drawnOf = (tables, template) => drawable(tables).filter(key => key.startsWith(`${template}:`));
+
+// Draws this template's option at this index, among options, with this target.
+function setUpDrawn(tables, template, { option = 0, options = 1, target = 0 } = {}) {
+    const templates = drawableTemplates(tables);
+    const ordered = CHALLENGE_TEMPLATE_IDS.filter(id => templates.includes(id));
+    const randoms = [(ordered.indexOf(template) + 0.5) / ordered.length, (option + 0.5) / options, target];
+    const set = setUp({ tables, randoms });
+    assert.equal(cabinetChallenge(set.fake).current.template, template);
+    return set;
+}
+
+// Community tables first: were they an option, they would come first.
+const MANUFACTURER_TABLES = [
+    table(11, "VPX Community", 2021), table(12, "VPX Community", 2022), table(13, "VPX Community", 2023),
+    table(14, "Stern", 2016), table(15, "Stern", 2020), table(16, "Stern", 2021), { ...table(17, "Stern", 2022), isHidden: true },
+    table(18, "Williams", 1992), table(19, "Williams", 1993),
+    table(20, "Bally", 1980), table(21, "", 1995), table(22, "", 1996),
+];
+
+test("manufacturerTables: one option per manufacturer with 2 visible tables, never the community tables' one", () => {
+    assert.deepEqual(drawnOf(MANUFACTURER_TABLES, "manufacturerTables"), [
+        "manufacturerTables:Stern:2", "manufacturerTables:Stern:3",
+        "manufacturerTables:Williams:2",
+    ]);
+
+    // Only the community tables' manufacturer has 2 tables: no option.
+    const communityOnly = [table(11, "VPX Community", 2021), table(12, "VPX Community", 2022), table(18, "Williams", 1992)];
+    assert.deepEqual(drawnOf(communityOnly, "manufacturerTables"), []);
+});
+
+test("manufacturerTables counts the manufacturer's distinct tables", () => {
+    const { fake } = setUpDrawn(MANUFACTURER_TABLES, "manufacturerTables", { option: 0, options: 2, target: 0.99 });
+    assert.deepEqual(cabinetChallenge(fake).current, { week: WEEK, template: "manufacturerTables", param: "Stern", target: 3 });
+    assert.ok(cardShows(fake, TEXT.titles.manufacturerTables(3, "Stern")));
+
+    play(fake, MANUFACTURER_TABLES[3], 90);
+    play(fake, MANUFACTURER_TABLES[3], 90);
+    play(fake, MANUFACTURER_TABLES[7], 90);
+    play(fake, MANUFACTURER_TABLES[0], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "the same table twice, other manufacturers: 1");
+
+    play(fake, MANUFACTURER_TABLES[4], 90);
+    play(fake, MANUFACTURER_TABLES[5], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, true);
+});
+
+test("decadeTables: one option per decade with 2 visible tables, counting its distinct tables", () => {
+    assert.deepEqual(drawnOf(MANUFACTURER_TABLES, "decadeTables"), [
+        "decadeTables:1990:2", "decadeTables:1990:4",
+        "decadeTables:2020:2", "decadeTables:2020:5",
+    ]);
+
+    const { fake } = setUpDrawn(MANUFACTURER_TABLES, "decadeTables", { option: 1, options: 2, target: 0 });
+    assert.deepEqual(cabinetChallenge(fake).current, { week: WEEK, template: "decadeTables", param: 1990, target: 2 });
+    assert.ok(cardShows(fake, TEXT.titles.decadeTables(2, 1990)));
+
+    play(fake, MANUFACTURER_TABLES[7], 90);
+    play(fake, MANUFACTURER_TABLES[7], 90);
+    play(fake, MANUFACTURER_TABLES[9], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))));
+    play(fake, MANUFACTURER_TABLES[10], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, true);
+});
+
+test("differentManufacturers: up to the visible tables' distinct manufacturers, counting distinct manufacturers played", () => {
+    // Stern, Williams and Bally: target 2 or 3.
+    const tables = [table(1, "Stern", 2016), table(2, "Stern", 2020), table(3, "Williams", 1992), table(4, "Bally", 1995),
+        table(5, "", 1996), { ...table(6, "Gottlieb", 1978), isHidden: true }];
+    assert.deepEqual(drawnOf(tables, "differentManufacturers"), ["differentManufacturers:null:2", "differentManufacturers:null:3"]);
+
+    const { fake } = setUpDrawn(tables, "differentManufacturers", { target: 0.99 });
+    assert.ok(cardShows(fake, TEXT.titles.differentManufacturers(3)));
+    play(fake, tables[0], 90);
+    play(fake, tables[1], 90);
+    play(fake, tables[4], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "two Stern tables and one without a manufacturer: 1");
+    play(fake, tables[2], 90);
+    play(fake, tables[3], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, true);
+});
+
+test("differentDecades: up to the visible tables' distinct decades, counting distinct decades played", () => {
+    // The 2010s, 1990s and 1970s: target 2 or 3.
+    const tables = [table(1, "Stern", 2016), table(2, "Stern", 2017), table(3, "Williams", 1992), table(4, "Bally", 1978),
+        table(5, "Gottlieb", 0), { ...table(6, "Gottlieb", 1965), isHidden: true }];
+    assert.deepEqual(drawnOf(tables, "differentDecades"), ["differentDecades:null:2", "differentDecades:null:3"]);
+
+    const { fake } = setUpDrawn(tables, "differentDecades", { target: 0 });
+    assert.ok(cardShows(fake, TEXT.titles.differentDecades(2)));
+    play(fake, tables[0], 90);
+    play(fake, tables[1], 90);
+    play(fake, tables[4], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "two 2010s tables and one without a year: 1");
+    play(fake, tables[2], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, true);
+});
+
+test("a manufacturer or decade template is never drawn when its max is below 2", () => {
+    // One manufacturer, one decade, each table its own.
+    const oneEach = [table(1, "Stern", 2016), table(2, "Williams", 1992)];
+    assert.deepEqual(drawableTemplates(oneEach),
+        ["differentDecades", "differentManufacturers", "differentTables"]);
+
+    const sameEra = [table(1, "Stern", 2016), table(2, "Stern", 2017)];
+    assert.deepEqual(drawableTemplates(sameEra),
+        ["decadeTables", "differentTables", "manufacturerTables"]);
 });

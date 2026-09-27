@@ -361,6 +361,10 @@ export default {
         cardHeader: "Desafio da semana",
         titles: {
             differentTables: (target) => `Jogar ${target} mesas diferentes`,
+            manufacturerTables: (target, manufacturer) => `Jogar ${target} mesas diferentes da ${manufacturer}`,
+            decadeTables: (target, decade) => `Jogar ${target} mesas diferentes dos anos ${decade}`,
+            differentManufacturers: (target) => `Jogar mesas de ${target} fabricantes diferentes`,
+            differentDecades: (target) => `Jogar mesas de ${target} décadas diferentes`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `faltam ${days} dias`,

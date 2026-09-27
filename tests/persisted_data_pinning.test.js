@@ -19,7 +19,7 @@ import config from "../common/config.js";
 import { createProfileStore } from "../common/profile_store.js";
 import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
 import { createRandomGame } from "../common/random_game.js";
-import { createChallenges } from "../common/challenge.js";
+import { createChallenges, CHALLENGE_TEMPLATE_IDS } from "../common/challenge.js";
 
 // Wednesday 23 September 2026, 10:00 local time: its week starts Monday 21.
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -342,4 +342,10 @@ test("a verdict on the previous Challenge stays byte-identical in the Profile's 
         { week: "2026-09-21", template: "differentTables", param: null, target: 2, reached: 0, completed: false },
     ]);
     assert.deepEqual(Object.keys(challenge.history[0]), ["week", "template", "param", "target", "reached", "completed"]);
+});
+
+test("the Challenge template ids stay byte-identical", () => {
+    for (const id of ["differentTables", "manufacturerTables", "decadeTables", "differentManufacturers", "differentDecades"]) {
+        assert.ok(CHALLENGE_TEMPLATE_IDS.includes(id), `${id} is still a Challenge template`);
+    }
 });

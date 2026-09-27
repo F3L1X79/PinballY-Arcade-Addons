@@ -278,6 +278,10 @@ export default {
         // One title per Challenge template, from its target and parameter.
         titles: {
             differentTables: (target) => `Play ${target} different tables`,
+            manufacturerTables: (target, manufacturer) => `Play ${target} different ${manufacturer} tables`,
+            decadeTables: (target, decade) => `Play ${target} different tables from the ${decade}s`,
+            differentManufacturers: (target) => `Play tables from ${target} different manufacturers`,
+            differentDecades: (target) => `Play tables from ${target} different decades`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `${days} days left`,

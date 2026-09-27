@@ -32,10 +32,10 @@ test("the Challenges Add-on draws the week's Challenge, shows the card and count
 
     const { challenge } = JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\cabinet.json`));
     assert.equal(challenge.current.week, "2026-09-21");
-    assert.equal(challenge.current.template, "differentTables");
     // The badge shares the card's Z index; only the card shows the Challenge's title.
     const { default: lang } = await import("../common/i18n.js");
-    const title = lang.challenges.titles.differentTables(challenge.current.target);
+    const { template, target, param } = challenge.current;
+    const title = lang.challenges.titles[template](target, param);
     const card = fake.drawingLayers().find(layer => layer.zIndex === CARD_Z_INDEX && layer.texts().includes(title));
     assert.ok(card && card.alpha > 0, "the Challenge Card is shown");
 

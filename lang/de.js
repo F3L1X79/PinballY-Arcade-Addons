@@ -361,6 +361,10 @@ export default {
         cardHeader: "Herausforderung der Woche",
         titles: {
             differentTables: (target) => `${target} verschiedene Tische spielen`,
+            manufacturerTables: (target, manufacturer) => `${target} verschiedene ${manufacturer}-Tische spielen`,
+            decadeTables: (target, decade) => `${target} verschiedene Tische aus den ${decade}ern spielen`,
+            differentManufacturers: (target) => `Tische von ${target} verschiedenen Herstellern spielen`,
+            differentDecades: (target) => `Tische aus ${target} verschiedenen Jahrzehnten spielen`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `noch ${days} Tage`,

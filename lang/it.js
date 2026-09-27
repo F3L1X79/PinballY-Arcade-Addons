@@ -360,6 +360,10 @@ export default {
         cardHeader: "Sfida della settimana",
         titles: {
             differentTables: (target) => `Giocare ${target} tavoli diversi`,
+            manufacturerTables: (target, manufacturer) => `Giocare ${target} tavoli ${manufacturer} diversi`,
+            decadeTables: (target, decade) => `Giocare ${target} tavoli diversi degli anni ${decade}`,
+            differentManufacturers: (target) => `Giocare tavoli di ${target} produttori diversi`,
+            differentDecades: (target) => `Giocare tavoli di ${target} decenni diversi`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `ancora ${days} giorni`,

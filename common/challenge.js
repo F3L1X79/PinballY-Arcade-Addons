@@ -1,7 +1,9 @@
 // ============================================================
 // Challenge module: owns the Challenges' state model. The week's
 // Challenge is drawn the first time it is needed in a week, among the
-// feasible templates other than the previous Challenge's, and locked in
+// feasible templates other than the previous Challenge's (tables of a
+// manufacturer or decade, different tables, manufacturers or decades,
+// never the community tables' manufacturer as an option), and locked in
 // cabinet.json with the previous one; each non-Guest Profile follows it
 // in its own profile.json ("challenge"), where the games that count are
 // kept with their facts, progress being recomputed from them. The game
@@ -22,6 +24,7 @@ import { getTableOfTheDay, getTableOfTheWeek, formatDateKey, getWeekKey } from "
 import { getRandomGame } from "./random_game.js";
 import { getDecadeStartYear } from "./decade.js";
 import { getAchievementToasts, TOAST_KIND } from "./achievement_toast.js";
+import config from "./config.js";
 import lang from "./i18n.js";
 
 const SCRIPT_NAME = "Challenges";
@@ -42,19 +45,58 @@ const daysLeftInWeek = date => 7 - (date.getDay() + 6) % 7;
 
 const distinct = values => new Set(values).size;
 const distinctTables = games => distinct(games.map(game => game.configId));
+// A table without a manufacturer or a year has no value to count.
+const isKnown = value => value !== "" && value !== null;
+const distinctKnown = values => distinct(values.filter(isKnown));
+const manufacturerOf = table => table.manufacturer || "";
+const decadeOf = table => getDecadeStartYear(table.year);
+const countTarget = max => Math.min(COUNT_RANGE.max, max);
 // One option without a parameter, its target up to max (at most 5), or
 // none when fewer than 2 would be reachable.
-const countOption = max => (max >= COUNT_RANGE.min ? [{ param: null, max: Math.min(COUNT_RANGE.max, max) }] : []);
+const countOption = max => (max >= COUNT_RANGE.min ? [{ param: null, max: countTarget(max) }] : []);
+
+// One option per value of keyOf shared by at least 2 tables, its target up
+// to that value's table count.
+function groupOptions(tables, keyOf) {
+    const counts = new Map();
+    for (const table of tables) {
+        const key = keyOf(table);
+        if (isKnown(key)) counts.set(key, (counts.get(key) || 0) + 1);
+    }
+    return [...counts]
+        .filter(([, count]) => count >= COUNT_RANGE.min)
+        .map(([param, count]) => ({ param, max: countTarget(count) }));
+}
 
 // Template ids are players' saved data (cabinet.json, history): never rename one.
 // options(context): the feasible { param, min?, max } choices, none when infeasible.
 // progress(games, param): the value compared with the target.
+// differentTables stays first: a scripted draw of 0 picks it.
 const TEMPLATES = Object.freeze({
     differentTables: {
         options: context => countOption(context.visibleTables.length),
         progress: games => distinctTables(games),
     },
+    manufacturerTables: {
+        // The community tables' manufacturer is not a real one.
+        options: context => groupOptions(
+            context.visibleTables.filter(table => manufacturerOf(table) !== config.communityTablesManufacturer), manufacturerOf),
+        progress: (games, manufacturer) => distinctTables(games.filter(game => game.manufacturer === manufacturer)),
+    },
+    decadeTables: {
+        options: context => groupOptions(context.visibleTables, decadeOf),
+        progress: (games, decade) => distinctTables(games.filter(game => game.decade === decade)),
+    },
+    differentManufacturers: {
+        options: context => countOption(distinctKnown(context.visibleTables.map(manufacturerOf))),
+        progress: games => distinctKnown(games.map(game => game.manufacturer)),
+    },
+    differentDecades: {
+        options: context => countOption(distinctKnown(context.visibleTables.map(decadeOf))),
+        progress: games => distinctKnown(games.map(game => game.decade)),
+    },
 });
+export const CHALLENGE_TEMPLATE_IDS = Object.freeze(Object.keys(TEMPLATES));
 
 const NO_CHALLENGE = Object.freeze({ current: null, previous: null });
 const emptyProfileChallenge = () => ({
@@ -179,8 +221,8 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         const weekTable = tableOfTheWeek.getTable();
         return {
             configId: game.configId,
-            manufacturer: game.manufacturer || "",
-            decade: getDecadeStartYear(game.year),
+            manufacturer: manufacturerOf(game),
+            decade: decadeOf(game),
             day: formatDateKey(start),
             seconds: 0,
             randomGame: randomGame.isStartedGameRandom(),
