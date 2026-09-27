@@ -177,3 +177,58 @@ test("the Challenge Tables filter is listed in no filter menu", () => {
     assert.equal(fake.scriptFilters().length, 1);
     assert.equal(fake.scriptFilters()[0].group, undefined);
 });
+
+// Back on the wheel with the Challenge Tables shown: the list is selected
+// again, or every table comes back once it is empty.
+const onChallengeTables = fake => fake.currentFilterId() === "User.project.ChallengeTables";
+
+test("back on the wheel, the Challenge Tables shown leave out a table that just counted", async () => {
+    const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
+    await chooseEntry(fake);
+
+    play(fake, TABLES[1]);
+
+    assert.ok(onChallengeTables(fake));
+    assert.deepEqual(fake.getWheelTables().map(game => game.configId), ["Table 1", "Table 5"]);
+});
+
+test("once the Challenge is completed, the wheel goes back to every table", async () => {
+    const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern", 2) });
+    await chooseEntry(fake);
+
+    play(fake, TABLES[0]);
+    play(fake, TABLES[1]);
+
+    assert.equal(fake.currentFilterId(), "All");
+    assert.deepEqual(fake.getWheelTables().map(game => game.configId).sort(),
+        ["Table 1", "Table 2", "Table 3", "Table 5", "Table 6"]);
+});
+
+test("once the Table of the Day counted today, the wheel goes back to every table", async () => {
+    const { fake, tableOfTheDay } = setUp({ challenge: challengeOf("tableOfTheDayDays") });
+    await chooseEntry(fake);
+
+    play(fake, tableOfTheDay.getTable());
+
+    assert.equal(fake.currentFilterId(), "All");
+});
+
+test("after a switch to Guest, the wheel goes back to every table", async () => {
+    const { fake, store } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
+    await chooseEntry(fake);
+
+    store.switchTo("guest");
+    fake.fire("wheelmode");
+
+    assert.equal(fake.currentFilterId(), "All");
+});
+
+test("another filter shown is left alone", async () => {
+    const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern", 2) });
+    fake.setWheelTables(["Table 3"], { filterId: "Favorites" });
+
+    play(fake, TABLES[0]);
+    play(fake, TABLES[1]);
+
+    assert.equal(fake.currentFilterId(), "Favorites");
+});
