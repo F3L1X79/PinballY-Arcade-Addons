@@ -42,13 +42,14 @@ const TEXT = lang.challenges;
 const scripted = values => () => (values.length > 0 ? values.shift() : 0);
 
 // saved: the week's lock already in cabinet.json and each Profile's
-// "challenge" record already in its profile.json.
-function setUp({ now = MONDAY, tables = TABLES, active = "Alice", randoms = [], saved = {} } = {}) {
+// "challenge" record already in its profile.json; plays: each Profile's
+// play records already there, Guest's under "guest".
+function setUp({ now = MONDAY, tables = TABLES, profiles = ["Alice", "Bob"], active = "Alice", randoms = [], saved = {}, plays = {} } = {}) {
     const fake = createFakePinballYHost({ now, tables, layoutSize: { width: 1080, height: 1920 } });
     fake.installGlobals();
-    for (const name of ["Alice", "Bob"]) {
+    for (const name of [...profiles, ...(plays.guest ? ["guest"] : [])]) {
         fake.addFolder(`${PROFILES}\\${name}`);
-        if (saved[name]) fake.addFile(profileFile(name), JSON.stringify({ challenge: saved[name] }));
+        if (saved[name] || plays[name]) fake.addFile(profileFile(name), JSON.stringify({ challenge: saved[name], plays: plays[name] }));
     }
     fake.addFile(CABINET_FILE, JSON.stringify({ version: 1, activeProfile: active, challenge: saved.cabinet }));
     const store = createProfileStore(fake);
@@ -59,7 +60,7 @@ function setUp({ now = MONDAY, tables = TABLES, active = "Alice", randoms = [], 
     const challenges = createChallenges(fake, store,
         { tableOfTheDay, tableOfTheWeek, randomGame, toasts, random: scripted([...randoms]) });
     createChallengeCard(fake, challenges, store);
-    return { fake, store, toasts };
+    return { fake, store, toasts, challenges };
 }
 
 const readJson = (fake, path) => JSON.parse(fake.readFile(path));
@@ -483,14 +484,16 @@ test("a previous week without a Challenge gets no verdict", () => {
 
 // Every Challenge a draw can give on this collection, as "template:param:target"
 // for the lowest and highest target, by walking the random source through
-// each template and option.
-function drawable(tables) {
+// each template and option; options go to setUp. The draw is asked for
+// directly, since Guest never needs one.
+function drawable(tables, options = {}) {
     const steps = Array.from({ length: 20 }, (_, index) => index / 20);
     const drawn = new Set();
     for (const templateRandom of steps) {
         for (const optionRandom of steps) {
             for (const targetRandom of [0, 0.99]) {
-                const { fake } = setUp({ tables, randoms: [templateRandom, optionRandom, targetRandom] });
+                const { fake, challenges } = setUp({ ...options, tables, randoms: [templateRandom, optionRandom, targetRandom] });
+                challenges.getCurrent();
                 const { template, param, target } = cabinetChallenge(fake).current;
                 drawn.add(`${template}:${param}:${target}`);
             }
@@ -498,16 +501,17 @@ function drawable(tables) {
     }
     return [...drawn].sort();
 }
-const drawableTemplates = tables =>
-    drawable(tables).map(key => key.split(":")[0]).filter((id, index, ids) => ids.indexOf(id) === index);
-const drawnOf = (tables, template) => drawable(tables).filter(key => key.startsWith(`${template}:`));
+const drawableTemplates = (tables, options) =>
+    drawable(tables, options).map(key => key.split(":")[0]).filter((id, index, ids) => ids.indexOf(id) === index);
+const drawnOf = (tables, template, options) => drawable(tables, options).filter(key => key.startsWith(`${template}:`));
 
-// Draws this template's option at this index, among options, with this target.
-function setUpDrawn(tables, template, { option = 0, options = 1, target = 0 } = {}) {
-    const templates = drawableTemplates(tables);
+// Draws this template's option at this index, among options, with this
+// target; setUpOptions go to setUp.
+function setUpDrawn(tables, template, { option = 0, options = 1, target = 0 } = {}, setUpOptions = {}) {
+    const templates = drawableTemplates(tables, setUpOptions);
     const ordered = CHALLENGE_TEMPLATE_IDS.filter(id => templates.includes(id));
     const randoms = [(ordered.indexOf(template) + 0.5) / ordered.length, (option + 0.5) / options, target];
-    const set = setUp({ tables, randoms });
+    const set = setUp({ ...setUpOptions, tables, randoms });
     assert.equal(cabinetChallenge(set.fake).current.template, template);
     return set;
 }
@@ -599,12 +603,81 @@ test("differentDecades: up to the visible tables' distinct decades, counting dis
 });
 
 test("a manufacturer or decade template is never drawn when its max is below 2", () => {
-    // One manufacturer, one decade, each table its own.
+    // One manufacturer, one decade, each table its own; nobody played yet.
     const oneEach = [table(1, "Stern", 2016), table(2, "Williams", 1992)];
     assert.deepEqual(drawableTemplates(oneEach),
-        ["differentDecades", "differentManufacturers", "differentTables"]);
+        ["differentDecades", "differentManufacturers", "differentTables", "neverPlayedTables"]);
 
     const sameEra = [table(1, "Stern", 2016), table(2, "Stern", 2017)];
     assert.deepEqual(drawableTemplates(sameEra),
-        ["decadeTables", "differentTables", "manufacturerTables"]);
+        ["decadeTables", "differentTables", "manufacturerTables", "neverPlayedTables"]);
+});
+
+// Tables 1 to 9, the 7th hidden. Alice never played 5, 6, 8 and 9, and last
+// played 3 and 4 (and the hidden 7) more than six months ago; Bob never
+// played 3, 4, 6, 8 and 9, and last played 1, 2 and 5 more than six months
+// ago. Guest played them all this week: were it counted, neither template
+// would be feasible.
+const PLAYED_TABLES = Array.from({ length: 9 }, (_, index) =>
+    ({ ...table(index + 1, `Maker ${index + 1}`, 1950 + 10 * index), isHidden: index === 6 }));
+const played = lastPlayed => ({ count: 1, seconds: 600, lastPlayed });
+const RECENTLY = played("2026-06-13T20:00:00");
+// 184 days before MONDAY.
+const LONG_AGO = played("2026-03-21T20:00:00");
+const PLAYS = {
+    Alice: { "Table 1": RECENTLY, "Table 2": RECENTLY, "Table 3": LONG_AGO, "Table 4": LONG_AGO, "Table 7": LONG_AGO },
+    Bob: { "Table 1": LONG_AGO, "Table 2": LONG_AGO, "Table 5": LONG_AGO, "Table 7": RECENTLY },
+    guest: Object.fromEntries(PLAYED_TABLES.map(game => [game.configId, played("2026-09-21T10:00:00")])),
+};
+
+test("neverPlayedTables: the target reaches only what every non-Guest Profile can", () => {
+    // Alice never played 4 visible tables, Bob 5.
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS }),
+        ["neverPlayedTables:null:2", "neverPlayedTables:null:4"]);
+
+    // With no Profile but Guest, the visible collection size.
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS, profiles: [], active: "guest" }),
+        ["neverPlayedTables:null:2", "neverPlayedTables:null:5"]);
+});
+
+test("dustyTables: the target reaches only what every non-Guest Profile can, never played tables excluded", () => {
+    // Alice's hidden table 7 does not count: 2 for her, 3 for Bob.
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS }), ["dustyTables:null:2"]);
+
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS, profiles: [], active: "guest" }),
+        ["dustyTables:null:2", "dustyTables:null:5"]);
+
+    // Bob left out, Alice alone has a single dusty table.
+    const aliceOneDusty = { Alice: { ...PLAYS.Alice, "Table 4": RECENTLY } };
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: aliceOneDusty, profiles: ["Alice"] }), []);
+});
+
+test("neverPlayedTables counts distinct tables never played when the game started", () => {
+    const { fake } = setUpDrawn(PLAYED_TABLES, "neverPlayedTables", { target: 0 }, { plays: PLAYS });
+    assert.ok(cardShows(fake, TEXT.titles.neverPlayedTables(2)));
+
+    play(fake, PLAYED_TABLES[4], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the game that plays it for the first time counts");
+    play(fake, PLAYED_TABLES[4], 90);
+    play(fake, PLAYED_TABLES[0], 90);
+    play(fake, PLAYED_TABLES[2], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the same table again, and tables already played: 1");
+
+    play(fake, PLAYED_TABLES[5], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, true);
+});
+
+test("dustyTables counts distinct tables last played more than six months before the game started", () => {
+    const { fake } = setUpDrawn(PLAYED_TABLES, "dustyTables", { target: 0 }, { plays: PLAYS });
+    assert.ok(cardShows(fake, TEXT.titles.dustyTables(2)));
+
+    play(fake, PLAYED_TABLES[2], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the game that dusts it off counts");
+    play(fake, PLAYED_TABLES[2], 90);
+    play(fake, PLAYED_TABLES[0], 90);
+    play(fake, PLAYED_TABLES[4], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the same table again, a recent one, a never played one: 1");
+
+    play(fake, PLAYED_TABLES[3], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, true);
 });

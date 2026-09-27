@@ -365,6 +365,8 @@ export default {
             decadeTables: (target, decade) => `${target} verschiedene Tische aus den ${decade}ern spielen`,
             differentManufacturers: (target) => `Tische von ${target} verschiedenen Herstellern spielen`,
             differentDecades: (target) => `Tische aus ${target} verschiedenen Jahrzehnten spielen`,
+            neverPlayedTables: (target) => `${target} nie gespielte Tische spielen`,
+            dustyTables: (target) => `${target} seit sechs Monaten nicht gespielte Tische spielen`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `noch ${days} Tage`,

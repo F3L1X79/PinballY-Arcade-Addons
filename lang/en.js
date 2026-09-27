@@ -282,6 +282,8 @@ export default {
             decadeTables: (target, decade) => `Play ${target} different tables from the ${decade}s`,
             differentManufacturers: (target) => `Play tables from ${target} different manufacturers`,
             differentDecades: (target) => `Play tables from ${target} different decades`,
+            neverPlayedTables: (target) => `Play ${target} tables you never played`,
+            dustyTables: (target) => `Play ${target} tables you haven't played for six months`,
         },
         progress: (value, target, daysText) => `${value}/${target} · ${daysText}`,
         daysLeft: (days) => `${days} days left`,

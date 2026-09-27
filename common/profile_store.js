@@ -193,17 +193,19 @@ export function createProfileStore(host) {
 
     const publicProfile = ({ name, isGuest, avatarPath }) => ({ name, isGuest, avatarPath });
 
-    // Changes the data of the named Profile (the active one by default) and
-    // saves it; another Profile's file is read, changed and written back.
-    function updateProfileData(change, profileName = activeProfile.name) {
-        if (sameName(profileName, activeProfile.name)) {
-            change(activeData);
-            saveProfileData(activeProfile, activeData);
-            return;
-        }
+    // The named Profile and its data: the active one's from memory, another
+    // one's read afresh from its file.
+    function profileWithData(profileName) {
+        if (sameName(profileName, activeProfile.name)) return { profile: activeProfile, data: activeData };
         const profile = findProfile(profileName);
         if (!profile) throw new Error(`No Profile named "${profileName}".`);
-        const data = readProfileData(profile);
+        return { profile, data: readProfileData(profile) };
+    }
+
+    // Changes the data of the named Profile (the active one by default) and
+    // saves it.
+    function updateProfileData(change, profileName = activeProfile.name) {
+        const { profile, data } = profileWithData(profileName);
         change(data);
         saveProfileData(profile, data);
     }
@@ -262,6 +264,8 @@ export function createProfileStore(host) {
         // The active Profile's play record of a table, all zero when never played.
         getPlay: (configId) => activeData.plays[configId] || NO_PLAY,
         hasPlayed: (configId) => (activeData.plays[configId] || NO_PLAY).count > 0,
+        // Every play record of the named Profile, by table.
+        getPlaysOf: (profileName) => profileWithData(profileName).data.plays,
         updateProfileData,
         getCabinetData: () => cabinet,
         updateCabinetData: (change) => {

@@ -3,10 +3,12 @@
 // Challenge is drawn the first time it is needed in a week, among the
 // feasible templates other than the previous Challenge's (tables of a
 // manufacturer or decade, different tables, manufacturers or decades,
-// never the community tables' manufacturer as an option), and locked in
-// cabinet.json with the previous one; each non-Guest Profile follows it
-// in its own profile.json ("challenge"), where the games that count are
-// kept with their facts, progress being recomputed from them. The game
+// never the community tables' manufacturer as an option; tables never
+// played or not played for six months, reachable by every non-Guest
+// Profile), and locked in cabinet.json with the previous one; each
+// non-Guest Profile follows it in its own profile.json ("challenge"),
+// where the games that count are kept with their facts, progress being
+// recomputed from them. The game
 // that first reaches the target completes the Challenge: the Profile's
 // completed count goes up and a Challenge Toast is submitted. When a
 // Profile first shows up in a later week, the previous Challenge is judged
@@ -43,6 +45,12 @@ const NO_TEMPLATE = "";
 // Today included: 7 on Monday, 1 on Sunday.
 const daysLeftInWeek = date => 7 - (date.getDay() + 6) % 7;
 
+const NO_PLAY = Object.freeze({ count: 0, lastPlayed: "" });
+const wasNeverPlayed = play => play.count === 0;
+// A never played table has no last play: it is never dusty.
+const wasDusty = (play, date) =>
+    play.count > 0 && date.getTime() - new Date(play.lastPlayed).getTime() > DUSTY_DAYS * DAY_MS;
+
 const distinct = values => new Set(values).size;
 const distinctTables = games => distinct(games.map(game => game.configId));
 // A table without a manufacturer or a year has no value to count.
@@ -66,6 +74,16 @@ function groupOptions(tables, keyOf) {
     return [...counts]
         .filter(([, count]) => count >= COUNT_RANGE.min)
         .map(([param, count]) => ({ param, max: countTarget(count) }));
+}
+
+// The least, across non-Guest Profiles, of visible tables whose play record
+// matches: a target every Profile can reach. With no such Profile yet,
+// the visible collection size.
+function leastAcrossProfiles(context, matches) {
+    const { visibleTables, profilePlays } = context;
+    if (profilePlays.length === 0) return visibleTables.length;
+    return Math.min(...profilePlays.map(plays =>
+        visibleTables.filter(table => matches(plays[table.configId] || NO_PLAY)).length));
 }
 
 // Template ids are players' saved data (cabinet.json, history): never rename one.
@@ -95,6 +113,14 @@ const TEMPLATES = Object.freeze({
         options: context => countOption(distinctKnown(context.visibleTables.map(decadeOf))),
         progress: games => distinctKnown(games.map(game => game.decade)),
     },
+    neverPlayedTables: {
+        options: context => countOption(leastAcrossProfiles(context, wasNeverPlayed)),
+        progress: games => distinctTables(games.filter(game => game.wasNeverPlayed)),
+    },
+    dustyTables: {
+        options: context => countOption(leastAcrossProfiles(context, play => wasDusty(play, context.now))),
+        progress: games => distinctTables(games.filter(game => game.wasDusty)),
+    },
 });
 export const CHALLENGE_TEMPLATE_IDS = Object.freeze(Object.keys(TEMPLATES));
 
@@ -115,7 +141,10 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
     // Every template but the previous Challenge's with a feasible option;
     // one of them, then one of its options, then a target in its range.
     function draw(week, previous) {
-        const context = { visibleTables: host.getVisibleTables() };
+        const profilePlays = profileStore.listProfiles()
+            .filter(profile => !profile.isGuest)
+            .map(profile => profileStore.getPlaysOf(profile.name));
+        const context = { visibleTables: host.getVisibleTables(), profilePlays, now: host.now() };
         const candidates = Object.entries(TEMPLATES)
             .filter(([id]) => !previous || previous.template !== id)
             .map(([id, template]) => ({ id, options: template.options(context) }))
@@ -228,8 +257,8 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
             randomGame: randomGame.isStartedGameRandom(),
             isTableOfTheDay: Boolean(dayTable && dayTable.configId === game.configId),
             isTableOfTheWeek: Boolean(weekTable && weekTable.configId === game.configId),
-            wasNeverPlayed: play.count === 0,
-            wasDusty: play.count > 0 && start.getTime() - new Date(play.lastPlayed).getTime() > DUSTY_DAYS * DAY_MS,
+            wasNeverPlayed: wasNeverPlayed(play),
+            wasDusty: wasDusty(play, start),
         };
     }
 

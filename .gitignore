@@ -9,18 +9,6 @@
 .scratch/
 skills-lock.json
 
-# This folder is already provided by PinballY
-System/
-
-# Player settings (see .env.example)
-.env.local
-
-# Players' Profiles and their progress; only the empty Guest folder ships
-profiles/*
-!profiles/guest/
-profiles/guest/*
-!profiles/guest/.gitkeep
-
 # Placeholders mounted by the Claude Code sandbox (/dev/null devices)
 .bash_profile
 .bashrc
@@ -43,3 +31,15 @@ profiles/guest/*
 .claude/scheduled_tasks.json
 .claude/settings.json
 .claude/workflows
+
+# This folder is already provided by PinballY
+System/
+
+# Player settings (see .env.example)
+.env.local
+
+# Players' Profiles and their progress; only the empty Guest folder ships
+profiles/*
+!profiles/guest/
+profiles/guest/*
+!profiles/guest/.gitkeep
