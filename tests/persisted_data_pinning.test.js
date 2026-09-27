@@ -8,7 +8,8 @@
 // second test locks the Challenges' saved data: the week's lock in
 // cabinet.json, a Profile's "challenge" record and its counted games in
 // profile.json, and the template ids. A third locks a verdict on the
-// previous Challenge in a Profile's history. These strings are players'
+// previous Challenge in a Profile's history, and a last one the Challenges
+// Achievement IDs. These strings are players'
 // saved progress: this test must keep passing unchanged.
 // ============================================================
 
@@ -20,6 +21,7 @@ import { createProfileStore } from "../common/profile_store.js";
 import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
 import { createRandomGame } from "../common/random_game.js";
 import { createChallenges, CHALLENGE_TEMPLATE_IDS } from "../common/challenge.js";
+import { buildChallengeAchievements } from "../achievements/challenges.js";
 
 // Wednesday 23 September 2026, 10:00 local time: its week starts Monday 21.
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -350,4 +352,26 @@ test("the Challenge template ids stay byte-identical", () => {
         "endurance", "marathon", "randomGames", "sameTableGames"]) {
         assert.ok(CHALLENGE_TEMPLATE_IDS.includes(id), `${id} is still a Challenge template`);
     }
+});
+
+test("the Challenges Achievement IDs stay byte-identical", () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    fake.addFolder(`${PROFILES_FOLDER}\\Alice`);
+    fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
+    const store = createProfileStore(fake);
+    const challenges = createChallenges(fake, store, {
+        tableOfTheDay: createPeriodTable(fake, TABLE_OF_THE_DAY, store),
+        tableOfTheWeek: createPeriodTable(fake, TABLE_OF_THE_WEEK, store),
+        randomGame: createRandomGame(fake, store, { animateTo: async () => {}, skipAnimation: true }),
+        random: () => 0,
+    });
+
+    assert.deepEqual(buildChallengeAchievements(challenges).map(achievement => achievement.id), [
+        "challengesCompleted:1",
+        "challengesCompleted:5",
+        "challengesCompleted:10",
+        "challengesCompleted:25",
+        "challengesCompleted:50",
+        "challengesCompleted:100",
+    ]);
 });

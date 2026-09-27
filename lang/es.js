@@ -246,6 +246,15 @@ export default {
             100: "Me encaaaanta el azar",
         },
         randomGamesDescription: (count) => `Jugar ${count} mesas al azar.`,
+        challengesCompletedTitles: {
+            1: "Primer desafío",
+            5: "Aficionado a los desafíos",
+            10: "Buscador de desafíos",
+            25: "Cazador de desafíos",
+            50: "Maestro de los desafíos",
+            100: "Leyenda de la semana",
+        },
+        challengesCompletedDescription: (count) => (count === 1 ? "Superar un desafío." : `Superar ${count} desafíos.`),
         dayManufacturersTitles: {
             3: "Vuelta al mundo exprés",
             5: "Mariposa del pinball",
@@ -309,6 +318,10 @@ export default {
                 short: (current, target) => `${current}/${target}`,
                 long: (current, target) => `${current} de ${target} fabricantes`,
             },
+            challenges: {
+                short: (current, target) => `${current}/${target}`,
+                long: (current, target) => `${current} de ${target} desafíos`,
+            },
         },
         families: {
             collection: "Colección",
@@ -319,6 +332,7 @@ export default {
             manufacturers: "Fabricantes",
             decades: "Décadas",
             categories: "Categorías",
+            challenges: "Desafíos",
         },
     },
 
@@ -332,6 +346,7 @@ export default {
         achievements: (unlocked, total) => `Logros: ${unlocked}/${total}`,
         tableOfTheDayStreak: (count, longest) => `Racha diaria: ${count} (récord ${longest})`,
         tableOfTheWeekStreak: (count, longest) => `Racha semanal: ${count} (récord ${longest})`,
+        challengesCompleted: (completed, total) => `Desafíos superados: ${completed}/${total}`,
         // Most time spent, with that time; "—" before any play.
         favouriteManufacturer: (name, hours, minutes) => `Marca: ${name} (${hours} h ${String(minutes).padStart(2, "0")})`,
         noFavouriteManufacturer: "Marca: —",

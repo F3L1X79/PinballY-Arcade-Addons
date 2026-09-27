@@ -246,6 +246,15 @@ export default {
             100: "Ich liiiiebe den Zufall",
         },
         randomGamesDescription: (count) => `${count} zufällige Tische spielen.`,
+        challengesCompletedTitles: {
+            1: "Erste Herausforderung",
+            5: "Herausforderer",
+            10: "Herausforderungssucher",
+            25: "Herausforderungsjäger",
+            50: "Meister der Herausforderungen",
+            100: "Legende der Woche",
+        },
+        challengesCompletedDescription: (count) => (count === 1 ? "Eine Herausforderung schaffen." : `${count} Herausforderungen schaffen.`),
         dayManufacturersTitles: {
             3: "Weltreise im Eiltempo",
             5: "Flipper-Schmetterling",
@@ -309,6 +318,10 @@ export default {
                 short: (current, target) => `${current}/${target}`,
                 long: (current, target) => `${current} von ${target} Herstellern`,
             },
+            challenges: {
+                short: (current, target) => `${current}/${target}`,
+                long: (current, target) => `${current} von ${target} Herausforderungen`,
+            },
         },
         families: {
             collection: "Sammlung",
@@ -319,6 +332,7 @@ export default {
             manufacturers: "Hersteller",
             decades: "Jahrzehnte",
             categories: "Kategorien",
+            challenges: "Herausforderungen",
         },
     },
 
@@ -332,6 +346,7 @@ export default {
         achievements: (unlocked, total) => `Erfolge: ${unlocked}/${total}`,
         tableOfTheDayStreak: (count, longest) => `Tagesserie: ${count} (Rekord ${longest})`,
         tableOfTheWeekStreak: (count, longest) => `Wochenserie: ${count} (Rekord ${longest})`,
+        challengesCompleted: (completed, total) => `Herausforderungen geschafft: ${completed}/${total}`,
         // Most time spent, with that time; "—" before any play.
         favouriteManufacturer: (name, hours, minutes) => `Hersteller: ${name} (${hours} Std. ${String(minutes).padStart(2, "0")})`,
         noFavouriteManufacturer: "Hersteller: —",

@@ -161,6 +161,15 @@ export default {
             100: "I Looooove Chance",
         },
         randomGamesDescription: (count) => `Play ${count} Random Games.`,
+        challengesCompletedTitles: {
+            1: "First Challenge",
+            5: "Challenge Taker",
+            10: "Challenge Seeker",
+            25: "Challenge Hunter",
+            50: "Challenge Master",
+            100: "Legend of the Week",
+        },
+        challengesCompletedDescription: (count) => (count === 1 ? "Complete a Challenge." : `Complete ${count} Challenges.`),
         dayManufacturersTitles: {
             3: "Express World Tour",
             5: "Pinball Butterfly",
@@ -225,6 +234,10 @@ export default {
                 short: (current, target) => `${current}/${target}`,
                 long: (current, target) => `${current} of ${target} manufacturers`,
             },
+            challenges: {
+                short: (current, target) => `${current}/${target}`,
+                long: (current, target) => `${current} of ${target} Challenges`,
+            },
         },
         families: {
             collection: "Collection",
@@ -235,6 +248,7 @@ export default {
             manufacturers: "Manufacturers",
             decades: "Decades",
             categories: "Categories",
+            challenges: "Challenges",
         },
     },
 
@@ -248,6 +262,7 @@ export default {
         achievements: (unlocked, total) => `Achievements: ${unlocked}/${total}`,
         tableOfTheDayStreak: (count, longest) => `Daily streak: ${count} (best ${longest})`,
         tableOfTheWeekStreak: (count, longest) => `Weekly streak: ${count} (best ${longest})`,
+        challengesCompleted: (completed, total) => `Challenges completed: ${completed}/${total}`,
         // Most time spent, with that time; "—" before any play.
         favouriteManufacturer: (name, hours, minutes) => `Manufacturer: ${name} (${hours} h ${String(minutes).padStart(2, "0")})`,
         noFavouriteManufacturer: "Manufacturer: —",

@@ -1,0 +1,148 @@
+// ============================================================
+// Completed Challenges in the player's record, through main.js on the fake
+// PinballY globals: the Challenges Achievement Family, after Categories in
+// the Achievement List, unlocks on the Profile's completed count and shows
+// its Achievement Progress; Profile Stats shows "Challenges completed:
+// X/Y", counting the week's Challenge as soon as it is completed. Guest
+// has neither.
+// ============================================================
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import config from "../common/config.js";
+
+// Wednesday 23 September 2026: its week is keyed "2026-09-21".
+const NOW = new Date(2026, 8, 23, 10, 0, 0);
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+// Longer than a toast's whole life (rise, hold, fade).
+const ONE_TOAST_MS = 6000;
+
+const table = (id, title, manufacturer, year) => ({
+    id, configId: title, title, manufacturer, year, categories: ["Fantasy"],
+    playCount: 0, playTime: 0, lastPlayed: null, rating: -1, isHidden: false,
+});
+const TABLES = [table(1, "Medieval Madness", "Williams", 1997), table(2, "Attack from Mars", "Bally", 1995)];
+
+const verdict = (week, completed) =>
+    ({ week, template: "differentTables", param: null, target: 3, reached: completed ? 3 : 1, completed });
+
+// Four Challenges completed, one missed; this week's follows, not completed yet.
+const ALICE_CHALLENGE = {
+    firstWeek: "2026-08-17", week: "2026-09-21", games: [], completed: false, completedCount: 4,
+    judgedWeek: "2026-09-14",
+    history: [
+        verdict("2026-08-17", true), verdict("2026-08-24", true), verdict("2026-08-31", true),
+        verdict("2026-09-07", true), verdict("2026-09-14", false),
+    ],
+};
+const CABINET = {
+    version: 1,
+    activeProfile: "Alice",
+    challenge: {
+        current: { week: "2026-09-21", template: "differentTables", param: null, target: 2 },
+        previous: { week: "2026-09-14", template: "differentTables", param: null, target: 3 },
+    },
+};
+
+const ADD_ONS_UNDER_TEST = ["achievements", "challenges", "profilePicker"];
+
+test("completed Challenges unlock the Challenges family and fill the Profile Stats line", async () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    fake.addFolder(`${PROFILES_FOLDER}\\Alice`);
+    fake.addFile(`${PROFILES_FOLDER}\\Alice\\profile.json`,
+        JSON.stringify({ version: 1, plays: {}, notified: [], challenge: ALICE_CHALLENGE }));
+    fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify(CABINET));
+    // Never uninstalled: node --test runs each test file in its own process.
+    fake.installGlobals();
+    for (const key of Object.keys(config.addOns)) config.addOns[key] = ADD_ONS_UNDER_TEST.includes(key);
+    config.language = "en";
+
+    const { default: lang } = await import("../common/i18n.js");
+    const { getProfileStore } = await import("../common/profile_store.js");
+    await import("../main.js");
+    await settle();
+    const LIST = lang.achievementList;
+    const STATS = lang.profileStats;
+    const ACHIEVEMENT = lang.achievements;
+
+    const openMainMenu = () => fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
+    function familyLines() {
+        openMainMenu();
+        fake.selectMenuItem(LIST.menuEntry);
+        const lines = fake.currentMenu().items.filter(item => item.cmd > 0 && item.title !== LIST.back).map(item => item.title);
+        fake.selectMenuItem(LIST.back);
+        return lines;
+    }
+    function challengeTitles() {
+        openMainMenu();
+        fake.selectMenuItem(LIST.menuEntry);
+        fake.selectMenuItem(fake.currentMenu().items
+            .find(item => item.title && item.title.startsWith(LIST.families.challenges)).title);
+        const titles = fake.currentMenu().items
+            .filter(item => typeof item.checked === "boolean")
+            .map(item => `${item.checked ? "✓ " : ""}${item.title}`);
+        fake.selectMenuItem(LIST.back);
+        fake.selectMenuItem(LIST.back);
+        return titles;
+    }
+    function statsLines() {
+        openMainMenu();
+        fake.selectMenuItem(STATS.menuEntry);
+        const lines = fake.currentMenu().items.map(item => item.title);
+        fake.selectMenuItem(STATS.back);
+        return lines;
+    }
+    const withProgress = (count, current) => LIST.titleWithProgress(ACHIEVEMENT.challengesCompletedTitles[count],
+        LIST.progressUnits.challenges.short(current, count));
+    async function play(game) {
+        fake.gameStarted(game);
+        await settle();
+        fake.advanceTime(90 * 1000);
+        fake.gameOver(game);
+        await settle();
+        for (let i = 0; i < 10; i++) fake.advanceTime(ONE_TOAST_MS);
+        await settle();
+    }
+
+    const families = familyLines();
+    assert.deepEqual(families.slice(-2).map(line => line.replace(/ \(\d+\/\d+\)$/, "")),
+        [LIST.families.categories, LIST.families.challenges]);
+    assert.equal(families.at(-1), LIST.familyLine(LIST.families.challenges, 1, 6));
+    assert.deepEqual(challengeTitles(), [
+        `✓ ${ACHIEVEMENT.challengesCompletedTitles[1]}`,
+        withProgress(5, 4), withProgress(10, 4), withProgress(25, 4), withProgress(50, 4), withProgress(100, 4),
+    ]);
+    const before = statsLines();
+    assert.ok(before.includes(STATS.challengesCompleted(4, 5)), before.join(" / "));
+
+    // Two different tables complete the week's Challenge: the fifth one.
+    await play(TABLES[0]);
+    assert.ok(statsLines().includes(STATS.challengesCompleted(4, 5)), "not completed after one table");
+    await play(TABLES[1]);
+    assert.deepEqual(challengeTitles().slice(0, 3), [
+        `✓ ${ACHIEVEMENT.challengesCompletedTitles[1]}`,
+        `✓ ${ACHIEVEMENT.challengesCompletedTitles[5]}`,
+        withProgress(10, 5),
+    ]);
+    const after = statsLines();
+    assert.ok(after.includes(STATS.challengesCompleted(5, 6)), after.join(" / "));
+    const { notified } = JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`));
+    assert.deepEqual(notified.filter(id => id.startsWith("challengesCompleted:")), ["challengesCompleted:1", "challengesCompleted:5"]);
+
+    // Next Monday the completed Challenge becomes a verdict: counted once.
+    fake.setNow(new Date(2026, 8, 28, 10, 0, 0));
+    fake.fire("wheelmode");
+    const judged = JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`)).challenge;
+    assert.equal(judged.history.at(-1).completed, true);
+    const nextWeek = statsLines();
+    assert.ok(nextWeek.includes(STATS.challengesCompleted(5, 6)), nextWeek.join(" / "));
+
+    // Guest has no Challenge: neither the family nor the line.
+    getProfileStore().switchTo("guest");
+    await settle();
+    assert.ok(!familyLines().some(line => line.startsWith(LIST.families.challenges)));
+    assert.ok(!statsLines().some(line => line && line.startsWith(STATS.challengesCompleted(0, 0).split(":")[0])));
+
+    assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
+});

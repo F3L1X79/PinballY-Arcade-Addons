@@ -15,7 +15,8 @@
 // completed count goes up and a Challenge Toast is submitted. When a
 // Profile first shows up in a later week, the previous Challenge is judged
 // once and the verdict kept in its history. It also selects the Challenge
-// Tables, for the templates where some tables move the Challenge forward.
+// Tables, for the templates where some tables move the Challenge forward,
+// and reads a Profile's record of completed Challenges.
 // Created from the PinballY host, the Profile store, the Period Tables, the
 // Random Game module, the Achievement Toast module and a random source; the
 // Add-ons share one instance through getChallenges(). Listens to "gamestarted" /
@@ -307,6 +308,18 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         };
     }
 
+    // The active Profile's completed Challenges out of every Challenge it
+    // completed or missed; null for Guest. Read from the completed count,
+    // not the verdicts, so it agrees with the Challenges Achievements and
+    // counts this week's Challenge as soon as it is completed.
+    function getRecord() {
+        const profile = profileStore.getActiveProfile();
+        if (profile.isGuest) return null;
+        const state = readProfileChallenge(profile.data);
+        const missed = state.history.filter(verdict => !verdict.completed).length;
+        return { completed: state.completedCount, total: state.completedCount + missed };
+    }
+
     // The active Profile's Challenge Tables, in collection order; none for
     // Guest, without a Challenge to follow, once it is completed, or for
     // the templates that have none.
@@ -397,7 +410,7 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         });
     }));
 
-    return { getCurrent, showUp, getActiveView, getTablesToPlay };
+    return { getCurrent, showUp, getActiveView, getTablesToPlay, getRecord };
 }
 
 let sharedChallenges = null;

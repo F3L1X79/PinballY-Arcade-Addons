@@ -6,7 +6,9 @@
 // game is running; an Achievement becomes Notified, for the Profile that
 // unlocked it, when its toast starts.
 // Also adds the Achievement List entry to the main menu, right after "Play",
-// and the Profile Stats entry right after it.
+// and the Profile Stats entry right after it. The Challenges family and the
+// Profile Stats line on completed Challenges exist only while the
+// Challenges Add-on is enabled.
 // ============================================================
 
 import { evaluateAchievements, markNotified } from "../common/achievements.js";
@@ -19,6 +21,7 @@ import { buildDecadeCompletionAchievements } from "../achievements/decade_comple
 import { buildCategoryCompletionAchievements } from "../achievements/category_completion.js";
 import { buildSessionMilestoneAchievements } from "../achievements/session_milestones.js";
 import { buildRandomGameFanAchievements } from "../achievements/random_game_fans.js";
+import { buildChallengeAchievements } from "../achievements/challenges.js";
 import { getAchievementToasts } from "../common/achievement_toast.js";
 import { getMainMenu, MAIN_MENU_POSITION } from "../common/main_menu.js";
 import { createAchievementList } from "../common/achievement_list.js";
@@ -26,12 +29,19 @@ import { createProfileStats } from "../common/profile_stats.js";
 import { getTableOfTheDay, getTableOfTheWeek } from "../common/period_table.js";
 import { createPinballYHost } from "../common/pinbally_host.js";
 import { getProfileStore } from "../common/profile_store.js";
+import { getChallenges } from "../common/challenge.js";
+import config from "../common/config.js";
 import lang from "../common/i18n.js";
 import { safeHandler } from "../common/safe_handler.js";
 
 const SCRIPT_NAME = "AchievementsEngine";
 
+// Null when the Challenges Add-on is disabled: then neither the Challenges
+// family nor the Profile Stats line exists.
+const getEnabledChallenges = () => (config.addOns.challenges === false ? null : getChallenges());
+
 function getAllAchievements() {
+    const challenges = getEnabledChallenges();
     return [
         ...buildDayManufacturersAchievements(),
         ...buildManufacturerCompletionAchievements(),
@@ -42,6 +52,7 @@ function getAllAchievements() {
         ...buildCategoryCompletionAchievements(),
         ...buildSessionMilestoneAchievements(),
         ...buildRandomGameFanAchievements(),
+        ...(challenges ? buildChallengeAchievements(challenges) : []),
     ];
 }
 
@@ -61,6 +72,7 @@ export default function init() {
         achievementList,
         tableOfTheDay: getTableOfTheDay(),
         tableOfTheWeek: getTableOfTheWeek(),
+        challenges: getEnabledChallenges(),
     });
     getMainMenu().add({
         name: "profileStats",

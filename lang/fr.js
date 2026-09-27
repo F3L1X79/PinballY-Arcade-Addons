@@ -250,6 +250,15 @@ export default {
             100: "J'adooooore le hasard !!",
         },
         randomGamesDescription: (count) => `Lancer ${count} tables au hasard.`,
+        challengesCompletedTitles: {
+            1: "Premier défi",
+            5: "Amateur de défis",
+            10: "Chercheur de défis",
+            25: "Chasseur de défis",
+            50: "Maître des défis",
+            100: "Légende de la semaine",
+        },
+        challengesCompletedDescription: (count) => (count === 1 ? "Réussir un défi." : `Réussir ${count} défis.`),
         dayManufacturersTitles: {
             3: "Tour du monde express",
             5: "Papillon du flipper",
@@ -313,6 +322,10 @@ export default {
                 short: (current, target) => `${current}/${target}`,
                 long: (current, target) => `${current} fabricant${current > 1 ? "s" : ""} sur ${target}`,
             },
+            challenges: {
+                short: (current, target) => `${current}/${target}`,
+                long: (current, target) => `${current} défi${current > 1 ? "s" : ""} réussi${current > 1 ? "s" : ""} sur ${target}`,
+            },
         },
         families: {
             collection: "Collection",
@@ -323,6 +336,7 @@ export default {
             manufacturers: "Fabricants",
             decades: "Décennies",
             categories: "Catégories",
+            challenges: "Défis",
         },
     },
 
@@ -336,6 +350,7 @@ export default {
         achievements: (unlocked, total) => `Succès : ${unlocked}/${total}`,
         tableOfTheDayStreak: (count, longest) => `Série du jour : ${count} (record ${longest})`,
         tableOfTheWeekStreak: (count, longest) => `Série hebdo : ${count} (record ${longest})`,
+        challengesCompleted: (completed, total) => `Défis réussis : ${completed}/${total}`,
         // Most time spent, with that time; "—" before any play.
         favouriteManufacturer: (name, hours, minutes) => `Marque : ${name} (${hours} h ${String(minutes).padStart(2, "0")})`,
         noFavouriteManufacturer: "Marque : —",

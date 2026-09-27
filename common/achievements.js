@@ -21,6 +21,7 @@ export const ACHIEVEMENT_FAMILY = Object.freeze({
     MANUFACTURERS: "manufacturers",
     DECADES: "decades",
     CATEGORIES: "categories",
+    CHALLENGES: "challenges",
 });
 
 // What an Achievement Progress counts; each one has its texts in the
@@ -35,6 +36,7 @@ export const PROGRESS_UNIT = Object.freeze({
     MINUTES: "minutes",
     RANDOM_GAMES: "randomGames",
     MANUFACTURERS: "manufacturers",
+    CHALLENGES: "challenges",
 });
 
 // Below this target, an Achievement Progress would only ever read "0/1".

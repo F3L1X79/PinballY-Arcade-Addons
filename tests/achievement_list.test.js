@@ -80,8 +80,9 @@ test("the families level shows the total line, then the non-empty families in th
     assert.deepEqual(menu.items.slice(-2), [{ cmd: -1 }, { title: TEXT.back, cmd: fake.getBuiltInCommand("MenuReturn") }]);
 });
 
-test("the families come in the fixed order: Collection, Play Time, Period Tables, Sessions, Random Game, Manufacturers, Decades, Categories", () => {
+test("the families come in the fixed order: Collection, Play Time, Period Tables, Sessions, Random Game, Manufacturers, Decades, Categories, Challenges", () => {
     const families = [
+        ACHIEVEMENT_FAMILY.CHALLENGES,
         ACHIEVEMENT_FAMILY.CATEGORIES,
         ACHIEVEMENT_FAMILY.DECADES,
         ACHIEVEMENT_FAMILY.MANUFACTURERS,
@@ -94,7 +95,7 @@ test("the families come in the fixed order: Collection, Play Time, Period Tables
     const { fake } = setUp(families.map(family => fakeAchievement(family, family)));
 
     assert.deepEqual(familyItems(fake.currentMenu()).map(item => item.title), [
-        "collection", "playTime", "periodTables", "sessions", "randomGame", "manufacturers", "decades", "categories",
+        "collection", "playTime", "periodTables", "sessions", "randomGame", "manufacturers", "decades", "categories", "challenges",
     ].map(family => familyTitle(family, 0, 1)));
 });
 

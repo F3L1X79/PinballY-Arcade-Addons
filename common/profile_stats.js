@@ -2,15 +2,18 @@
 // Profile Stats module: the screen the player opens from the main menu to
 // sum up the active Profile's own plays (games played, total time,
 // collection completion, Achievements Unlocked, Period Table Streaks,
-// favourite manufacturer and decade) in a native PinballY menu named after
-// the Profile, closed by two sub-menus: the most played tables (the Hall of
-// Fame) and the never played tables. Selecting a table there puts the wheel
-// on it, switching to the all-tables filter when the current one hides it.
+// completed Challenges, favourite manufacturer and decade) in a native
+// PinballY menu named after the Profile, closed by two sub-menus: the most
+// played tables (the Hall of Fame) and the never played tables. Selecting a
+// table there puts the wheel on it, switching to the all-tables filter when
+// the current one hides it.
 // Created from the PinballY host, the Profile store, the Achievement List
-// (its counts, and opening it from the Achievements line) and the Table of
-// the Day and Table of the Week. Every number and list is read again each
-// time a menu opens. Listens to "command". Opens its menus directly, not
-// through the wheel dialog module: the player asked for them.
+// (its counts, and opening it from the Achievements line), the Table of
+// the Day and Table of the Week, and the Challenge module (null when the
+// Challenges Add-on is disabled: no Challenges line). Every number and list
+// is read again each time a menu opens. Listens to "command". Opens its
+// menus directly, not through the wheel dialog module: the player asked for
+// them.
 // ============================================================
 
 import lang from "./i18n.js";
@@ -28,7 +31,7 @@ const MINUTES_PER_HOUR = 60;
 // PinballY's own filter showing every table.
 const ALL_TABLES_FILTER = "All";
 
-export function createProfileStats(host, { profileStore, achievementList, tableOfTheDay, tableOfTheWeek }) {
+export function createProfileStats(host, { profileStore, achievementList, tableOfTheDay, tableOfTheWeek, challenges = null }) {
     const { profileStats: TEXT } = lang;
     const achievementsCommand = host.allocateCommand("profileStatsAchievements");
     const backToStatsCommand = host.allocateCommand("profileStatsBackToStats");
@@ -117,6 +120,8 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
         const favouriteManufacturer = findFavourite(visibleTables, game => game.manufacturer || null);
         const favouriteDecade = findFavourite(visibleTables, game => getDecadeStartYear(game.year));
         const achievements = achievementList.countAll();
+        // Null for Guest, which has no Challenge.
+        const challengeRecord = challenges && challenges.getRecord();
         const info = title => ({ title, cmd: -1 });
         // An empty list is left out: the player never opens an empty menu.
         const listItems = tableLists
@@ -137,6 +142,7 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
             { title: TEXT.achievements(achievements.unlocked, achievements.total), cmd: achievementsCommand },
             info(TEXT.tableOfTheDayStreak(tableOfTheDay.getStreak(), tableOfTheDay.getLongestStreak())),
             info(TEXT.tableOfTheWeekStreak(tableOfTheWeek.getStreak(), tableOfTheWeek.getLongestStreak())),
+            ...(challengeRecord ? [info(TEXT.challengesCompleted(challengeRecord.completed, challengeRecord.total))] : []),
             info(favouriteLine(favouriteManufacturer, TEXT.favouriteManufacturer, TEXT.noFavouriteManufacturer)),
             info(favouriteLine(favouriteDecade, TEXT.favouriteDecade, TEXT.noFavouriteDecade)),
             ...(listItems.length > 0 ? [{ cmd: -1 }, ...listItems] : []),
