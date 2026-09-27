@@ -3,8 +3,8 @@
 // on the fake PinballY host, with a real Profile store, real Period
 // Tables, a real Random Game module and a scripted random source: the
 // week's draw locked in cabinet.json, the games that count in each
-// Profile's profile.json, what the card shows (and when it lights up), and
-// the Challenge Toast on completion.
+// Profile's profile.json, what the card shows (and when it lights up), the
+// Challenge Toast on completion and the verdict on the previous Challenge.
 // ============================================================
 
 import { test } from "node:test";
@@ -14,7 +14,7 @@ import { createProfileStore } from "../common/profile_store.js";
 import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
 import { createRandomGame } from "../common/random_game.js";
 import { createChallenges } from "../common/challenge.js";
-import { createChallengeCard, CHALLENGE_CARD_Z_INDEX } from "../common/challenge_card.js";
+import { createChallengeCard, CHALLENGE_CARD_Z_INDEX, CHALLENGE_VERDICT_MS } from "../common/challenge_card.js";
 import { createAchievementToasts } from "../common/achievement_toast.js";
 import lang from "../common/i18n.js";
 
@@ -23,6 +23,7 @@ const MONDAY = new Date(2026, 8, 21, 20, 0, 0);
 const SUNDAY_NIGHT = new Date(2026, 8, 27, 23, 59, 0);
 const NEXT_MONDAY = new Date(2026, 8, 28, 20, 0, 0);
 const WEEK = "2026-09-21";
+const NEXT_WEEK = "2026-09-28";
 const MINUTE_MS = 60 * 1000;
 const HIGHLIGHT_OVER_MS = 5000;
 // Longer than a toast's whole life (rise, hold, fade).
@@ -40,11 +41,16 @@ const TEXT = lang.challenges;
 // A random source that returns these values in turn, then 0.
 const scripted = values => () => (values.length > 0 ? values.shift() : 0);
 
-function setUp({ now = MONDAY, tables = TABLES, active = "Alice", randoms = [] } = {}) {
+// saved: the week's lock already in cabinet.json and each Profile's
+// "challenge" record already in its profile.json.
+function setUp({ now = MONDAY, tables = TABLES, active = "Alice", randoms = [], saved = {} } = {}) {
     const fake = createFakePinballYHost({ now, tables, layoutSize: { width: 1080, height: 1920 } });
     fake.installGlobals();
-    for (const name of ["Alice", "Bob"]) fake.addFolder(`${PROFILES}\\${name}`);
-    fake.addFile(CABINET_FILE, JSON.stringify({ version: 1, activeProfile: active }));
+    for (const name of ["Alice", "Bob"]) {
+        fake.addFolder(`${PROFILES}\\${name}`);
+        if (saved[name]) fake.addFile(profileFile(name), JSON.stringify({ challenge: saved[name] }));
+    }
+    fake.addFile(CABINET_FILE, JSON.stringify({ version: 1, activeProfile: active, challenge: saved.cabinet }));
     const store = createProfileStore(fake);
     const tableOfTheDay = createPeriodTable(fake, TABLE_OF_THE_DAY, store);
     const tableOfTheWeek = createPeriodTable(fake, TABLE_OF_THE_WEEK, store);
@@ -137,7 +143,8 @@ test("a new week draws a new Challenge, never with the previous template", () =>
         current: { week: "2026-09-28", template: "", param: null, target: 0 },
         previous: lastWeek,
     });
-    assert.ok(!cardShown(fake));
+    fake.advanceTime(CHALLENGE_VERDICT_MS);
+    assert.ok(!cardShown(fake), "no card once last week's verdict is gone");
 });
 
 test("a game counts from 60 seconds on a visible table, and progress counts distinct tables", () => {
@@ -318,4 +325,158 @@ test("a game started on Sunday night completes that week's Challenge", () => {
 
     assert.equal(profileChallenge(fake, "Alice").completedCount, 1);
     assert.equal(toastsDrawn(fake).length, 1);
+});
+
+// Last week's Challenge (target 2) and this week's (target 3), already drawn.
+const TWO_WEEKS_LOCKED = {
+    current: { week: NEXT_WEEK, template: "differentTables", param: null, target: 3 },
+    previous: { week: WEEK, template: "differentTables", param: null, target: 2 },
+};
+const followed = (week, games = [], more = {}) => ({
+    firstWeek: week, week, games, completed: false, completedCount: 0, judgedWeek: "", history: [], ...more,
+});
+const countedGame = (configId, day) => ({
+    configId, manufacturer: "Williams", decade: 1990, day, seconds: 90, randomGame: false,
+    isTableOfTheDay: false, isTableOfTheWeek: false, wasNeverPlayed: true, wasDusty: false,
+});
+const verdictHeader = TEXT.verdictHeader.toLocaleUpperCase();
+
+test("a missed Challenge gets its verdict once, on the card, with the value reached and no toast", () => {
+    const { fake } = setUp({ randoms: [0, 0, 0] });
+    play(fake, TABLES[0], 90);
+
+    fake.setNow(NEXT_MONDAY);
+    fake.fire("wheelmode");
+
+    const challenge = profileChallenge(fake, "Alice");
+    assert.deepEqual(challenge.history, [{ week: WEEK, template: "differentTables", param: null, target: 2, reached: 1, completed: false }]);
+    assert.equal(challenge.judgedWeek, WEEK);
+    assert.ok(cardShows(fake, verdictHeader));
+    assert.ok(cardShows(fake, TEXT.titles.differentTables(2)));
+    assert.ok(cardShows(fake, TEXT.missed(1, 2)));
+
+    fake.advanceTime(CHALLENGE_VERDICT_MS + ONE_TOAST_MS);
+    assert.deepEqual(toastsDrawn(fake), [], "no toast for a missed Challenge");
+    // differentTables is the only template yet: no Challenge this week.
+    assert.ok(!cardShown(fake), "the verdict gives way to this week's Challenge");
+
+    fake.fire("wheelmode");
+    assert.ok(!cardShown(fake), "the verdict is shown once");
+    assert.equal(profileChallenge(fake, "Alice").history.length, 1);
+});
+
+test("a completed Challenge gets its verdict, then the new Challenge lights up", () => {
+    const games = [countedGame("Table 1", "2026-09-22"), countedGame("Table 2", "2026-09-23")];
+    const { fake } = setUp({
+        now: NEXT_MONDAY,
+        saved: { cabinet: TWO_WEEKS_LOCKED, Alice: followed(WEEK, games, { completed: true, completedCount: 1 }) },
+    });
+
+    assert.ok(cardShows(fake, verdictHeader));
+    assert.ok(cardShows(fake, TEXT.completed));
+    assert.deepEqual(profileChallenge(fake, "Alice").history,
+        [{ week: WEEK, template: "differentTables", param: null, target: 2, reached: 2, completed: true }]);
+
+    fake.advanceTime(CHALLENGE_VERDICT_MS);
+    assert.ok(cardShows(fake, TEXT.cardHeader.toLocaleUpperCase()));
+    assert.ok(cardShows(fake, TEXT.progress(0, 3, TEXT.daysLeft(7))));
+    const lit = card(fake).frames().length;
+    assert.ok(lit > restingFrames(fake), "the new Challenge lights up");
+
+    const challenge = profileChallenge(fake, "Alice");
+    assert.equal(challenge.week, NEXT_WEEK);
+    assert.equal(challenge.completedCount, 1);
+    assert.equal(challenge.firstWeek, WEEK);
+});
+
+test("a Profile that didn't play the previous week gets a verdict with 0", () => {
+    // Bob last followed a Challenge three weeks ago, and was judged on it.
+    const old = followed("2026-09-07", [countedGame("Table 1", "2026-09-08")], { judgedWeek: "2026-08-31" });
+    const { fake } = setUp({ now: NEXT_MONDAY, active: "Bob", saved: { cabinet: TWO_WEEKS_LOCKED, Bob: old } });
+
+    assert.ok(cardShows(fake, TEXT.missed(0, 2)));
+    assert.deepEqual(profileChallenge(fake, "Bob").history,
+        [{ week: WEEK, template: "differentTables", param: null, target: 2, reached: 0, completed: false }],
+        "only the last Challenge is judged: the weeks in between leave no trace");
+});
+
+test("a Profile that never saw the previous Challenge gets no verdict", () => {
+    const { fake, store } = setUp({
+        now: NEXT_MONDAY,
+        saved: { cabinet: TWO_WEEKS_LOCKED, Alice: followed(WEEK), Bob: followed(NEXT_WEEK) },
+    });
+    fake.advanceTime(CHALLENGE_VERDICT_MS);
+
+    // Bob first saw a Challenge this week.
+    store.switchTo("Bob");
+    assert.ok(!cardShows(fake, verdictHeader));
+    assert.deepEqual(profileChallenge(fake, "Bob").history, []);
+
+    fake.addFolder(`${PROFILES}\\Carol`);
+    store.switchTo("Carol");
+    assert.ok(!cardShows(fake, verdictHeader), "a Profile created after the previous Challenge");
+    assert.ok(cardShows(fake, TEXT.progress(0, 3, TEXT.daysLeft(7))));
+    assert.deepEqual(profileChallenge(fake, "Carol").history, []);
+    assert.equal(profileChallenge(fake, "Carol").firstWeek, NEXT_WEEK);
+});
+
+test("a game across Monday midnight completes the old week's Challenge: the toast and the verdict both show", () => {
+    const { fake } = setUp({ now: new Date(2026, 8, 27, 22, 0, 0), randoms: [0, 0, 0] });
+    play(fake, TABLES[0], 90);
+
+    fake.setNow(SUNDAY_NIGHT);
+    fake.gameStarted(TABLES[1]);
+    fake.setNow(NEXT_MONDAY);
+    fake.gameOver(TABLES[1]);
+
+    const challenge = profileChallenge(fake, "Alice");
+    assert.equal(challenge.completedCount, 1);
+    assert.deepEqual(challenge.history,
+        [{ week: WEEK, template: "differentTables", param: null, target: 2, reached: 2, completed: true }]);
+    assert.ok(cardShows(fake, verdictHeader));
+    assert.ok(cardShows(fake, TEXT.completed));
+    fake.advanceTime(ONE_TOAST_MS);
+    assert.equal(toastsDrawn(fake).length, 1);
+});
+
+test("a menu or a dialog closing over the verdict shows it again, in full, then the new Challenge lights up", () => {
+    const { fake } = setUp({
+        now: NEXT_MONDAY,
+        saved: { cabinet: TWO_WEEKS_LOCKED, Alice: followed(WEEK) },
+    });
+    fake.advanceTime(CHALLENGE_VERDICT_MS - 1000);
+
+    fake.fire("wheelmode");
+    fake.advanceTime(CHALLENGE_VERDICT_MS - 1000);
+    assert.ok(cardShows(fake, TEXT.missed(0, 2)), "still the verdict");
+    fake.advanceTime(1000);
+    assert.ok(cardShows(fake, TEXT.progress(0, 3, TEXT.daysLeft(7))));
+    const lit = card(fake).frames().length;
+    assert.ok(lit > restingFrames(fake), "the new Challenge lights up");
+    assert.equal(profileChallenge(fake, "Alice").history.length, 1);
+
+    fake.fire("wheelmode");
+    assert.ok(!cardShows(fake, verdictHeader), "once seen, the verdict is gone");
+
+    // A Profile switch drops a verdict still on screen.
+    const withVerdict = setUp({ now: NEXT_MONDAY, saved: { cabinet: TWO_WEEKS_LOCKED, Alice: followed(WEEK) } });
+    withVerdict.store.switchTo("Bob");
+    assert.ok(!cardShows(withVerdict.fake, verdictHeader));
+});
+
+test("a previous week without a Challenge gets no verdict", () => {
+    const { fake } = setUp({
+        now: NEXT_MONDAY,
+        saved: {
+            cabinet: {
+                current: TWO_WEEKS_LOCKED.current,
+                previous: { week: WEEK, template: "", param: null, target: 0 },
+            },
+            Alice: followed("2026-09-14"),
+        },
+    });
+
+    assert.ok(!cardShows(fake, verdictHeader));
+    assert.ok(cardShows(fake, TEXT.progress(0, 3, TEXT.daysLeft(7))));
+    assert.deepEqual(profileChallenge(fake, "Alice").history, []);
 });

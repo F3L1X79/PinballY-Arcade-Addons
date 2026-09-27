@@ -366,6 +366,8 @@ export default {
         daysLeft: (days) => `quedan ${days} días`,
         lastDay: "último día",
         completed: "¡Desafío superado!",
+        verdictHeader: "Reto anterior",
+        missed: (reached, target) => `Fallado · ${reached}/${target}`,
         toastHeader: "Desafío superado",
         toastDescription: (count) => (count === 1 ? "Primer desafío superado" : `${count} desafíos superados`),
     },

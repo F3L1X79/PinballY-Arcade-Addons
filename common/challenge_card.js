@@ -6,8 +6,10 @@
 // there is no Challenge and while a game runs. When there is something new
 // (a Challenge to follow, a Profile switch, progress after a game) its
 // content changes in place and it lights up once. Once the Challenge is
-// completed, it says so until the end of the week. Redrawn at startup, on
-// every Profile switch and on "wheelmode".
+// completed, it says so until the end of the week. The first time a
+// Profile shows up in a later week, it first shows the verdict on the
+// previous Challenge for a few seconds. Redrawn at startup, on every
+// Profile switch and on "wheelmode".
 // ============================================================
 
 import lang from "./i18n.js";
@@ -34,6 +36,8 @@ const FONT = "Segoe UI";
 // Also the Challenge Toast's accent.
 export const CHALLENGE_ACCENT_COLOR = 0xFF4FD1B0;
 const HIGHLIGHT = Object.freeze({ ms: 1200, glowRings: 8, glowMaxAlpha: 0x60 });
+// How long the verdict stays before the week's Challenge replaces it.
+export const CHALLENGE_VERDICT_MS = 5000;
 const COLORS = Object.freeze({
     background: 0xEB141C28,
     border: 0xFF3E4C60,
@@ -61,16 +65,33 @@ function drawGlow(dc) {
     }
 }
 
-function drawCard(host, dc, view, lit) {
-    const { challenge, value, daysLeft, completed } = view;
+// What the card shows: the week's Challenge or the previous one's verdict.
+function currentFace({ challenge, value, daysLeft, completed }) {
     const TEXT = lang.challenges;
+    const daysText = daysLeft === 1 ? TEXT.lastDay : TEXT.daysLeft(daysLeft);
+    return {
+        header: TEXT.cardHeader, challenge, value, completed,
+        status: completed ? TEXT.completed : TEXT.progress(value, challenge.target, daysText),
+    };
+}
+
+function verdictFace({ challenge, reached, completed }) {
+    const TEXT = lang.challenges;
+    return {
+        header: TEXT.verdictHeader, challenge, value: reached, completed,
+        status: completed ? TEXT.completed : TEXT.missed(reached, challenge.target),
+    };
+}
+
+function drawCard(host, dc, face, lit) {
+    const { header, challenge, value, completed, status } = face;
     if (lit) drawGlow(dc);
     dc.fillRect(CARD.x, CARD.y, CARD.width, CARD.height, COLORS.background);
     dc.frameRect(CARD.x, CARD.y, CARD.width, CARD.height, CARD.border, COLORS.border);
     dc.fillRect(CARD.x, CARD.y, CARD.width, CARD.accentHeight, COLORS.accent);
 
-    drawText(host, dc, TEXT.cardHeader.toLocaleUpperCase(), { ...HEADER, weight: 600, color: COLORS.accent });
-    drawText(host, dc, TEXT.titles[challenge.template](challenge.target, challenge.param),
+    drawText(host, dc, header.toLocaleUpperCase(), { ...HEADER, weight: 600, color: COLORS.accent });
+    drawText(host, dc, lang.challenges.titles[challenge.template](challenge.target, challenge.param),
         { ...TITLE, weight: 600, color: COLORS.title });
 
     const barX = CARD.x + CARD.padding;
@@ -79,8 +100,7 @@ function drawCard(host, dc, view, lit) {
     const filled = Math.round(barWidth * value / challenge.target);
     if (filled > 0) dc.fillRect(barX, CARD.y + BAR.y, filled, BAR.height, lit ? COLORS.accentLit : COLORS.accent);
 
-    const daysText = daysLeft === 1 ? TEXT.lastDay : TEXT.daysLeft(daysLeft);
-    drawText(host, dc, completed ? TEXT.completed : TEXT.progress(value, challenge.target, daysText),
+    drawText(host, dc, status,
         { ...PROGRESS, weight: completed ? 600 : 400, color: completed ? COLORS.accent : COLORS.text });
 }
 
@@ -88,40 +108,74 @@ export function createChallengeCard(host, challenges, profileStore) {
     const layer = host.createDrawingLayer(CHALLENGE_CARD_Z_INDEX);
     layer.setScale({ ySpan: CANVAS.height / CARD_REFERENCE_HEIGHT });
     layer.setPos(0, -BADGE_HEIGHT / CARD_REFERENCE_HEIGHT, "top right");
-    let highlightTimer = null;
+    let timer = null;
 
-    function stopHighlight() {
-        host.clearTimeout(highlightTimer);
-        highlightTimer = null;
+    function stopTimer() {
+        host.clearTimeout(timer);
+        timer = null;
     }
 
-    function draw(lit) {
-        const view = challenges.getActiveView();
+    // The card's one pending step: a new one replaces it.
+    function scheduleNext(ms, callback) {
+        timer = host.setTimeout(safeHandler(SCRIPT_NAME, () => {
+            timer = null;
+            callback();
+        }), ms);
+    }
+
+    function draw(face, lit) {
         layer.clear(COLORS.transparent);
-        if (!view) {
+        if (!face) {
             layer.alpha = 0;
             return;
         }
         layer.alpha = 1;
-        layer.draw(dc => drawCard(host, dc, view, lit), CANVAS.width, CANVAS.height);
+        layer.draw(dc => drawCard(host, dc, face, lit), CANVAS.width, CANVAS.height);
     }
 
-    // Lights the card up once when there is something new, then lets it rest.
-    function refresh(options) {
-        stopHighlight();
-        const { hasNews } = challenges.showUp(options);
-        draw(hasNews);
-        if (hasNews) {
-            highlightTimer = host.setTimeout(safeHandler(SCRIPT_NAME, () => {
-                highlightTimer = null;
-                draw(false);
-            }), HIGHLIGHT.ms);
+    const drawCurrent = lit => {
+        const view = challenges.getActiveView();
+        draw(view && currentFace(view), lit);
+    };
+
+    // Lit up, then resting after the highlight, then whatever comes next.
+    function lightUp(drawFace, next = () => {}) {
+        drawFace(true);
+        scheduleNext(HIGHLIGHT.ms, () => {
+            drawFace(false);
+            next();
+        });
+    }
+
+    // The verdict until it has stayed its full time: it is saved as shown
+    // as soon as it is judged, so a menu or a dialog closing over it (at
+    // startup, the Period Table announcements) shows it again rather than
+    // losing it. A Profile switch drops it.
+    let unseenVerdict = null;
+
+    // The verdict first, and the week's Challenge lit up once it is gone;
+    // otherwise the week's Challenge, lit up when there is something new.
+    function refresh(options = {}) {
+        stopTimer();
+        const { hasNews, verdict } = challenges.showUp(options);
+        if (verdict) unseenVerdict = verdictFace(verdict);
+        else if (options.switched) unseenVerdict = null;
+        if (unseenVerdict) {
+            const face = unseenVerdict;
+            lightUp(lit => draw(face, lit), () => scheduleNext(CHALLENGE_VERDICT_MS - HIGHLIGHT.ms, () => {
+                unseenVerdict = null;
+                lightUp(drawCurrent);
+            }));
+        } else if (hasNews) {
+            lightUp(drawCurrent);
+        } else {
+            drawCurrent(false);
         }
     }
 
     // Never over a game.
     host.on("gamestarted", safeHandler(SCRIPT_NAME, () => {
-        stopHighlight();
+        stopTimer();
         layer.alpha = 0;
     }));
     // Fires back on the wheel, after a game, a menu or a dialog.

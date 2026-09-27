@@ -6,7 +6,9 @@
 // in its own profile.json ("challenge"), where the games that count are
 // kept with their facts, progress being recomputed from them. The game
 // that first reaches the target completes the Challenge: the Profile's
-// completed count goes up and a Challenge Toast is submitted. Created from
+// completed count goes up and a Challenge Toast is submitted. When a
+// Profile first shows up in a later week, the previous Challenge is judged
+// once and the verdict kept in its history. Created from
 // the PinballY host, the Profile store, the Period Tables, the Random Game
 // module, the Achievement Toast module and a random source; the Add-ons
 // share one instance through getChallenges(). Listens to "gamestarted" /
@@ -103,24 +105,50 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
     // Profile shows up on the wheel.
     let progressedProfile = null;
 
+    // The previous Challenge's verdict for this Profile record, or null when
+    // it gets none: no previous Challenge, already judged, or drawn before
+    // the Profile first saw a Challenge.
+    function judge(state, previous) {
+        if (!isChallenge(previous) || !state.firstWeek || previous.week < state.firstWeek) return null;
+        if (state.judgedWeek === previous.week) return null;
+        const followed = state.week === previous.week;
+        return {
+            challenge: previous,
+            reached: followed ? Math.min(previous.target, progressOf(previous, state.games)) : 0,
+            completed: followed && state.completed,
+        };
+    }
+
     // When the active Profile shows up on the wheel (startup, Profile
-    // switch, back from a game): draws the week's Challenge if needed and
-    // starts following it. Returns whether the card has something new.
+    // switch, back from a game): draws the week's Challenge if needed, judges
+    // the previous one once and starts following the week's. Returns whether
+    // the card has something new, and the verdict to show first, if any.
     // Guest needs no Challenge: none is drawn for it.
     function showUp({ switched = false } = {}) {
         const profile = profileStore.getActiveProfile();
         const progressed = progressedProfile === profile.name;
         progressedProfile = null;
-        if (profile.isGuest) return { hasNews: false };
+        if (profile.isGuest) return { hasNews: false, verdict: null };
         const current = getCurrent();
-        if (!current) return { hasNews: false };
-
         const state = readProfileChallenge(profile.data);
-        if (state.week === current.week) return { hasNews: switched || progressed };
+        // Only the last Challenge before the week's is ever judged: after an
+        // absence, the weeks in between leave no trace.
+        const verdict = judge(state, getLocks().previous);
+        const follows = !current || state.week === current.week;
+        if (!verdict && follows) return { hasNews: Boolean(current) && (switched || progressed), verdict: null };
+
         profileStore.updateProfileData(data => {
-            data.challenge = { ...state, firstWeek: state.firstWeek || current.week, week: current.week, games: [], completed: false };
+            const next = { ...state };
+            if (verdict) {
+                const { week, template, param, target } = verdict.challenge;
+                next.history = [...state.history, { week, template, param, target, reached: verdict.reached, completed: verdict.completed }];
+                next.judgedWeek = week;
+            }
+            if (!follows) Object.assign(next, { firstWeek: state.firstWeek || current.week, week: current.week, games: [], completed: false });
+            data.challenge = next;
         });
-        return { hasNews: true };
+        if (verdict) log(`${profile.name}: week ${verdict.challenge.week} Challenge ${verdict.completed ? "completed" : "missed"} (${verdict.reached}/${verdict.challenge.target}).`);
+        return { hasNews: Boolean(current), verdict };
     }
 
     // The active Profile's view of the week's Challenge, or null when it
