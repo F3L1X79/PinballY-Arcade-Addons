@@ -103,7 +103,7 @@ An Achievement whose condition holds right now. It can be lost again, for exampl
 _Avoid_: earned, obtained
 
 **Achievement List**:
-The screen, opened by the player, that shows every Achievement in one scrolling list: the Unlocked ones first, the most recently Notified at the top, then the missing ones, the highest Unlock Rate first. Shown as "Succès personnels" in French.
+The screen, opened by the player, that shows every Achievement in one scrolling list of two sections: the Unlocked ones, the most recently Notified at the top, then the missing ones, the highest Unlock Rate first. Each Achievement shows its Achievement Rank. Shown as "Succès personnels" in French.
 _Avoid_: My Achievements, trophy room
 
 **Achievement Family**:
@@ -113,6 +113,10 @@ _Avoid_: group (a group is the set of tables a completion Achievement covers, su
 **Notified**:
 An Achievement whose Achievement Toast has started showing. Toasts still waiting while a game runs are not Notified yet.
 _Avoid_: acknowledged, seen, unlocked (an Achievement can be unlocked but not yet Notified)
+
+**Achievement Rank**:
+How hard an Achievement is: Bronze, Silver, Gold or Platinum. Every Achievement has one, whether Unlocked or missing.
+_Avoid_: tier, level, difficulty, grade
 
 **Unlock Rate**:
 How many of the household's Profiles (Guest excepted) have been Notified of an Achievement, shown on the Achievement List by the Avatars of the Profiles other than the active one. It is not shown while there is only one Profile besides Guest.
