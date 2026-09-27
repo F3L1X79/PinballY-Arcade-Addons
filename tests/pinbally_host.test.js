@@ -115,6 +115,19 @@ for (const { name, createHost, usesGlobals } of ADAPTERS) {
             assert.deepEqual(host.getWheelTables().map(game => game.title), ["Attack from Mars", "Medieval Madness"]);
         });
 
+        test("creates a script filter under its full id, then shows it and runs it again on refresh", () => {
+            let selected = ["Attack from Mars (Bally 1995)"];
+            host.createFilter({ id: "test.Selected", title: "Selected", select: game => selected.includes(game.configId) });
+
+            host.setCurrentFilter("User.test.Selected");
+            assert.equal(host.getCurrentFilterId(), "User.test.Selected");
+            assert.deepEqual(host.getWheelTables().map(game => game.title), ["Attack from Mars"]);
+
+            selected = ["Medieval Madness (Williams 1997)"];
+            host.refreshFilter();
+            assert.deepEqual(host.getWheelTables().map(game => game.title), ["Medieval Madness"]);
+        });
+
         test("allocates a distinct command ID per name", () => {
             const first = host.allocateCommand("first");
             const second = host.allocateCommand("second");

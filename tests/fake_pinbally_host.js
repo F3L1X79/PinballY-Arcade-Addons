@@ -402,6 +402,16 @@ export function createFakePinballYHost({
         if (currentIndex > 0) setWheelGame(currentIndex);
     }
 
+    // Like gameList.createFilter(): kept under its full id, never shown until selected.
+    function createFilter(filter) {
+        filters.set(`User.${filter.id}`, filter);
+        return allocateCommand(`filter ${filter.id}`);
+    }
+
+    function refreshFilter() {
+        if (filters.has(currentFilterId)) applyFilter(currentFilterId);
+    }
+
     // Like gameList.setWheelGame(): the table at this offset from the current
     // one becomes the current one; the wheel wraps around.
     function setWheelGame(offset) {
@@ -430,6 +440,9 @@ export function createFakePinballYHost({
             : wheelConfigIds.map(getGameInfo)),
         getGameInfo,
         setCurrentFilter,
+        createFilter,
+        getCurrentFilterId: () => currentFilterId,
+        refreshFilter,
         setWheelGame,
         getUIMode: () => uiMode,
         getFullUIMode,
@@ -491,6 +504,8 @@ export function createFakePinballYHost({
         currentFilterId: () => currentFilterId,
         // Shows a script filter, by its full id ("User.<id>").
         selectFilter: applyFilter,
+        // The script filters' descriptions, as created.
+        scriptFilters: () => [...filters.values()],
         lowerStatusLine: () => [...lowerStatusLine],
         seedSettings(values) {
             for (const [key, value] of Object.entries(values)) storedSettings.set(key, toStoredString(value));
@@ -596,14 +611,11 @@ export function createFakePinballYHost({
                     on,
                     getWheelGame: (offset) => host.getWheelTables()[offset] || null,
                     getWheelCount: () => host.getWheelTables().length,
-                    createFilter: (filter) => {
-                        filters.set(`User.${filter.id}`, filter);
-                        return allocateCommand(`filter ${filter.id}`);
-                    },
+                    createFilter,
                     getCurFilter: () => ({ id: currentFilterId }),
                     setCurFilter: setCurrentFilter,
                     setWheelGame: (offset) => { setWheelGame(offset); },
-                    refreshFilter: () => { if (filters.has(currentFilterId)) applyFilter(currentFilterId); },
+                    refreshFilter,
                     getGameInfo,
                 },
                 mainWindow: {

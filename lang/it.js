@@ -169,6 +169,7 @@ export default {
 
     // Labels for menu items this project adds itself (see custom_menu_commands.js, custom_filter.js and hall_of_fame.js).
     customMenuLabels: {
+        challengeTables: "Tavoli della sfida",
         hallOfFameFilter: "Hall of Fame",
         originalTablesFilter: "Tavoli originali",
         randomGame: "Avvia un tavolo casuale",

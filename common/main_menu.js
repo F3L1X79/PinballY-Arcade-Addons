@@ -1,6 +1,7 @@
 ﻿// ============================================================
-// Main menu module: Add-ons add their entries (label, action, position)
-// and it inserts them into PinballY's main menu right after "Play", in a
+// Main menu module: Add-ons add their entries (label, action, position,
+// and optionally a "shown when" predicate checked on each opening) and it
+// inserts them into PinballY's main menu right after "Play", in a
 // fixed position order, so the Add-on order in main.js never decides where
 // an entry lands. It owns the entry commands and runs the matching action
 // when one is selected. Listens to "menuopen" and "command".
@@ -20,26 +21,31 @@ export const MAIN_MENU_POSITION = Object.freeze({
     RANDOM_GAME: 4,
     TABLE_OF_THE_DAY: 5,
     TABLE_OF_THE_WEEK: 6,
+    CHALLENGE_TABLES: 7,
 });
 
 export function createMainMenu(host) {
     // Sorted by position.
     const entries = [];
 
-    function add({ name, label, position, action }) {
-        const entry = { label, position, action, cmd: host.allocateCommand(name) };
+    // shownWhen: optional, the entry is left out of the menu when it returns
+    // false. Guarded on its own, so a failing one hides only its own entry.
+    function add({ name, label, position, action, shownWhen = () => true }) {
+        const entry = { label, position, action, shownWhen: safeHandler(SCRIPT_NAME, shownWhen), cmd: host.allocateCommand(name) };
         const insertAt = entries.findIndex(other => other.position > position);
         if (insertAt === -1) entries.push(entry);
         else entries.splice(insertAt, 0, entry);
     }
 
     // Fires when any menu opens, with a fresh item list each time: adds the
-    // entries to the main menu.
+    // entries shown this time to the main menu.
     host.on("menuopen", safeHandler(SCRIPT_NAME, ev => {
-        if (ev.id !== "main" || entries.length === 0) return;
+        if (ev.id !== "main") return;
+        const shown = entries.filter(entry => entry.shownWhen());
+        if (shown.length === 0) return;
         ev.addMenuItem(
             { after: host.getBuiltInCommand("PlayGame") },
-            entries.map(({ label, cmd }) => ({ title: label, cmd }))
+            shown.map(({ label, cmd }) => ({ title: label, cmd }))
         );
     }));
 

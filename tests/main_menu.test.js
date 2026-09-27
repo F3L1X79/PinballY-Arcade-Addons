@@ -60,3 +60,38 @@ test("selecting an entry runs its action, and only its own", async () => {
 
     assert.deepEqual(runs, ["random"]);
 });
+
+test("an entry with a shown-when predicate appears only when it holds, checked on each opening", () => {
+    const { fake, mainMenu, openMainMenu } = setUp();
+    let shown = false;
+    mainMenu.add({ name: "list", label: "List", position: MAIN_MENU_POSITION.ACHIEVEMENT_LIST, action: () => {} });
+    mainMenu.add({ name: "challenge", label: "Challenge", position: MAIN_MENU_POSITION.CHALLENGE_TABLES, action: () => {}, shownWhen: () => shown });
+
+    openMainMenu();
+    assert.deepEqual(titles(fake.currentMenu()), ["Play", "List", "Exit"]);
+    fake.closeMenu();
+
+    shown = true;
+    openMainMenu();
+    assert.deepEqual(titles(fake.currentMenu()), ["Play", "List", "Challenge", "Exit"]);
+});
+
+test("with every entry hidden by its predicate, the main menu is left as it is", () => {
+    const { fake, mainMenu, openMainMenu } = setUp();
+    mainMenu.add({ name: "challenge", label: "Challenge", position: MAIN_MENU_POSITION.CHALLENGE_TABLES, action: () => {}, shownWhen: () => false });
+
+    openMainMenu();
+
+    assert.deepEqual(titles(fake.currentMenu()), ["Play", "Exit"]);
+});
+
+test("a failing shown-when predicate hides only its own entry", () => {
+    const { fake, mainMenu, openMainMenu } = setUp();
+    mainMenu.add({ name: "list", label: "List", position: MAIN_MENU_POSITION.ACHIEVEMENT_LIST, action: () => {} });
+    mainMenu.add({ name: "challenge", label: "Challenge", position: MAIN_MENU_POSITION.CHALLENGE_TABLES, action: () => {},
+        shownWhen: () => { throw new Error("broken"); } });
+
+    openMainMenu();
+
+    assert.deepEqual(titles(fake.currentMenu()), ["Play", "List", "Exit"]);
+});

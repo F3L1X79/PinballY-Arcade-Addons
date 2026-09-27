@@ -118,6 +118,12 @@ export function createPinballYHost() {
         // Doesn't fire "filterselect"; fires "gameselect" only when the
         // current table has to change.
         setCurrentFilter: (filterId) => { gameList.setCurFilter(filterId); },
+        // PinballY prefixes the id with "User."; a filter without a group is
+        // listed in no filter menu. Returns its command ID.
+        createFilter: (desc) => gameList.createFilter(desc),
+        getCurrentFilterId: () => gameList.getCurFilter().id,
+        // Runs the current filter again, before() included.
+        refreshFilter: () => { gameList.refreshFilter(); },
         // Makes the table at this wheel offset the current one, instantly:
         // no spin animation, no sound, no "gameselect".
         setWheelGame: (offset) => { gameList.setWheelGame(offset, { animate: false }); },

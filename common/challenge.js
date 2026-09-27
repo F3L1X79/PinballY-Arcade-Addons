@@ -14,10 +14,11 @@
 // that first reaches the target completes the Challenge: the Profile's
 // completed count goes up and a Challenge Toast is submitted. When a
 // Profile first shows up in a later week, the previous Challenge is judged
-// once and the verdict kept in its history. Created from the PinballY
-// host, the Profile store, the Period Tables, the Random Game module, the
-// Achievement Toast module and a random source; the Add-ons share one
-// instance through getChallenges(). Listens to "gamestarted" /
+// once and the verdict kept in its history. It also selects the Challenge
+// Tables, for the templates where some tables move the Challenge forward.
+// Created from the PinballY host, the Profile store, the Period Tables, the
+// Random Game module, the Achievement Toast module and a random source; the
+// Add-ons share one instance through getChallenges(). Listens to "gamestarted" /
 // "gameover" to count games.
 // ============================================================
 
@@ -57,6 +58,9 @@ const wasDusty = (play, date) =>
 
 const distinct = values => new Set(values).size;
 const distinctTables = games => distinct(games.map(game => game.configId));
+const onlyTable = (tables, periodTable) =>
+    tables.filter(table => periodTable && table.configId === periodTable.configId);
+const notCounted = (tables, games) => tables.filter(table => !games.some(game => game.configId === table.configId));
 const distinctDays = games => distinct(games.map(game => game.day));
 const totalSeconds = games => games.reduce((sum, game) => sum + game.seconds, 0);
 // The highest of totalOf over each table's games, 0 without any.
@@ -108,6 +112,8 @@ function leastAcrossProfiles(context, matches) {
 // options(context): the feasible { param, min?, max } choices, none when infeasible.
 // Targets are counts, or minutes for endurance and marathon.
 // progress(games, param): the value compared with the target.
+// tablesToPlay(context): the Challenge Tables, visible tables that would move
+// the Challenge forward; only for the templates where that makes sense.
 // differentTables stays first: a scripted draw of 0 picks it.
 const TEMPLATES = Object.freeze({
     differentTables: {
@@ -119,10 +125,14 @@ const TEMPLATES = Object.freeze({
         options: context => groupOptions(
             context.visibleTables.filter(table => manufacturerOf(table) !== config.communityTablesManufacturer), manufacturerOf),
         progress: (games, manufacturer) => distinctTables(games.filter(game => game.manufacturer === manufacturer)),
+        tablesToPlay: ({ visibleTables, games, param }) =>
+            notCounted(visibleTables.filter(table => manufacturerOf(table) === param), games),
     },
     decadeTables: {
         options: context => groupOptions(context.visibleTables, decadeOf),
         progress: (games, decade) => distinctTables(games.filter(game => game.decade === decade)),
+        tablesToPlay: ({ visibleTables, games, param }) =>
+            notCounted(visibleTables.filter(table => decadeOf(table) === param), games),
     },
     differentManufacturers: {
         options: context => countOption(distinctKnown(context.visibleTables.map(manufacturerOf))),
@@ -135,18 +145,26 @@ const TEMPLATES = Object.freeze({
     neverPlayedTables: {
         options: context => countOption(leastAcrossProfiles(context, wasNeverPlayed)),
         progress: games => distinctTables(games.filter(game => game.wasNeverPlayed)),
+        tablesToPlay: ({ visibleTables, playOf }) => visibleTables.filter(table => wasNeverPlayed(playOf(table))),
     },
     dustyTables: {
         options: context => countOption(leastAcrossProfiles(context, play => wasDusty(play, context.now))),
         progress: games => distinctTables(games.filter(game => game.wasDusty)),
+        tablesToPlay: ({ visibleTables, playOf, now }) => visibleTables.filter(table => wasDusty(playOf(table), now)),
     },
     tableOfTheDayDays: {
         options: context => countOptionWhenPlayable(context, context.daysLeft),
         progress: games => distinctDays(games.filter(game => game.isTableOfTheDay)),
+        tablesToPlay: ({ visibleTables, games, now, getDayTable }) => {
+            const today = formatDateKey(now);
+            if (games.some(game => game.isTableOfTheDay && game.day === today)) return [];
+            return onlyTable(visibleTables, getDayTable());
+        },
     },
     tableOfTheWeekGames: {
         options: context => countOptionWhenPlayable(context, COUNT_RANGE.max),
         progress: games => games.filter(game => game.isTableOfTheWeek).length,
+        tablesToPlay: ({ visibleTables, getWeekTable }) => onlyTable(visibleTables, getWeekTable()),
     },
     activeDays: {
         options: context => countOptionWhenPlayable(context, context.daysLeft),
@@ -289,6 +307,26 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         };
     }
 
+    // The active Profile's Challenge Tables, in collection order; none for
+    // Guest, without a Challenge to follow, once it is completed, or for
+    // the templates that have none.
+    function getTablesToPlay() {
+        const view = getActiveView();
+        if (!view || view.completed) return [];
+        const { tablesToPlay } = TEMPLATES[view.challenge.template];
+        if (!tablesToPlay) return [];
+        return tablesToPlay({
+            visibleTables: host.getVisibleTables(),
+            games: readProfileChallenge(profileStore.getActiveProfile().data).games,
+            param: view.challenge.param,
+            playOf: table => profileStore.getPlay(table.configId),
+            now: host.now(),
+            // Only when needed: getTable() locks a new period's table in cabinet.json.
+            getDayTable: () => tableOfTheDay.getTable(),
+            getWeekTable: () => tableOfTheWeek.getTable(),
+        });
+    }
+
     // The started game's facts, noted before the Profile store records the
     // play at "gameover" (a never played table stops being one), for the
     // Profile active then; by table, like the store.
@@ -359,7 +397,7 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         });
     }));
 
-    return { getCurrent, showUp, getActiveView };
+    return { getCurrent, showUp, getActiveView, getTablesToPlay };
 }
 
 let sharedChallenges = null;
