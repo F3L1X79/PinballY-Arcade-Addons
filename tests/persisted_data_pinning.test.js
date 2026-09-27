@@ -293,8 +293,8 @@ test("the Challenges' saved data stays byte-identical", () => {
     });
     assert.deepEqual(Object.keys(challenge), ["firstWeek", "week", "games", "completed", "completedCount", "judgedWeek", "history"]);
 
-    // A week where no template is feasible: fewer than 2 visible tables.
-    const empty = createFakePinballYHost({ now: NOW, tables: TABLES.slice(0, 1) });
+    // A week where no template is feasible: no visible table.
+    const empty = createFakePinballYHost({ now: NOW, tables: [{ ...TABLES[0], isHidden: true }] });
     empty.addFolder(`${PROFILES_FOLDER}\\Alice`);
     empty.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
     const emptyStore = createProfileStore(empty);
@@ -346,7 +346,7 @@ test("a verdict on the previous Challenge stays byte-identical in the Profile's 
 
 test("the Challenge template ids stay byte-identical", () => {
     for (const id of ["differentTables", "manufacturerTables", "decadeTables", "differentManufacturers", "differentDecades",
-        "neverPlayedTables", "dustyTables"]) {
+        "neverPlayedTables", "dustyTables", "tableOfTheDayDays", "tableOfTheWeekGames", "activeDays"]) {
         assert.ok(CHALLENGE_TEMPLATE_IDS.includes(id), `${id} is still a Challenge template`);
     }
 });

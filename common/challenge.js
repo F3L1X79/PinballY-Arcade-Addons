@@ -5,17 +5,18 @@
 // manufacturer or decade, different tables, manufacturers or decades,
 // never the community tables' manufacturer as an option; tables never
 // played or not played for six months, reachable by every non-Guest
-// Profile), and locked in cabinet.json with the previous one; each
-// non-Guest Profile follows it in its own profile.json ("challenge"),
-// where the games that count are kept with their facts, progress being
-// recomputed from them. The game
+// Profile; the Table of the Day on different days or days played, never
+// more than the days left; games on the Table of the Week), and locked in
+// cabinet.json with the previous one; each non-Guest Profile follows it
+// in its own profile.json ("challenge"), where the games that count are
+// kept with their facts, progress being recomputed from them. The game
 // that first reaches the target completes the Challenge: the Profile's
 // completed count goes up and a Challenge Toast is submitted. When a
 // Profile first shows up in a later week, the previous Challenge is judged
-// once and the verdict kept in its history. Created from
-// the PinballY host, the Profile store, the Period Tables, the Random Game
-// module, the Achievement Toast module and a random source; the Add-ons
-// share one instance through getChallenges(). Listens to "gamestarted" /
+// once and the verdict kept in its history. Created from the PinballY
+// host, the Profile store, the Period Tables, the Random Game module, the
+// Achievement Toast module and a random source; the Add-ons share one
+// instance through getChallenges(). Listens to "gamestarted" /
 // "gameover" to count games.
 // ============================================================
 
@@ -53,6 +54,7 @@ const wasDusty = (play, date) =>
 
 const distinct = values => new Set(values).size;
 const distinctTables = games => distinct(games.map(game => game.configId));
+const distinctDays = games => distinct(games.map(game => game.day));
 // A table without a manufacturer or a year has no value to count.
 const isKnown = value => value !== "" && value !== null;
 const distinctKnown = values => distinct(values.filter(isKnown));
@@ -62,6 +64,8 @@ const countTarget = max => Math.min(COUNT_RANGE.max, max);
 // One option without a parameter, its target up to max (at most 5), or
 // none when fewer than 2 would be reachable.
 const countOption = max => (max >= COUNT_RANGE.min ? [{ param: null, max: countTarget(max) }] : []);
+// Without a visible table there is no Period Table and no game that counts.
+const countOptionWhenPlayable = (context, max) => countOption(context.visibleTables.length > 0 ? max : 0);
 
 // One option per value of keyOf shared by at least 2 tables, its target up
 // to that value's table count.
@@ -121,6 +125,18 @@ const TEMPLATES = Object.freeze({
         options: context => countOption(leastAcrossProfiles(context, play => wasDusty(play, context.now))),
         progress: games => distinctTables(games.filter(game => game.wasDusty)),
     },
+    tableOfTheDayDays: {
+        options: context => countOptionWhenPlayable(context, context.daysLeft),
+        progress: games => distinctDays(games.filter(game => game.isTableOfTheDay)),
+    },
+    tableOfTheWeekGames: {
+        options: context => countOptionWhenPlayable(context, COUNT_RANGE.max),
+        progress: games => games.filter(game => game.isTableOfTheWeek).length,
+    },
+    activeDays: {
+        options: context => countOptionWhenPlayable(context, context.daysLeft),
+        progress: games => distinctDays(games),
+    },
 });
 export const CHALLENGE_TEMPLATE_IDS = Object.freeze(Object.keys(TEMPLATES));
 
@@ -144,7 +160,8 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         const profilePlays = profileStore.listProfiles()
             .filter(profile => !profile.isGuest)
             .map(profile => profileStore.getPlaysOf(profile.name));
-        const context = { visibleTables: host.getVisibleTables(), profilePlays, now: host.now() };
+        const now = host.now();
+        const context = { visibleTables: host.getVisibleTables(), profilePlays, now, daysLeft: daysLeftInWeek(now) };
         const candidates = Object.entries(TEMPLATES)
             .filter(([id]) => !previous || previous.template !== id)
             .map(([id, template]) => ({ id, options: template.options(context) }))
