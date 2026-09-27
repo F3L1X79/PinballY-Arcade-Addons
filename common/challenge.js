@@ -6,9 +6,10 @@
 // never the community tables' manufacturer as an option; tables never
 // played or not played for six months, reachable by every non-Guest
 // Profile; the Table of the Day on different days or days played, never
-// more than the days left; games on the Table of the Week), and locked in
-// cabinet.json with the previous one; each non-Guest Profile follows it
-// in its own profile.json ("challenge"), where the games that count are
+// more than the days left; games on the Table of the Week, on the same
+// table or launched as Random Games; minutes on one table or in total),
+// and locked in cabinet.json with the previous one; each non-Guest
+// Profile follows it in its own profile.json ("challenge"), where the games that count are
 // kept with their facts, progress being recomputed from them. The game
 // that first reaches the target completes the Challenge: the Profile's
 // completed count goes up and a Challenge Toast is submitted. When a
@@ -35,6 +36,8 @@ const SCRIPT_NAME = "Challenges";
 // A shorter game never counts: launching and quitting a table is not playing it.
 const MIN_GAME_SECONDS = 60;
 const COUNT_RANGE = Object.freeze({ min: 2, max: 5 });
+const ENDURANCE_MINUTES = Object.freeze({ min: 15, max: 30 });
+const MARATHON_MINUTES = Object.freeze({ min: 40, max: 80 });
 const DUSTY_DAYS = 183;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -55,6 +58,15 @@ const wasDusty = (play, date) =>
 const distinct = values => new Set(values).size;
 const distinctTables = games => distinct(games.map(game => game.configId));
 const distinctDays = games => distinct(games.map(game => game.day));
+const totalSeconds = games => games.reduce((sum, game) => sum + game.seconds, 0);
+// The highest of totalOf over each table's games, 0 without any.
+function bestTableTotal(games, totalOf) {
+    const byTable = new Map();
+    for (const game of games) byTable.set(game.configId, [...(byTable.get(game.configId) || []), game]);
+    return Math.max(0, ...[...byTable.values()].map(totalOf));
+}
+// Applied to summed seconds, so that no game's last partial minute is lost.
+const wholeMinutes = seconds => Math.floor(seconds / 60);
 // A table without a manufacturer or a year has no value to count.
 const isKnown = value => value !== "" && value !== null;
 const distinctKnown = values => distinct(values.filter(isKnown));
@@ -65,7 +77,9 @@ const countTarget = max => Math.min(COUNT_RANGE.max, max);
 // none when fewer than 2 would be reachable.
 const countOption = max => (max >= COUNT_RANGE.min ? [{ param: null, max: countTarget(max) }] : []);
 // Without a visible table there is no Period Table and no game that counts.
-const countOptionWhenPlayable = (context, max) => countOption(context.visibleTables.length > 0 ? max : 0);
+const isPlayable = context => context.visibleTables.length > 0;
+const countOptionWhenPlayable = (context, max) => countOption(isPlayable(context) ? max : 0);
+const minutesOptionWhenPlayable = (context, range) => (isPlayable(context) ? [{ param: null, ...range }] : []);
 
 // One option per value of keyOf shared by at least 2 tables, its target up
 // to that value's table count.
@@ -92,6 +106,7 @@ function leastAcrossProfiles(context, matches) {
 
 // Template ids are players' saved data (cabinet.json, history): never rename one.
 // options(context): the feasible { param, min?, max } choices, none when infeasible.
+// Targets are counts, or minutes for endurance and marathon.
 // progress(games, param): the value compared with the target.
 // differentTables stays first: a scripted draw of 0 picks it.
 const TEMPLATES = Object.freeze({
@@ -136,6 +151,24 @@ const TEMPLATES = Object.freeze({
     activeDays: {
         options: context => countOptionWhenPlayable(context, context.daysLeft),
         progress: games => distinctDays(games),
+    },
+    // The table of the player's choice: the one with the most minutes.
+    endurance: {
+        options: context => minutesOptionWhenPlayable(context, ENDURANCE_MINUTES),
+        progress: games => wholeMinutes(bestTableTotal(games, totalSeconds)),
+    },
+    marathon: {
+        options: context => minutesOptionWhenPlayable(context, MARATHON_MINUTES),
+        progress: games => wholeMinutes(totalSeconds(games)),
+    },
+    randomGames: {
+        options: context => countOptionWhenPlayable(context, COUNT_RANGE.max),
+        progress: games => games.filter(game => game.randomGame).length,
+    },
+    // The table of the player's choice: the one with the most games.
+    sameTableGames: {
+        options: context => countOptionWhenPlayable(context, COUNT_RANGE.max),
+        progress: games => bestTableTotal(games, tableGames => tableGames.length),
     },
 });
 export const CHALLENGE_TEMPLATE_IDS = Object.freeze(Object.keys(TEMPLATES));

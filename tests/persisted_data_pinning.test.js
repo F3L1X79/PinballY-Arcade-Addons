@@ -346,7 +346,8 @@ test("a verdict on the previous Challenge stays byte-identical in the Profile's 
 
 test("the Challenge template ids stay byte-identical", () => {
     for (const id of ["differentTables", "manufacturerTables", "decadeTables", "differentManufacturers", "differentDecades",
-        "neverPlayedTables", "dustyTables", "tableOfTheDayDays", "tableOfTheWeekGames", "activeDays"]) {
+        "neverPlayedTables", "dustyTables", "tableOfTheDayDays", "tableOfTheWeekGames", "activeDays",
+        "endurance", "marathon", "randomGames", "sameTableGames"]) {
         assert.ok(CHALLENGE_TEMPLATE_IDS.includes(id), `${id} is still a Challenge template`);
     }
 });
