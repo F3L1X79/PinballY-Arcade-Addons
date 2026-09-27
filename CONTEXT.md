@@ -103,16 +103,20 @@ An Achievement whose condition holds right now. It can be lost again, for exampl
 _Avoid_: earned, obtained
 
 **Achievement List**:
-The screen, opened by the player, that shows every Achievement sorted into Achievement Families, each as Unlocked or missing. Shown as "Succès personnels" in French.
+The screen, opened by the player, that shows every Achievement in one scrolling list: the Unlocked ones first, the most recently Notified at the top, then the missing ones, the highest Unlock Rate first. Shown as "Succès personnels" in French.
 _Avoid_: My Achievements, trophy room
 
 **Achievement Family**:
-A kind of Achievement, used to sort the Achievement List: Collection, Play Time, Period Tables, Sessions, Random Game, Manufacturers, Decades, Categories, Challenges. Period Tables gathers every Achievement about playing the Table of the Day or the Table of the Week (first play, total Periods played, Streaks).
+A kind of Achievement, absent as a whole when the Add-on it depends on is turned off: Collection, Play Time, Period Tables, Sessions, Random Game, Manufacturers, Decades, Categories, Challenges. Period Tables gathers every Achievement about playing the Table of the Day or the Table of the Week (first play, total Periods played, Streaks).
 _Avoid_: group (a group is the set of tables a completion Achievement covers, such as one manufacturer's tables), category (a PinballY table category)
 
 **Notified**:
 An Achievement whose Achievement Toast has started showing. Toasts still waiting while a game runs are not Notified yet.
 _Avoid_: acknowledged, seen, unlocked (an Achievement can be unlocked but not yet Notified)
+
+**Unlock Rate**:
+How many of the household's Profiles (Guest excepted) have been Notified of an Achievement, shown on the Achievement List by the Avatars of the Profiles other than the active one. It is not shown while there is only one Profile besides Guest.
+_Avoid_: rarity (a rare Achievement has a low Unlock Rate), household rate, global percentage
 
 **Achievement Progress**:
 How far the active Profile is from a missing Achievement: the very value its unlock condition tests, against the target that unlocks it (for a Streak, the current Streak: a missing Streak Achievement starts over from 0 when the Streak breaks). Only Achievements with a counted target of at least 2 have one; an Unlocked Achievement shows none.
