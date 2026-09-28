@@ -1,28 +1,42 @@
-# PinballY Arcade Add-ons
+# PinballY Expansion Pack
 
-*[Version française](README.fr.md)*
+An unofficial extension of [PinballY](http://mjrnet.org/pinscape/PinballY.php), written with the JavaScript scripting API that PinballY opens to every developer. · *[Version française](README.fr.md)*
 
-A curated list of JavaScript add-ons for [PinballY](http://mjrnet.org/pinscape/PinballY.php) that make a virtual pinball cabinet feel more like an arcade machine. Plain JavaScript run by PinballY itself: no build step, no dependencies.
+> **Give everyone in the house a real reason to come back to your pincab.** A Profile with an Avatar for each of you, a Table of the Day, weekly Challenges, Achievements from Bronze to Platinum, and PinballY itself in French, German, Spanish, Italian or Portuguese: everything PinballY was missing, without touching PinballY. And this is only the beginning…
 
-## Features
+<img src="docs/images/hero.png" alt="The wheel screen with the clock, the active Profile's badge and the status line" width="360">
 
-- **Startup dialog**: stay on the last played table, or launch the table of the day, the table of the week or a random table.
-- **Table of the day** (never played, or else played longest ago) and **table of the week** (random, Monday to Sunday).
-- **Random table**: a "wheel of fortune" animation, never the last played table.
-- **Main menu entries** after "Play": Change Player (a carousel of Avatars driven by the flipper buttons, also in the Exit menu and second in the startup dialog; the active Profile's Avatar and name stay at the top right of the wheel screen; picking a Profile greets the player, and so does starting PinballY when the startup dialog is off), Achievement List, Table Setup, Random Game, Table of the Day, Table of the Week.
-- **"Original Tables" filter** in "Filter by Manufacturer": every table except the community-made ones.
-- **"Hall of Fame" filter** in the main menu: your ten most played tables, ranked by play time.
-- **Clock** at the top left of the wheel screen, in your language's format (hidden during a game).
-- **Achievements**, each announced once by a small card in the bottom-right corner of the playfield screen that disappears on its own (never during a game; several stack, with an optional sound), and browsable by family in the "Achievement List":
-  - collection: first table, then 10 to 100 % of your collection played;
-  - play time: 1 to 100 hours;
-  - tables of the day and week: first play, total days or weeks played, streaks;
-  - sessions: 30 or 60 minute marathon, rage quit (a session of 30 seconds to under a minute), grand comeback after 31 days;
-  - random game: 10, 50 and 100 random tables played;
-  - manufacturers: 3, 5 or 8 different manufacturers played the same day, completion of a manufacturer;
-  - completion of a decade or a category.
-- **Interface**: PinballY translated into French, German, Spanish, Italian or Portuguese; a status line about the selected table; a reminder to rate a table after 60 minutes of play.
-- **Launch**: no black flash between the wheel and the table, an optional launch sound, the backglass hidden while a table runs.
+### A Profile for everyone
+
+<img src="docs/images/profiles.png" alt="The Change Player carousel and its Avatars" width="480">
+
+With Change Player, everyone picks their own Profile and Avatar, with their own Achievements and Profile Stats.
+
+### Table of the Day, Table of the Week
+
+<img src="docs/images/period_tables.png" alt="The startup dialog with the Table of the Day and the Table of the Week" width="480">
+
+Every day a table never played or long forgotten, every week a random one, offered right at startup.
+
+### Weekly Challenges
+
+<img src="docs/images/challenges.png" alt="The week's Challenge Card under the Profile badge" width="376">
+
+A new Challenge every Monday, its card tracking your progress on the wheel screen.
+
+### Achievements
+
+<img src="docs/images/achievements.png" alt="The Achievement List" width="320">
+
+Dozens of Achievements from Bronze to Platinum, announced without interrupting your games and gathered in the Achievement List.
+
+### PinballY in 6 languages
+
+<img src="docs/images/translation.png" alt="PinballY's Exit menu in French" width="480">
+
+PinballY's own menus and messages in French, German, Spanish, Italian or Portuguese.
+
+**And also**: a Random Game spun on a wheel of fortune, "Hall of Fame" and "Original Tables" filters, a clock, a status line, a reminder to rate a table, launches without a black flash, the backglass hidden during a game, launch and Achievement sounds.
 
 ## Install
 
@@ -33,22 +47,16 @@ Requires **Windows** and **PinballY 1.1.0 Beta 10** or later (plus the *Windows 
 3. **Copy `.env.example` to `.env.local`** and set what you need, one `KEY=value` per line (UTF-8). Missing settings keep their default; `.env.local` is ignored by git.
 4. **Restart PinballY** and check `PinballY.log`: it lists your overrides, one "initialized" line per add-on, and `ERROR` lines naming the add-on at fault.
 
-| Setting | Default | Meaning |
-|---|---|---|
-| `LANGUAGE` | `en` | `en`, `fr`, `de`, `es`, `it` or `pt`. |
-| `LAUNCH_SOUND_FILE` | empty | Full path to the launch sound, e.g. `C:\PinballY\Media\Sounds\launch.mp3`. |
-| `ACHIEVEMENT_SOUND_FILE` | empty | Full path to a sound played with each Achievement card. |
-| `PROFILE_GREETING_SOUND_FILE` | empty | Full path to a sound played when a player is greeted. |
-| `COMMUNITY_TABLES_MANUFACTURER` | `VPX Community` | Manufacturer name of your community-made tables. |
-| `SKIP_RANDOM_GAME_ANIMATION` | `false` | `true` skips the wheel animation. |
-| `ASK_TO_RATE_AFTER_MINUTES_PLAYED` | `60` | Play time before the rating reminder. |
-| `ACHIEVEMENT_TOAST_SECONDS` | `4` | Seconds an Achievement card stays fully visible (above 0, at most 60). |
-| `ACHIEVEMENT_TOAST_SCALE` | `1.0` | Size of an Achievement card: `1` = the original size, `2` = twice as large (from 0.5 to 3, with a dot: `1.6`). |
-| `ADD_ON_<NAME>` | `true` | `false` turns an add-on off, e.g. `ADD_ON_FORCE_BACKGLASS=false`. |
+## Settings
 
-## Your progress
+```
+LANGUAGE=en
+ACHIEVEMENT_TOAST_SECONDS=4
+```
 
-Each Profile's progress is saved in the `profiles` folder next to `main.js`, which project updates never overwrite.
+`LANGUAGE` sets the language (`en`, `fr`, `de`, `es`, `it` or `pt`) and `ACHIEVEMENT_TOAST_SECONDS` how many seconds an Achievement stays on screen. Every feature can be turned off with its `ADD_ON_*` key, for example `ADD_ON_CLOCK=false`. Every setting is described in [.env.example](.env.example).
+
+Each Profile's progress is saved in the `profiles` folder, which project updates never overwrite: keep it to get your progress back after reinstalling.
 
 ## Contributing
 
