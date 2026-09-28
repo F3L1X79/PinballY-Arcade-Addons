@@ -1,9 +1,10 @@
 ﻿// ============================================================
-// Fills PinballY's lower status line with rotating info about the selected
-// table: its alphabetical position within the active filter, release year,
+// Fills PinballY's two status lines, after the player's own messages from
+// PinballY's options, never in their place. The upper line adds a welcome
+// naming the active Profile, the table count, how to launch and browse, and
+// a sign-off. The lower line adds rotating info about the selected table:
+// its alphabetical position within the active filter, release year,
 // manufacturer, and the active Profile's play count and total play time.
-// The player's own messages from PinballY's options stay first: the table
-// info is added after them, never in their place.
 // Refreshes on "gameselect", "filterselect", "wheelmode" (back from a game)
 // and on a Profile switch.
 // ============================================================
@@ -12,29 +13,40 @@ import lang from "../common/i18n.js";
 import config from "../common/config.js";
 import { safeHandler } from "../common/safe_handler.js";
 import { getProfileStore } from "../common/profile_store.js";
+import { displayNameOf } from "../common/profile_name.js";
 
 const SCRIPT_NAME = "StatusLineInfo";
 const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
 
 export default function init() {
-    const STATUS_LINE_TEXT = lang.tableInfoStatusLines;
+    const LOWER_STATUS_LINE_TEXT = lang.tableInfoStatusLines;
+    const UPPER_STATUS_LINE_TEXT = lang.upperStatusLines;
     const COMMUNITY_MANUFACTURER_NAME = config.communityTablesManufacturer;
     const profileStore = getProfileStore();
 
     // PinballY's [Game.PlayCount] and [Game.PlayTime] would show its own
     // figures, shared by every Profile: the active Profile's are written out.
-    const STATUS_LINE_BUILDERS = [
-        position => STATUS_LINE_TEXT.year(position),
+    const LOWER_STATUS_LINE_BUILDERS = [
+        position => LOWER_STATUS_LINE_TEXT.year(position),
         (position, game) => game && game.manufacturer === COMMUNITY_MANUFACTURER_NAME
-            ? STATUS_LINE_TEXT.manufacturerFictional(position)
-            : STATUS_LINE_TEXT.manufacturer(position),
-        (position, _game, play) => STATUS_LINE_TEXT.playCount(position, play.count),
+            ? LOWER_STATUS_LINE_TEXT.manufacturerFictional(position)
+            : LOWER_STATUS_LINE_TEXT.manufacturer(position),
+        (position, _game, play) => LOWER_STATUS_LINE_TEXT.playCount(position, play.count),
         (position, _game, play) => {
             const totalMinutes = Math.floor(play.seconds / SECONDS_PER_MINUTE);
-            return STATUS_LINE_TEXT.playTime(position,
+            return LOWER_STATUS_LINE_TEXT.playTime(position,
                 Math.floor(totalMinutes / MINUTES_PER_HOUR), totalMinutes % MINUTES_PER_HOUR);
         },
+    ];
+
+    // Only the welcome depends on the active Profile.
+    const buildUpperStatusLineTexts = profile => [
+        UPPER_STATUS_LINE_TEXT.welcome(displayNameOf(profile)),
+        UPPER_STATUS_LINE_TEXT.tablesAvailable,
+        UPPER_STATUS_LINE_TEXT.launchHint,
+        UPPER_STATUS_LINE_TEXT.browseHint,
+        UPPER_STATUS_LINE_TEXT.signOff,
     ];
 
     // Cache of the CURRENTLY FILTERED wheel titles, sorted alphabetically once
@@ -90,34 +102,21 @@ export default function init() {
         return titleIndex >= 0 ? titleIndex + 1 : 0;
     }
 
-    // The non-temporary entries on the line at start-up are the player's own
-    // messages from PinballY's options; the table info is written after them.
-    // PinballY's show() inserts a temporary entry just after the current one
-    // and removes it once shown, which shifts the indexes: the table info's
-    // slots are counted among the non-temporary entries only.
-    const statusLine = mainWindow.statusLines.lower;
-    const firstTableInfoSlot = statusLine.getText().filter(entry => !entry.isTemp).length;
-    for (let i = 0; i < STATUS_LINE_BUILDERS.length; i++) {
-        statusLine.add("");
-    }
+    const upperSlots = createSlots(mainWindow.statusLines.upper,
+        buildUpperStatusLineTexts(profileStore.getActiveProfile()).length);
+    const lowerSlots = createSlots(mainWindow.statusLines.lower, LOWER_STATUS_LINE_BUILDERS.length);
 
-    function findTableInfoSlotIndexes() {
-        return statusLine.getText()
-            .map((entry, index) => (entry.isTemp ? -1 : index))
-            .filter(index => index >= 0)
-            .slice(firstTableInfoSlot, firstTableInfoSlot + STATUS_LINE_BUILDERS.length);
-    }
-
-    function refreshStatusLine() {
+    function refreshLowerStatusLine() {
         const currentGame = gameList.getWheelGame(0);
         const currentTitle = currentGame ? currentGame.title : null;
         const position = getCurrentTablePosition(currentTitle);
         const play = profileStore.getPlay(currentGame ? currentGame.configId : "");
 
-        const slotIndexes = findTableInfoSlotIndexes();
-        STATUS_LINE_BUILDERS.forEach((buildText, i) => {
-            statusLine.setText(slotIndexes[i], buildText(position, currentGame, play));
-        });
+        lowerSlots.setTexts(LOWER_STATUS_LINE_BUILDERS.map(buildText => buildText(position, currentGame, play)));
+    }
+
+    function refreshUpperStatusLine() {
+        upperSlots.setTexts(buildUpperStatusLineTexts(profileStore.getActiveProfile()));
     }
 
     // A filter change (category, manufacturer, era, etc.) swaps out the entire
@@ -127,24 +126,52 @@ export default function init() {
     // deferring by one tick lets the switch complete first.
     // The deferred callback runs outside the listener's call stack, so it is
     // guarded separately from the listener itself.
-    gameList.on("filterselect", safeHandler(SCRIPT_NAME, () => {
+    function rebuildLowerStatusLineNextTick() {
         setTimeout(safeHandler(SCRIPT_NAME, () => {
             buildSortedTitles();
-            refreshStatusLine();
+            refreshLowerStatusLine();
         }), 0);
-    }));
+    }
 
-    gameList.on("gameselect", safeHandler(SCRIPT_NAME, refreshStatusLine));
+    gameList.on("filterselect", safeHandler(SCRIPT_NAME, rebuildLowerStatusLineNextTick));
+
+    gameList.on("gameselect", safeHandler(SCRIPT_NAME, refreshLowerStatusLine));
     // Back on the wheel after a game, whose play the Profile store recorded on "gameover".
-    mainWindow.on("wheelmode", safeHandler(SCRIPT_NAME, refreshStatusLine));
-    // Deferred and rebuilt like a filter change: a switch can re-run the
-    // Hall of Fame filter, which then shows other tables.
+    mainWindow.on("wheelmode", safeHandler(SCRIPT_NAME, refreshLowerStatusLine));
+    // The welcome follows a switch at once. The table info is deferred and
+    // rebuilt like a filter change: a switch can re-run the Hall of Fame
+    // filter, which then shows other tables.
     profileStore.onSwitch(safeHandler(SCRIPT_NAME, () => {
-        setTimeout(safeHandler(SCRIPT_NAME, () => {
-            buildSortedTitles();
-            refreshStatusLine();
-        }), 0);
+        refreshUpperStatusLine();
+        rebuildLowerStatusLineNextTick();
     }));
 
-    refreshStatusLine();
+    refreshUpperStatusLine();
+    refreshLowerStatusLine();
+}
+
+// The Add-on's slots on one status line, after the player's own messages: the
+// non-temporary entries already on the line at start-up. PinballY's show()
+// inserts a temporary entry just after the current one and removes it once
+// shown, which shifts the indexes: the slots are counted among the
+// non-temporary entries only, at each write.
+function createSlots(statusLine, slotCount) {
+    const firstSlot = statusLine.getText().filter(entry => !entry.isTemp).length;
+    for (let i = 0; i < slotCount; i++) {
+        statusLine.add("");
+    }
+
+    function findSlotIndexes() {
+        return statusLine.getText()
+            .map((entry, index) => (entry.isTemp ? -1 : index))
+            .filter(index => index >= 0)
+            .slice(firstSlot, firstSlot + slotCount);
+    }
+
+    return {
+        setTexts(texts) {
+            const slotIndexes = findSlotIndexes();
+            texts.forEach((text, i) => statusLine.setText(slotIndexes[i], text));
+        },
+    };
 }

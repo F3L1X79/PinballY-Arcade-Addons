@@ -81,7 +81,8 @@ export function createFakePinballYHost({
     tables = [],
     layoutSize = { width: 1920, height: 1080 },
     programFolder = "C:\\PinballY\\",
-    // The player's own messages, from PinballY's lower status line option.
+    // The player's own messages, from PinballY's status line options.
+    upperStatusLineMessages = [],
     lowerStatusLineMessages = [],
 } = {}) {
     let nowMs = now.getTime();
@@ -108,7 +109,8 @@ export function createFakePinballYHost({
     // Script filters by full id ("User.<id>"), and the id of the one shown.
     const filters = new Map();
     let currentFilterId = "All";
-    // The lower status line's entries, as PinballY's getText() gives them.
+    // The status lines' entries, as PinballY's getText() gives them.
+    const upperStatusLine = upperStatusLineMessages.map(text => ({ text, isTemp: false }));
     const lowerStatusLine = lowerStatusLineMessages.map(text => ({ text, isTemp: false }));
     const storedSettings = new Map();
     const writtenKeys = new Set();
@@ -149,10 +151,22 @@ export function createFakePinballYHost({
 
     // As PinballY does, inserts a temporary entry just after the current one
     // (always the first here) and after the temporary ones already queued there.
-    function showOnLowerStatusLine(text) {
+    function showOnStatusLine(statusLine, text) {
         let index = 1;
-        while (index < lowerStatusLine.length && lowerStatusLine[index].isTemp) index++;
-        lowerStatusLine.splice(index, 0, { text, isTemp: true });
+        while (index < statusLine.length && statusLine[index].isTemp) index++;
+        statusLine.splice(index, 0, { text, isTemp: true });
+    }
+    const showOnUpperStatusLine = text => showOnStatusLine(upperStatusLine, text);
+    const showOnLowerStatusLine = text => showOnStatusLine(lowerStatusLine, text);
+
+    // PinballY's statusLines.upper / .lower object for one line.
+    function statusLineObject(statusLine) {
+        return {
+            getText: () => statusLine.map(entry => ({ ...entry })),
+            add: (text) => { statusLine.push({ text, isTemp: false }); },
+            setText: (index, text) => { statusLine[index].text = text; },
+            show: text => showOnStatusLine(statusLine, text),
+        };
     }
 
     function fire(type, properties = {}) {
@@ -518,7 +532,9 @@ export function createFakePinballYHost({
         selectFilter: applyFilter,
         // The script filters' descriptions, as created.
         scriptFilters: () => [...filters.values()],
+        upperStatusLine: () => upperStatusLine.map(entry => entry.text),
         lowerStatusLine: () => lowerStatusLine.map(entry => entry.text),
+        showOnUpperStatusLine,
         showOnLowerStatusLine,
         seedSettings(values) {
             for (const [key, value] of Object.entries(values)) storedSettings.set(key, toStoredString(value));
@@ -640,12 +656,8 @@ export function createFakePinballYHost({
                     createDrawingLayer,
                     removeDrawingLayer,
                     statusLines: {
-                        lower: {
-                            getText: () => lowerStatusLine.map(entry => ({ ...entry })),
-                            add: (text) => { lowerStatusLine.push({ text, isTemp: false }); },
-                            setText: (index, text) => { lowerStatusLine[index].text = text; },
-                            show: showOnLowerStatusLine,
-                        },
+                        upper: statusLineObject(upperStatusLine),
+                        lower: statusLineObject(lowerStatusLine),
                     },
                 },
                 command: { ...BUILT_IN_COMMANDS, allocate: allocateCommand },

@@ -61,7 +61,9 @@ export default {
     startupPrompt: {
         introWithPicks: (playerName, dayTitle, weekTitle) => {
             const lines = [`Hi, ${playerName}! How would you like to start?`];
+            lines.push('---');
             if (dayTitle) lines.push(`Table of the Day: ${dayTitle}`);
+            lines.push('---');
             if (weekTitle) lines.push(`Table of the Week: ${weekTitle}`);
             return lines.join("\n");
         },
@@ -79,6 +81,16 @@ export default {
         playCount: (position, count) => `Table ${position}/[Filter.Count] - launched ${count} times.`,
         playTime: (position, hours, minutes) => `Table ${position}/[Filter.Count] - played for ${formatPlayTime(hours, minutes)}.`,
         year: (position) => `Table ${position}/[Filter.Count] - released in [Game.Year].`,
+    },
+
+    // Upper status line messages, after the player's own from PinballY's options.
+    // [Filter.Count] is a PinballY placeholder — keep it as-is.
+    upperStatusLines: {
+        welcome: name => `Welcome, ${name}!`,
+        tablesAvailable: "[Filter.Count] tables are available!",
+        launchHint: "Launch button to start a table.",
+        browseHint: "Left/right flippers to browse the tables.",
+        signOff: "Have fun!",
     },
 
     // Labels for menu items this project adds itself (see custom_menu_commands.js, custom_filter.js and hall_of_fame.js).

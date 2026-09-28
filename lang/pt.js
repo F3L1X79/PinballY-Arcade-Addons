@@ -168,6 +168,16 @@ export default {
         year: (position) => `Mesa ${position}/[Filter.Count] - lançada em [Game.Year].`,
     },
 
+    // Upper status line messages, after the player's own from PinballY's options.
+    // [Filter.Count] is a PinballY placeholder — keep it as-is.
+    upperStatusLines: {
+        welcome: name => `Boas-vindas, ${name}!`,
+        tablesAvailable: "[Filter.Count] mesas disponíveis!",
+        launchHint: "Botão de lançamento para iniciar uma mesa.",
+        browseHint: "Flippers esquerdo/direito para passar as mesas.",
+        signOff: "Divirta-se!",
+    },
+
     // Labels for menu items this project adds itself (see custom_menu_commands.js, custom_filter.js and hall_of_fame.js).
     customMenuLabels: {
         challengeTables: "Mesas do desafio",
