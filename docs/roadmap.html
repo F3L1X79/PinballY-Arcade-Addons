@@ -124,6 +124,7 @@
   .queue { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); background: var(--panel); }
   .item { display: grid; grid-template-columns: 58px 70px minmax(0, 1fr); gap: 0 14px; padding: 14px 16px 14px 0; background: var(--row);
     border-left: 4px solid var(--c); position: relative; transition: opacity .18s, background .18s; outline: none; }
+  .item[hidden] { display: none; }
   .item:nth-child(even) { background: var(--row-alt); }
   .item + .item { border-top: 1px solid #10151d; }
   .item.dragging { opacity: .35; }
