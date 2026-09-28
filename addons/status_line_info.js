@@ -92,12 +92,20 @@ export default function init() {
 
     // The non-temporary entries on the line at start-up are the player's own
     // messages from PinballY's options; the table info is written after them.
-    // Temporary entries (from show()) are not the player's and are not
-    // counted; this assumes none is on the line yet when the Add-on starts.
+    // PinballY's show() inserts a temporary entry just after the current one
+    // and removes it once shown, which shifts the indexes: the table info's
+    // slots are counted among the non-temporary entries only.
     const statusLine = mainWindow.statusLines.lower;
     const firstTableInfoSlot = statusLine.getText().filter(entry => !entry.isTemp).length;
     for (let i = 0; i < STATUS_LINE_BUILDERS.length; i++) {
         statusLine.add("");
+    }
+
+    function findTableInfoSlotIndexes() {
+        return statusLine.getText()
+            .map((entry, index) => (entry.isTemp ? -1 : index))
+            .filter(index => index >= 0)
+            .slice(firstTableInfoSlot, firstTableInfoSlot + STATUS_LINE_BUILDERS.length);
     }
 
     function refreshStatusLine() {
@@ -106,8 +114,9 @@ export default function init() {
         const position = getCurrentTablePosition(currentTitle);
         const play = profileStore.getPlay(currentGame ? currentGame.configId : "");
 
+        const slotIndexes = findTableInfoSlotIndexes();
         STATUS_LINE_BUILDERS.forEach((buildText, i) => {
-            statusLine.setText(firstTableInfoSlot + i, buildText(position, currentGame, play));
+            statusLine.setText(slotIndexes[i], buildText(position, currentGame, play));
         });
     }
 

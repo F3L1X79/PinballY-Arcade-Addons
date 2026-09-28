@@ -181,7 +181,8 @@ Members:
 - `setText(index, text)`: the new text shows immediately if that entry is on screen.
 - `getText()` returns a `[{text, isTemp}]` snapshot.
 - `getCur()` returns the current index, or −1.
-- `show(text)` shows the text once, as a temporary entry.
+- `show(text)` shows the text once, as a temporary entry. The entry is inserted just after the current message (and after any temporary ones already queued there), then removed once shown, so it shifts the indexes of the entries after it.
+- `add(text, index?)` without an index (or out of range) appends at the end.
 - `id`.
 
 Text may contain `[substitution]` variables (StatuslineOptions.html).

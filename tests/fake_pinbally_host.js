@@ -6,7 +6,8 @@
 // PinballY events, pick menu items, play launched games, and inspect shown
 // menus, launches, written settings keys, drawing layers, what was drawn,
 // sounds played and the lower status line (which can start with the
-// player's own messages); script filters are shown with selectFilter().
+// player's own messages, and get a temporary one as PinballY's show() puts
+// it); script filters are shown with selectFilter().
 // Its in-memory file system is seeded with files and folders (and
 // unreadable images) and inspected (file contents, writes, renames and
 // deletes).
@@ -144,6 +145,14 @@ export function createFakePinballYHost({
         const type = eventName.split(".")[0];
         if (!handlers.has(type)) handlers.set(type, []);
         handlers.get(type).push(handler);
+    }
+
+    // As PinballY does, inserts a temporary entry just after the current one
+    // (always the first here) and after the temporary ones already queued there.
+    function showOnLowerStatusLine(text) {
+        let index = 1;
+        while (index < lowerStatusLine.length && lowerStatusLine[index].isTemp) index++;
+        lowerStatusLine.splice(index, 0, { text, isTemp: true });
     }
 
     function fire(type, properties = {}) {
@@ -510,6 +519,7 @@ export function createFakePinballYHost({
         // The script filters' descriptions, as created.
         scriptFilters: () => [...filters.values()],
         lowerStatusLine: () => lowerStatusLine.map(entry => entry.text),
+        showOnLowerStatusLine,
         seedSettings(values) {
             for (const [key, value] of Object.entries(values)) storedSettings.set(key, toStoredString(value));
         },
@@ -634,6 +644,7 @@ export function createFakePinballYHost({
                             getText: () => lowerStatusLine.map(entry => ({ ...entry })),
                             add: (text) => { lowerStatusLine.push({ text, isTemp: false }); },
                             setText: (index, text) => { lowerStatusLine[index].text = text; },
+                            show: showOnLowerStatusLine,
                         },
                     },
                 },

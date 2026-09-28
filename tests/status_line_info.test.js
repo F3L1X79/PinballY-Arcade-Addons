@@ -2,7 +2,8 @@
 // The status line's play count and play time, through main.js on the fake
 // PinballY globals: they are the active Profile's figures for the selected
 // table, never PinballY's own, and follow a switch and a finished game. The
-// player's own messages from PinballY's options stay first, unchanged.
+// player's own messages from PinballY's options stay first, unchanged, even
+// with a temporary message inserted among them.
 // ============================================================
 
 import { test } from "node:test";
@@ -57,6 +58,14 @@ test("the status line shows the active Profile's play count and play time of the
     await settle();
     assert.deepEqual(figures(), [TEXT.playCount(2, 8), TEXT.playTime(2, 3, 5)], "Alice's game counted on the return to the wheel");
     assert.deepEqual(fake.lowerStatusLine().slice(0, PLAYER_MESSAGES.length), PLAYER_MESSAGES, "the player's messages unchanged");
+
+    // PinballY shows a one-time message just after the current (first) entry.
+    fake.showOnLowerStatusLine("Added to Favorites");
+    fake.fire("wheelmode");
+    assert.deepEqual(fake.lowerStatusLine(), [
+        PLAYER_MESSAGES[0], "Added to Favorites", PLAYER_MESSAGES[1],
+        TEXT.year(2), TEXT.manufacturer(2), TEXT.playCount(2, 8), TEXT.playTime(2, 3, 5),
+    ], "a temporary message moves the table info along, never over the player's messages");
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });
