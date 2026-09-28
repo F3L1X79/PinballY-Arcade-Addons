@@ -1,0 +1,771 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Roadmap PinballY Expansion Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* The cabinet's "Steamball" Achievement List, as prototyped on
+     prototype/achievement-list: Steam palette, gold accents, rank emblems,
+     two-tone rows, dimmed spotlight, console-like footer. */
+  :root {
+    --page: #10141b;
+    --panel: #171d27;
+    --row: #222a38;
+    --row-alt: #1a1f29;
+    --row-hi: #2b3547;
+    --border: #3e4c60;
+    --gold: #e8b84a;
+    --gold-soft: rgb(232 184 74 / .14);
+    --text: #e6eaf2;
+    --muted: #8f9bb3;
+    --faint: #5d6a80;
+    --bronze: #c07a45;
+    --silver: #b8c4d4;
+    --gold-rank: #e8b84a;
+    --platinum: #4fd6c9;
+    --t-profiles: #8d99ff;
+    --t-play: #f07aa6;
+    --t-share: #5fd29b;
+    --dim: .62;
+    --cond: "Bahnschrift SemiCondensed", "Barlow Semi Condensed", "Segoe UI", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--page); }
+  body {
+    margin: 0; color: var(--text); background:
+      radial-gradient(ellipse 80% 50% at 50% -10%, rgb(232 184 74 / .08), transparent 70%),
+      var(--page);
+    font: 15px/1.55 "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  main { max-width: 1080px; margin: 0 auto; padding: 28px 16px 110px; display: grid; gap: 28px; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  a { color: inherit; text-decoration-color: var(--faint); }
+  a:hover { text-decoration-color: var(--gold); }
+  code { font-family: "JetBrains Mono", Consolas, monospace; font-size: .82em; background: #0e1219; border: 1px solid #2a3344; padding: 1px 5px; border-radius: 3px; color: #cfd6e4; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 4px; }
+
+  /* ===== Header, like the list's: medallion, title, gauge, per-rank recap ===== */
+  .hero { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 22px; padding: 22px 24px; align-items: center;
+    background: linear-gradient(180deg, #1c2330, var(--panel)); }
+  .medallion { width: 92px; height: 92px; border: 2px solid var(--gold); padding: 4px; border-radius: 3px; }
+  .medallion > div { width: 100%; height: 100%; border: 1px solid var(--gold); display: grid; place-items: center;
+    background: radial-gradient(circle at 50% 40%, #2c3a52, #121722); }
+  .medallion img { width: 70px; height: 70px; object-fit: contain; }
+  .hero .eyebrow { margin: 0; }
+  .hero h1 { font-family: var(--cond); font-weight: 700; font-size: clamp(1.7rem, 4.5vw, 2.4rem); letter-spacing: .08em; line-height: 1.05; }
+  .hero .sub { color: var(--muted); margin: 4px 0 12px; font-size: .92rem; }
+  .hero-line { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 18px; font-family: var(--cond); font-size: 1.02rem; }
+  .hero-line b { color: var(--gold); font-weight: 600; }
+  .recap { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--muted); font-size: .95rem; }
+  .recap span { display: inline-flex; align-items: center; gap: 5px; }
+  .recap img { width: 26px; height: 26px; object-fit: contain; }
+  .gauge { position: relative; height: 7px; background: #0d1118; border: 1px solid #2c3647; margin-top: 8px; }
+  .gauge > i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #b78a2c, var(--gold)); }
+  .gauge > i::after { content: ""; position: absolute; right: -6px; top: 50%; width: 9px; height: 9px; background: #fff3cf;
+    transform: translateY(-50%) rotate(45deg); box-shadow: 0 0 8px var(--gold); }
+  .stamp { font-family: var(--cond); color: var(--faint); letter-spacing: .08em; font-size: .85rem; }
+
+  /* ===== Section headers, like "SUCCÈS DÉBLOQUÉS (34)" ===== */
+  .eyebrow { font-family: var(--cond); font-weight: 600; font-size: .95rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); margin: 0 0 10px;
+    display: flex; align-items: center; gap: 12px; }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+  .eyebrow .count { color: var(--muted); }
+  .lede { color: var(--muted); margin: -2px 0 14px; max-width: 72ch; font-size: .92rem; }
+
+  /* ===== In progress ===== */
+  .now { padding: 16px 20px; border-left: 3px solid var(--gold); display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center; justify-content: space-between; }
+  .now p { margin: 0; max-width: 64ch; }
+  .now .next { font-family: var(--cond); font-size: 1rem; color: var(--muted); }
+  .now .next code { color: var(--gold); }
+
+  /* ===== Decisions + matrix ===== */
+  .two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+  @media (max-width: 820px) { .two { grid-template-columns: 1fr; } }
+  .decisions { padding: 6px 0; }
+  .decisions h4 { font-family: var(--cond); font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); font-size: .8rem; margin: 10px 18px 4px; }
+  .decisions ol { margin: 0; padding: 0; list-style: none; }
+  .decisions li { padding: 9px 18px 9px 30px; position: relative; }
+  .decisions li:nth-child(odd) { background: var(--row-alt); }
+  .decisions li::before { content: ""; position: absolute; left: 13px; top: 16px; width: 6px; height: 6px; background: var(--gold); transform: rotate(45deg); }
+  .decisions strong { display: block; font-weight: 600; }
+  .decisions span { color: var(--muted); font-size: .9rem; }
+  .matrix-wrap { padding: 16px 18px; }
+  .matrix { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 5px; font-size: .84rem; }
+  .matrix .ax { color: var(--muted); font-family: var(--cond); font-size: .8rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; display: flex; align-items: center; justify-content: center; padding: 4px; }
+  .matrix .ax.row { writing-mode: vertical-rl; transform: rotate(180deg); }
+  .cell { background: var(--row-alt); border: 1px solid #252e3d; min-height: 74px; padding: 7px; display: flex; flex-wrap: wrap; gap: 5px; align-content: flex-start; }
+  .cell.sweet { border: 1px dashed var(--gold); background: linear-gradient(180deg, var(--gold-soft), transparent); }
+  .chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px 3px 3px; background: var(--row); border: 1px solid var(--border); border-left: 3px solid var(--c); text-decoration: none; line-height: 1.25; }
+  .chip:hover { background: var(--row-hi); }
+  .chip b { font-family: var(--cond); min-width: 20px; text-align: center; background: #0e1219; color: var(--gold); padding: 0 4px; }
+  .tr-profiles { --c: var(--t-profiles); } .tr-play { --c: var(--t-play); } .tr-share { --c: var(--t-share); }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: .8rem; color: var(--muted); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend span::before { content: ""; width: 10px; height: 10px; background: var(--c); }
+  .legend .sweet-key::before { background: none; border: 1px dashed var(--gold); }
+
+  /* ===== Queue toolbar ===== */
+  .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .filters, .actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+  .filters button, .actions button { font-family: var(--cond); font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: .85rem;
+    background: var(--row); border: 1px solid var(--border); padding: 5px 12px; border-radius: 3px; }
+  .filters button:hover, .actions button:hover { background: var(--row-hi); }
+  .filters button[aria-pressed="true"] { border-color: var(--gold); color: var(--gold); background: var(--gold-soft); }
+  .status { font-size: .82rem; color: var(--gold); }
+
+  /* ===== Rows, like the list's: rank emblem, title, description, gauge ===== */
+  .queue { list-style: none; margin: 0; padding: 0; border: 1px solid var(--border); background: var(--panel); }
+  .item { display: grid; grid-template-columns: 58px 70px minmax(0, 1fr); gap: 0 14px; padding: 14px 16px 14px 0; background: var(--row);
+    border-left: 4px solid var(--c); position: relative; transition: opacity .18s, background .18s; outline: none; }
+  .item:nth-child(even) { background: var(--row-alt); }
+  .item + .item { border-top: 1px solid #10151d; }
+  .item.dragging { opacity: .35; }
+  .item.drop-before { box-shadow: inset 0 3px 0 var(--gold); }
+  .item.drop-after { box-shadow: inset 0 -3px 0 var(--gold); }
+  /* Spotlight: the other rows dimmed, as on the cabinet. */
+  .queue.spot .item:not(.hi) { opacity: var(--dim); }
+  .item.hi { background: var(--row-hi); box-shadow: inset 0 0 0 1px rgb(232 184 74 / .55); }
+  .item.current::after { content: "EN COURS"; position: absolute; top: 0; right: 0; font-family: var(--cond); font-weight: 700; font-size: .72rem; letter-spacing: .14em;
+    background: var(--gold); color: #1a1406; padding: 2px 8px; }
+  .handle { display: flex; flex-direction: column; align-items: center; gap: 6px; padding-top: 2px; cursor: grab; }
+  .num { font-family: var(--cond); font-weight: 700; font-size: 1.5rem; line-height: 1; color: var(--gold); }
+  .move { display: flex; flex-direction: column; gap: 2px; }
+  .move button { background: #0e1219; border: 1px solid var(--border); width: 26px; height: 20px; font-size: .62rem; color: var(--muted); padding: 0; border-radius: 2px; }
+  .move button:hover { color: var(--gold); border-color: var(--gold); }
+  .emblem { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .emblem img { width: 66px; height: 66px; object-fit: contain; filter: drop-shadow(0 2px 4px rgb(0 0 0 / .5)); }
+  .emblem small { font-family: var(--cond); font-size: .72rem; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .content { min-width: 0; }
+  .item-head { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; justify-content: space-between; padding-right: 70px; }
+  .item h3 { font-family: var(--cond); font-weight: 600; font-size: 1.22rem; letter-spacing: .01em; }
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag { font-family: var(--cond); font-size: .76rem; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; background: #0e1219; border: 1px solid #2c3647; color: var(--muted); }
+  .tag.track { color: var(--c); border-color: color-mix(in srgb, var(--c) 50%, transparent); }
+  .content > p { margin: 6px 0 8px; color: #c8cfdc; font-size: .93rem; }
+  /* Flow progress, like an Achievement Progress bar with "3/5". */
+  .flow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; margin: 4px 0 6px; }
+  .stepper { display: flex; gap: 3px; }
+  .stepper i { display: none; }
+  .stepper span { flex: 1; position: relative; padding-top: 11px; font-family: var(--cond); font-size: .76rem; letter-spacing: .04em; color: var(--faint); text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .stepper span::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 5px; background: #0d1118; border: 1px solid #2c3647; }
+  .stepper span.done { color: var(--muted); }
+  .stepper span.done::before { background: #a88233; border-color: #a88233; }
+  .stepper span.here { color: var(--gold); font-weight: 600; }
+  .stepper span.here::before { background: linear-gradient(90deg, #a88233, var(--gold)); border-color: var(--gold); box-shadow: 0 0 6px rgb(232 184 74 / .6); }
+  .stepper span.skip { text-decoration: line-through; opacity: .6; }
+  .stepper span.skip::before { border-style: dashed; background: none; }
+  .progress { font-family: var(--cond); font-weight: 600; color: var(--gold); font-size: .95rem; white-space: nowrap; }
+  .links { font-size: .86rem; color: var(--muted); margin: 2px 0 4px; }
+  .links::before { content: "◆ "; color: var(--gold); font-size: .7em; }
+  details { margin-top: 6px; border-top: 1px dashed #2c3647; padding-top: 6px; }
+  summary { cursor: pointer; font-family: var(--cond); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; font-size: .82rem; color: var(--muted); list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸"; display: inline-block; width: 1em; color: var(--gold); transition: transform .15s; }
+  details[open] > summary::before { transform: rotate(90deg); }
+  summary:hover { color: var(--text); }
+  details ul { margin: 6px 0; padding-left: 20px; font-size: .9rem; }
+  details li { margin: 3px 0; }
+  details li::marker { color: var(--gold); }
+  .ctx { color: var(--muted); font-size: .88rem; margin: 6px 0 2px; }
+  @media (max-width: 640px) {
+    .item { grid-template-columns: 44px minmax(0, 1fr); padding-right: 12px; }
+    .emblem { display: none; }
+    .item-head { padding-right: 0; padding-top: 10px; }
+    .hero { grid-template-columns: 1fr; }
+    .medallion { width: 72px; height: 72px; }
+    .medallion img { width: 54px; height: 54px; }
+  }
+
+  .refs { padding: 12px 18px; }
+  .refs ul { margin: 0; padding-left: 18px; }
+  .refs li { margin: 4px 0; color: var(--muted); }
+
+  /* ===== Footer, console-like hints with key caps ===== */
+  .hints { position: fixed; left: 0; right: 0; bottom: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; padding: 10px 16px;
+    background: linear-gradient(180deg, rgb(16 20 27 / 0), rgb(16 20 27 / .96) 35%); font-family: var(--cond); font-weight: 600; letter-spacing: .1em; font-size: .85rem; color: var(--muted); }
+  .hints span { display: inline-flex; align-items: center; gap: 7px; }
+  kbd { font-family: var(--cond); font-weight: 700; font-size: .78rem; letter-spacing: .06em; color: #10141b; background: #d9dee8; border-radius: 9px; padding: 1px 9px; box-shadow: inset 0 -2px 0 #9aa3b3; }
+  @media (max-width: 640px) { .hints .kb-only { display: none; } }
+</style>
+</head>
+<body>
+
+
+<main>
+
+  <header class="panel hero">
+    <div class="medallion"><div><img src="roadmap/emblems/gold.png" alt=""></div></div>
+    <div>
+      <p class="eyebrow">PinballY Expansion Pack</p>
+      <h1>ROADMAP</h1>
+      <p class="sub">Les chantiers à venir, dans l'ordre. Les chantiers terminés sont retirés.</p>
+      <div class="hero-line">
+        <span><b id="hero-count"></b></span>
+        <span class="recap" id="recap" aria-label="Chantiers par effort"></span>
+      </div>
+      <div class="gauge" aria-hidden="true"><i id="hero-gauge" style="width:0"></i></div>
+      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 28.09.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
+    </div>
+  </header>
+
+  <!-- ===== In progress ===== -->
+  <section>
+    <p class="eyebrow">En cours <span class="count">(1)</span></p>
+    <div class="panel now" id="now">
+      <p><strong>Achievement List dessinée</strong> : spec <a href="https://github.com/F3L1X79/PinballY-Arcade-Addons/issues/78">#78</a> découpée en 9 tickets (#79 à #87). La vitrine des README (spec #88) est terminée.</p>
+      <span class="next">Ensuite : <code>/implement</code> #79 ou #80 · tes blasons : #87</span>
+    </div>
+  </section>
+
+  <!-- ===== Decisions + matrix ===== -->
+  <section class="two">
+    <div>
+      <p class="eyebrow">Décisions</p>
+      <div class="panel decisions">
+        <h4>28/09</h4>
+        <ol>
+          <li><strong>Le README passe avant tout le reste</strong>
+            <span>Attirer du monde d'abord : captures tout de suite et promo Discord, sans attendre la Distribution ni l'Achievement List dessinée.</span></li>
+          <li><strong>Le projet s'appelle « PinballY Expansion Pack »</strong>
+            <span>Titre des README et du glossaire, avec la mention « non officiel ». « PinballY+ » abandonné. Le dépôt garde son nom pour l'instant.</span></li>
+        </ol>
+        <h4>27/09</h4>
+        <ol>
+          <li><strong>Picker plus fluide juste après l'Achievement List</strong>
+            <span>Il réutilise le dessin d'avance qu'elle extrait dans <code>common/</code>, tant que les mesures du prototype sont fraîches.</span></li>
+          <li><strong>Profile Stats dessinées avant les Stats des autres</strong>
+            <span>La comparaison entre Profiles se construit sur l'écran dessiné, pas sur des menus natifs à refaire.</span></li>
+          <li><strong>Achievements isolés en Gold</strong>
+            <span>Le rang des autres est déduit de leur palier (premier Bronze, dernier Platinum) : le futur Tour du monde sera donc Gold.</span></li>
+        </ol>
+        <h4>26/09</h4>
+        <ol>
+          <li><strong>Le projet s'ouvre aux autres à la fin</strong>
+            <span>La Distribution reste en fin de file, quand il y aura le plus de choses à montrer (le README en est sorti le 28/09).</span></li>
+          <li><strong>Admin, enfant et reset se grillent ensemble</strong>
+            <span>Réunis en un seul chantier : <a href="#marked-profiles">Profiles marqués (n° <span data-ref="marked-profiles"></span>)</a>.</span></li>
+          <li><strong>Réglages et filtres par Profile : abandonné</strong>
+            <span>Trop flou, et bloqué par l'interdiction de <code>save()</code>. À recréer seulement si un besoin précis apparaît.</span></li>
+        </ol>
+      </div>
+    </div>
+
+    <div>
+      <p class="eyebrow">Effort × impact <span class="count">(mon estimation)</span></p>
+      <div class="panel matrix-wrap">
+        <div class="matrix">
+          <div></div><div class="ax">Petit</div><div class="ax">Moyen</div><div class="ax">Gros</div>
+
+          <div class="ax row">Fort</div>
+          <div class="cell sweet"></div>
+          <div class="cell">
+            <a class="chip tr-profiles" href="#marked-profiles"><b></b>Profiles marqués</a>
+          </div>
+          <div class="cell">
+            <a class="chip tr-share" href="#distrib"><b></b>Distribution</a>
+          </div>
+
+          <div class="ax row">Moyen</div>
+          <div class="cell sweet">
+            <a class="chip tr-profiles" href="#picker-smooth"><b></b>Picker fluide</a>
+            <a class="chip tr-play" href="#world-tour"><b></b>Tour du monde</a>
+            <a class="chip tr-play" href="#table-fan"><b></b>Féru d'une table</a>
+          </div>
+          <div class="cell">
+            <a class="chip tr-profiles" href="#stats-drawn"><b></b>Stats dessinées</a>
+            <a class="chip tr-profiles" href="#stats"><b></b>Stats des autres</a>
+            <a class="chip tr-share" href="#nested-install"><b></b>Install non invasive</a>
+          </div>
+          <div class="cell">
+            <a class="chip tr-play" href="#popup"><b></b>Achievement List</a>
+            <a class="chip tr-profiles" href="#ratings"><b></b>Notes et favoris</a>
+          </div>
+
+          <div class="ax row">Faible</div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+          <div class="cell"></div>
+        </div>
+        <div class="legend">
+          <span class="tr-profiles">Profiles</span>
+          <span class="tr-play">Jeu et succès</span>
+          <span class="tr-share">Diffusion</span>
+          <span class="sweet-key">Gains rapides</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Queue ===== -->
+  <section>
+    <p class="eyebrow">File d'attente <span class="count" id="queue-count"></span></p>
+    <p class="lede">Glisse une ligne, ou utilise ▲ ▼ (ou <kbd>ALT</kbd> + flèches sur la ligne surlignée), pour changer la priorité. Ton ordre reste dans ce navigateur : copie-le et colle-le-moi pour que je l'écrive dans le fichier.</p>
+
+    <div class="toolbar">
+      <div class="filters" role="group" aria-label="Filtrer par thème">
+        <button type="button" data-filter="all" aria-pressed="true">Tout</button>
+        <button type="button" data-filter="profiles" aria-pressed="false">Profiles</button>
+        <button type="button" data-filter="play" aria-pressed="false">Jeu et succès</button>
+        <button type="button" data-filter="share" aria-pressed="false">Diffusion</button>
+      </div>
+      <div class="actions">
+        <span class="status" id="order-status" aria-live="polite"></span>
+        <button type="button" id="copy-order">Copier l'ordre pour Claude</button>
+        <button type="button" id="reset-order" hidden>Revenir à l'ordre du fichier</button>
+      </div>
+    </div>
+
+    <ol class="queue">
+
+      <li draggable="true" tabindex="0" class="item tr-play current" id="popup" data-track="play" data-rank="gold">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Achievement List dessinée</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen-gros</span><span class="tag">UI</span></div>
+          </div>
+          <p>Remplacer les menus natifs de la liste des succès par une liste défilante dessinée sur des calques, style « Steamball » (ADR 0005).</p>
+          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span>prototype</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span class="here">implement</span></div>
+          <div class="links">Spec <a href="https://github.com/F3L1X79/PinballY-Arcade-Addons/issues/78">#78</a> · ouvre la voie au <a href="#picker-smooth">picker fluide (n° <span data-ref="picker-smooth"></span>)</a> et aux <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
+          <details open>
+            <summary>Contexte</summary>
+            <p class="ctx">Prototype validé le 27/09/2026 (branche <code>prototype/achievement-list</code>, verdict dans son dernier commit ; ADR 0005). Spec #78 publiée le même jour : Achievement Rank déduit du palier (premier Bronze, dernier Platinum ; isolés Gold ; complétions de groupe selon la taille du groupe), dessin d'avance gardé d'une ouverture à l'autre, palette commune avec le toast et la Challenge Card. Une fois livrée, refaire les captures des README (<code>docs/images/</code>).</p>
+          </details>
+          <details>
+            <summary>Blasons (2)</summary>
+            <ul>
+              <li>Planche Photoshop livrée (avec halo, grisés, petits sans halo) : à exporter en 12 PNG séparés, canevas carré identique, halos non coupés, franges du détourage nettoyées.</li>
+              <li>12 images retenues (avec halo, grisés, petits sans halo pour l'en-tête) : ticket #87 pour toi, intégration #86.</li>
+            </ul>
+            <p class="ctx">Silhouettes proches des emblèmes de League of Legends : sans souci sur ta borne, à éloigner du modèle avant la Distribution.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="picker-smooth" data-track="profiles" data-rank="bronze">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Profile picker plus fluide</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span><span class="tag">perf</span></div>
+          </div>
+          <p>Le carrousel des Profiles saccade un peu à chaque déplacement : lui appliquer les leçons du prototype de l'Achievement List.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>diagnose</span><i>›</i><span>implement</span></div>
+          <div class="links">Après l'<a href="#popup">Achievement List (n° <span data-ref="popup"></span>)</a>, dont il réutilise le module de dessin d'avance</div>
+          <details>
+            <summary>Pistes, non mesurées (3)</summary>
+            <ul>
+              <li>Chaque pas redessine 3 Avatars (celui qui entre, et les deux dont le cadre passe au doré ou le perd) ; un Avatar qui sort est effacé puis relu. Cadre doré sur un calque à part, Avatars gardés et dessinés d'avance.</li>
+              <li>Le fond plein écran est redessiné deux fois par pas pour cacher puis montrer le nom (la surface B rejetée par le prototype). Fond dessiné une fois, nom sur un petit calque par Profile.</li>
+              <li>L'ouverture dessine tout sur le moment : avec le dessin d'avance, elle ne ferait plus que déplacer des calques.</li>
+            </ul>
+            <p class="ctx">D'abord mesurer avec <code>/diagnosing-bugs</code> (temps de dessin dans <code>logfile.log</code> sur la borne), puis corriger. Le dessin d'avance : tranches de 12 ms, pause de 400 ms après un bouton, rien pendant une partie.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="marked-profiles" data-track="profiles" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Profiles marqués : admin, enfant et remise à zéro des succès</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span><span class="tag">un seul grilling</span></div>
+          </div>
+          <p>Marquer un Profile pour changer ce qu'il voit. Un Profile <strong>admin</strong> garde les menus de configuration (Table Setup, réglages de PinballY…), les autres ont un menu principal épuré. Un Profile <strong>enfant</strong> ne voit pas les tables de la catégorie « NSFW » (déjà créée dans PinballY), qui deviennent Hidden pour lui seulement. Un bouton <strong>remet les Achievements à zéro</strong> sans toucher aux fichiers, a priori dans le menu admin.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Touche aussi les Weekly Challenges (Challenge Tables)</div>
+          <details>
+            <summary>Questions ouvertes : admin (3)</summary>
+            <ul>
+              <li>Comment désigner un admin : une liste <code>ADMIN_PROFILES=…</code> dans <code>.env.local</code> (recommandé) ou un champ dans <code>profile.json</code>, comme pour l'enfant ?</li>
+              <li>Quels menus cacher exactement ?</li>
+              <li>Que faire quand aucun admin n'est défini ?</li>
+            </ul>
+            <p class="ctx">Désencombrer, pas protéger : aucun mot de passe. Déconseillé : fusionner avec Guest, qui sert aux visiteurs et est actif sur une installation neuve.</p>
+          </details>
+          <details>
+            <summary>Questions ouvertes : enfant (4)</summary>
+            <ul>
+              <li>Comment marquer le Profile : <code>"isChild": true</code> dans <code>profile.json</code> ?</li>
+              <li>Que faire quand la Table of the Day commune est NSFW ?</li>
+              <li>Les Achievements de collection comptent-ils sans les tables NSFW ?</li>
+              <li>Les Challenge Tables et le Random Game doivent-ils aussi les exclure ?</li>
+            </ul>
+            <p class="ctx">Ce n'est pas un contrôle parental : aucun mot de passe.</p>
+          </details>
+          <details>
+            <summary>Questions ouvertes : remise à zéro (4)</summary>
+            <ul>
+              <li>Seulement le Profile actif, ou tous ?</li>
+              <li>Effacer seulement les annonces (<code>notified</code>) ou aussi la progression (parties, Streaks, stats de session) ?</li>
+              <li>Confirmation obligatoire : comment la rendre difficile à déclencher par erreur avec les boutons du cabinet ?</li>
+              <li>Menu admin, ou aussi l'Achievement List quand aucun admin n'est défini ?</li>
+            </ul>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-play" id="world-tour" data-track="play" data-rank="bronze">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Achievement « Tour du monde »</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
+          </div>
+          <p>Sans filtre actif, faire défiler toutes les tables de la Wheel sans en lancer aucune.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Achievement isolé : Gold, d'après la règle de la spec #78</div>
+          <details>
+            <summary>Questions ouvertes (5)</summary>
+            <ul>
+              <li>À vérifier dans PinballY : <code>gameselect</code> se déclenche-t-il pour chaque table traversée en défilement rapide, ou seulement à l'arrêt ?</li>
+              <li>Les sauts par lettre ou par page comptent-ils ?</li>
+              <li>D'une traite dans la session (un lancement ou un changement de filtre remet le tour à zéro) ou cumulé ? Je recommande d'une traite, sinon le succès se débloque tout seul avec le temps.</li>
+              <li>Tables Hidden exclues ; quelle Achievement Family ?</li>
+              <li>Par Profile, jamais pour Guest ?</li>
+            </ul>
+            <p class="ctx">Nos propres déplacements (animation Random Game, Profile Stats) passent par <code>setWheelGame</code>, qui ne déclenche pas <code>gameselect</code> : ils ne compteront pas. Nouvel ID à figer dans <code>persisted_data_pinning.test.js</code>.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-play" id="table-fan" data-track="play" data-rank="bronze">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Achievements « Féru d'une table »</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
+          </div>
+          <p>Une échelle d'Achievements pour avoir joué une même table un certain nombre de fois (par exemple 10, 25, 50, 100 parties), avec la table la plus jouée comme Achievement Progress.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">À griller avec le <a href="#world-tour">Tour du monde (n° <span data-ref="world-tour"></span>)</a> : deux petits Achievements, un seul grilling</div>
+          <details>
+            <summary>Questions ouvertes (4)</summary>
+            <ul>
+              <li>Quels paliers ? Ils font partie des ID, à figer dans <code>persisted_data_pinning.test.js</code>.</li>
+              <li>Qu'est-ce qui compte comme une partie : tout lancement (<code>plays[configId].count</code>, déjà suivi par Profile) ou seulement une partie d'au moins une minute, comme pour les Challenges ?</li>
+              <li>Tables Hidden exclues ? Quelle Achievement Family (Play Time, Sessions, ou une nouvelle) ?</li>
+              <li>Le titre nomme-t-il la table une fois débloqué, ou reste-t-il générique ?</li>
+            </ul>
+            <p class="ctx">Rien de tel aujourd'hui : Marathon compte la durée d'une session, Collection et les complétions récompensent la variété, pas la fidélité. Le rang viendra tout seul du palier (spec #78).</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="stats-drawn" data-track="profiles" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Profile Stats en écran dessiné</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span><span class="tag">UI</span></div>
+          </div>
+          <p>Passer les Profile Stats et leur liste de tables des menus natifs à un écran dessiné, avec la palette commune.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Après l'<a href="#popup">Achievement List (n° <span data-ref="popup"></span>)</a>, dont il reprend la surface et la palette ; avant les <a href="#stats">Stats des autres (n° <span data-ref="stats"></span>)</a></div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">Reporté pendant le grilling de l'Achievement List dessinée (27/09/2026) : si le rendu plaît, l'étendre aux Profile Stats.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="stats" data-track="profiles" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Profile Stats des autres Profiles et comparaison</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span></div>
+          </div>
+          <p>Consulter les Profile Stats d'un autre Profile que l'actif, puis comparer tous les Profiles de la maison.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Sur l'écran des <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">Reporté pendant le grilling des Profile Stats : la première version ne montre que le Profile actif. Les données de chaque Profile sont déjà dans son <code>profile.json</code>. Un classement des Challenges réussis pourrait s'y ajouter. L'Unlock Rate (Avatars des autres Profiles sur chaque Achievement) arrive déjà avec l'<a href="#popup">Achievement List dessinée</a>.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="ratings" data-track="profiles" data-rank="gold">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Notes et favoris par Profile</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen-gros</span></div>
+          </div>
+          <p>Chaque Profile a ses propres notes et favoris (aujourd'hui communs dans PinballY), avec ensuite une note moyenne de la maison par table.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">Les notes et favoris natifs sont des colonnes globales de <code>GameStats.csv</code> : l'invite de notation et les filtres de favoris devront lire les données du Profile.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-share" id="nested-install" data-track="share" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Installation non invasive : un sous-dossier et une ligne dans <code>main.js</code></h3>
+            <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen</span></div>
+          </div>
+          <p>Tout le projet vit dans <code>Scripts\ArcadeAddons\</code> (nom à choisir) et l'installation se résume à ajouter <code>import "./ArcadeAddons/main.js";</code> au <code>main.js</code> du joueur. On n'écrase plus ses scripts, et nos dossiers génériques (<code>addons\</code>, <code>common\</code>, <code>lang\</code>, <code>assets\</code>, <code>profiles\</code>) ne risquent plus d'entrer en collision avec les siens.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Recoupe peut-être la <a href="#distrib">Distribution (n° <span data-ref="distrib"></span>)</a> : à trancher pendant le grill</div>
+          <details>
+            <summary>Questions ouvertes (4)</summary>
+            <ul>
+              <li>Faut-il fusionner ce chantier avec la Distribution, ou le traiter avant pour qu'elle installe déjà dans un sous-dossier ?</li>
+              <li>Où placer le dépôt git : à la racine du sous-dossier, avec <code>System\</code> hors du dépôt ? Il faut alors revoir <code>tests/file_layout.test.js</code> et la règle « la racine ne contient que <code>main.js</code> ».</li>
+              <li>Chemins écrits en dur à calculer à partir du dossier du projet : <code>Scripts\assets\...</code> (<code>achievement_toast.js</code>), <code>Scripts\.env.local</code> (<code>config.js</code>), <code>profiles\</code>.</li>
+              <li>Migration des installations existantes : déplacer <code>profiles\</code> et <code>.env.local</code> automatiquement, ou via une consigne du README ?</li>
+            </ul>
+            <p class="ctx">Idée issue d'une évaluation externe, qui proposait une « plateforme d'extension » (loader générique, Add-ons tiers). Écartée : PinballY ne fournit pas de <code>main.js</code> d'origine, notre <code>main.js</code> est déjà un loader, et les Add-ons sont volontairement couplés (Profile store en premier, ordre imposé).</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-share" id="distrib" data-track="share" data-rank="gold">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Distribution : installation et mises à jour</h3>
+            <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen-gros</span></div>
+          </div>
+          <p>Installer le projet en 30 secondes sans git : choix des Add-ons, sauvegarde de <code>main.js</code>, dossiers <code>System</code> et <code>profiles/</code> et fichier <code>.env.local</code> préservés, puis un moyen de mettre à jour.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>research</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Réécrit la section Install des README</div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">Research : installation chez les utilisateurs de pincab, SmartScreen, GitHub Releases. Piste légère avant un vrai .exe : un zip dans GitHub Releases et un script PowerShell qui installe, écrit les <code>ADD_ON_*</code> cochés dans <code>.env.local</code> et vérifie la dernière version. Un .exe non signé déclenche SmartScreen, et une étape de build demande ton accord.</p>
+          </details>
+        </div>
+      </li>
+
+
+    </ol>
+  </section>
+
+  <section>
+    <p class="eyebrow">Doc PinballY</p>
+    <div class="panel refs">
+      <ul>
+        <li><code>.claude/reference/pinbally-help.md</code> : résumé de l'aide officielle.</li>
+        <li><code>.claude/reference/pinbally-examples.md</code> : idiomes des exemples officiels.</li>
+        <li><code>../Help/*.html</code> : aide complète (169 pages).</li>
+      </ul>
+    </div>
+  </section>
+
+</main>
+
+<footer class="hints" aria-hidden="true">
+  <span class="kb-only"><kbd>↓</kbd><kbd>↑</kbd> PARCOURIR</span>
+  <span class="kb-only"><kbd>ALT</kbd><kbd>↓↑</kbd> DÉPLACER</span>
+  <span><kbd>GLISSER</kbd> PRIORITÉ</span>
+  <span class="kb-only"><kbd>ÉCHAP</kbd> RETOUR</span>
+</footer>
+
+<script>
+  // Theme filter, drag & drop priority and the cabinet-like spotlight.
+  // Order and filter live in this browser's localStorage only; "Copier
+  // l'ordre" hands the order back to Claude.
+  (function () {
+    const queue = document.querySelector(".queue");
+    const buttons = document.querySelectorAll(".filters button");
+    const status = document.getElementById("order-status");
+    const resetBtn = document.getElementById("reset-order");
+    const items = () => [...queue.querySelectorAll(".item")];
+    const visibleItems = () => items().filter(it => !it.hidden);
+    const fileOrder = items().map(it => it.id);
+    const RANKS = { bronze: "Bronze · petit", silver: "Argent · moyen", gold: "Or · moyen-gros", platinum: "Platine · gros" };
+    const store = {
+      get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } },
+      set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
+      del(k) { try { localStorage.removeItem(k); } catch (e) {} }
+    };
+    // The player's own emblems, cut from the Photoshop sheet (roadmap/emblems/).
+    const emblem = rank => '<img src="roadmap/emblems/' + rank + '.png" alt="">';
+
+    // Emblems, flow progress ("3/6") and the header's recap.
+    items().forEach(it => {
+      const rank = it.dataset.rank;
+      it.querySelector(".emblem").innerHTML = emblem(rank) + "<small>" + RANKS[rank].split(" · ")[0] + "</small>";
+      it.querySelector(".emblem").title = "Effort : " + RANKS[rank].split(" · ")[1];
+      const stepper = it.querySelector(".stepper");
+      const steps = [...stepper.querySelectorAll("span")];
+      const here = steps.findIndex(s => s.classList.contains("here"));
+      steps.forEach((s, i) => { if (i < here && !s.classList.contains("skip")) s.classList.add("done"); });
+      const counted = steps.filter(s => !s.classList.contains("skip"));
+      const flow = document.createElement("div");
+      flow.className = "flow";
+      stepper.replaceWith(flow);
+      flow.append(stepper);
+      const progress = document.createElement("span");
+      progress.className = "progress";
+      progress.textContent = (counted.indexOf(steps[here]) + 1) + "/" + counted.length;
+      flow.append(progress);
+    });
+    const recap = document.getElementById("recap");
+    Object.keys(RANKS).forEach(rank => {
+      const n = items().filter(it => it.dataset.rank === rank).length;
+      if (n) recap.insertAdjacentHTML("beforeend", "<span title=\"" + RANKS[rank] + "\">" + emblem(rank) + n + "</span>");
+    });
+    const current = queue.querySelector(".current");
+    if (current) {
+      const counted = [...current.querySelectorAll(".stepper span")].filter(s => !s.classList.contains("skip"));
+      const at = counted.findIndex(s => s.classList.contains("here"));
+      document.getElementById("hero-count").textContent =
+        current.querySelector("h3").textContent + " : étape " + (at + 1) + " / " + counted.length + " (" + counted[at].textContent + ")";
+      document.getElementById("hero-gauge").style.width = Math.round(100 * at / (counted.length - 1)) + "%";
+    }
+    document.getElementById("queue-count").textContent = "(" + items().length + ")";
+
+    function applyFilter(filter) {
+      buttons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.filter === filter)));
+      items().forEach(it => { it.hidden = filter !== "all" && it.dataset.track !== filter; });
+      store.set("roadmap-filter", filter);
+    }
+    buttons.forEach(b => b.addEventListener("click", () => applyFilter(b.dataset.filter)));
+    // A matrix chip or a link always shows its row, even when a filter hides it.
+    document.querySelectorAll('a[href^="#"]').forEach(a => a.addEventListener("click", () => {
+      applyFilter("all");
+      const target = document.getElementById(a.getAttribute("href").slice(1));
+      if (target && target.classList.contains("item")) highlight(target);
+    }));
+
+    function renumber() {
+      const pos = {};
+      items().forEach((it, i) => { pos[it.id] = i + 1; it.querySelector(".num").textContent = i + 1; });
+      document.querySelectorAll(".chip").forEach(c => {
+        const id = c.getAttribute("href").slice(1);
+        c.querySelector("b").textContent = pos[id] || "?";
+      });
+      document.querySelectorAll("[data-ref]").forEach(el => { el.textContent = pos[el.dataset.ref] || "?"; });
+      const order = items().map(it => it.id);
+      const changed = order.join() !== fileOrder.join();
+      resetBtn.hidden = !changed;
+      status.textContent = changed ? "Ordre modifié, pas encore dans le fichier" : "";
+      return order;
+    }
+    function save() {
+      const order = renumber();
+      // The file order is stored alongside: once Claude rewrites the file,
+      // the stale browser order is dropped instead of masking the new one.
+      if (order.join() === fileOrder.join()) store.del("roadmap-order");
+      else store.set("roadmap-order", JSON.stringify({ base: fileOrder, order }));
+    }
+    function restore() {
+      let saved = null;
+      try { saved = JSON.parse(store.get("roadmap-order") || "null"); } catch (e) {}
+      if (!saved || !saved.base || saved.base.join() !== fileOrder.join()) { store.del("roadmap-order"); return; }
+      saved.order.forEach(id => { const el = document.getElementById(id); if (el && el.parentNode === queue) queue.appendChild(el); });
+    }
+
+    // Spotlight: the highlighted row stays bright, the others dim to 0.62.
+    function highlight(it) {
+      items().forEach(x => x.classList.toggle("hi", x === it));
+      queue.classList.toggle("spot", !!it);
+      if (it) { it.focus({ preventScroll: true }); it.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+    }
+    queue.addEventListener("click", e => {
+      const btn = e.target.closest("[data-move]");
+      if (btn) {
+        const it = btn.closest(".item");
+        if (btn.dataset.move === "-1" && it.previousElementSibling) it.previousElementSibling.before(it);
+        if (btn.dataset.move === "1" && it.nextElementSibling) it.nextElementSibling.after(it);
+        save(); btn.focus();
+        return;
+      }
+      if (e.target.closest("a, summary, details")) return;
+      const it = e.target.closest(".item");
+      highlight(it && it.classList.contains("hi") ? null : it);
+    });
+    document.addEventListener("keydown", e => {
+      if (e.target.closest && e.target.closest("button, input, textarea, summary")) return;
+      const hi = queue.querySelector(".item.hi");
+      if (e.key === "Escape") { highlight(null); return; }
+      if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+      e.preventDefault();
+      const list = visibleItems();
+      if (!list.length) return;
+      const down = e.key === "ArrowDown";
+      if (e.altKey && hi) {
+        const sib = down ? hi.nextElementSibling : hi.previousElementSibling;
+        if (sib) { down ? sib.after(hi) : sib.before(hi); save(); highlight(hi); }
+        return;
+      }
+      // Wraps at both ends, like the cabinet's list.
+      const i = list.indexOf(hi);
+      const next = i < 0 ? list[down ? 0 : list.length - 1] : list[(i + (down ? 1 : -1) + list.length) % list.length];
+      highlight(next);
+    });
+
+    let dragged = null;
+    function clearMarks() { items().forEach(it => it.classList.remove("drop-before", "drop-after")); }
+    queue.addEventListener("dragstart", e => {
+      // Let text selection and <summary> clicks behave normally inside details.
+      if (e.target.closest && e.target.closest("details")) { e.preventDefault(); return; }
+      dragged = e.target.closest(".item");
+      if (!dragged) return;
+      dragged.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", dragged.id);
+    });
+    queue.addEventListener("dragover", e => {
+      const over = e.target.closest(".item");
+      if (!dragged || !over) return;
+      e.preventDefault();
+      clearMarks();
+      if (over === dragged) return;
+      const r = over.getBoundingClientRect();
+      over.classList.add(e.clientY < r.top + r.height / 2 ? "drop-before" : "drop-after");
+    });
+    queue.addEventListener("drop", e => {
+      const over = e.target.closest(".item");
+      if (!dragged || !over) return;
+      e.preventDefault();
+      if (over !== dragged) {
+        if (over.classList.contains("drop-before")) over.before(dragged); else over.after(dragged);
+        save();
+      }
+      clearMarks();
+    });
+    queue.addEventListener("dragend", () => { if (dragged) dragged.classList.remove("dragging"); dragged = null; clearMarks(); });
+
+    resetBtn.addEventListener("click", () => {
+      fileOrder.forEach(id => queue.appendChild(document.getElementById(id)));
+      save();
+    });
+    document.getElementById("copy-order").addEventListener("click", () => {
+      const text = "Nouvel ordre de la roadmap :\n" + items().map((it, i) =>
+        (i + 1) + ". " + it.querySelector("h3").textContent.trim() + " (#" + it.id + ")").join("\n");
+      const done = () => { status.textContent = "Ordre copié : colle-le à Claude"; };
+      const fallback = () => { window.prompt("Copie ce texte :", text); };
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+    });
+
+    restore();
+    renumber();
+    applyFilter(store.get("roadmap-filter") || "all");
+  })();
+</script>
+</body>
+</html>
