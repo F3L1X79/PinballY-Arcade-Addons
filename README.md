@@ -4,7 +4,7 @@ An unofficial extension of [PinballY](http://mjrnet.org/pinscape/PinballY.php), 
 
 > **Give everyone in the house a real reason to come back to your pincab.** A Profile with an Avatar for each of you, a Table of the Day, weekly Challenges, Achievements from Bronze to Platinum, and PinballY itself in French, German, Spanish, Italian or Portuguese: everything PinballY was missing, without touching PinballY. And this is only the beginning…
 
-<img src="docs/images/hero.png" alt="The wheel screen with the clock, the active Profile's badge and the status line" width="360">
+<img src="docs/images/hero.png" alt="The wheel screen with the clock, the active Profile's badge and the week's Challenge Card" width="360">
 
 ### A Profile for everyone
 
@@ -26,7 +26,7 @@ A new Challenge every Monday, its card tracking your progress on the wheel scree
 
 ### Achievements
 
-<img src="docs/images/achievements.png" alt="The Achievement List" width="320">
+<img src="docs/images/achievements.png" alt="The Achievement List" width="380">
 
 Dozens of Achievements from Bronze to Platinum, announced without interrupting your games and gathered in the Achievement List.
 

@@ -4,7 +4,7 @@ Extension non officielle de [PinballY](http://mjrnet.org/pinscape/PinballY.php),
 
 > **Votre pincab, en français, avec de vraies raisons d'y revenir.** Profils avec avatar, table du jour, défis hebdomadaires, succès Bronze à Platine : tout ce qui manquait à PinballY, sans toucher à PinballY. Et ce n'est que le début…
 
-<img src="docs/images/hero.png" alt="L'écran de la roue avec l'horloge, le badge du Profil actif et la ligne d'état" width="360">
+<img src="docs/images/hero.png" alt="L'écran de la roue avec l'horloge, le badge du Profil actif et la carte du Défi de la semaine" width="360">
 
 ### PinballY en 6 langues
 
@@ -32,7 +32,7 @@ Chaque lundi, un nouveau Défi : sa carte suit votre progression sur l'écran de
 
 ### Succès
 
-<img src="docs/images/achievements.png" alt="La liste « Succès personnels »" width="320">
+<img src="docs/images/achievements.png" alt="La liste « Succès personnels »" width="380">
 
 Des dizaines de Succès, du Bronze au Platine, annoncés sans interrompre vos parties et réunis dans « Succès personnels ».
 

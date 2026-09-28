@@ -26,7 +26,7 @@ The project's words (Profile, Avatar, Table of the Day, Challenge, Achievement, 
 - `random_game`: the Random Game.
 - `wheel_dialog`: spontaneous dialogs from Add-ons, shown one at a time when the wheel is free, by priority.
 - `achievement_toast`: Achievement Toasts and Challenge Toasts, drawn in the bottom-right corner of the playfield screen, never as a dialog.
-- `main_menu`: every main menu entry after "Play", placed by a fixed position.
+- `main_menu`: every main menu entry after "Play", placed by a fixed position. Only a PinballY filter may reach the main menu on its own, through `createFilter({ group: "[Top]" })`.
 - `i18n`: every text shown to the player, in the active language.
 - `safe_handler`: wraps event handlers and callbacks so that an error is logged with the script's name instead of being lost.
 
@@ -51,7 +51,7 @@ node --test
 
 Run from the project root with Node.js 22 or later; nothing to install. PinballY never loads the tests.
 
-`tests/persisted_data_pinning.test.js` locks the saved data format and every Achievement ID: they are the players' progress. Never change it to make a change pass.
+`tests/persisted_data_pinning.test.js` locks the saved data format and every Achievement ID: they are the Profiles' progress. Never change it to make a change pass.
 
 ## Adding a language
 
@@ -64,7 +64,7 @@ Translations live in `lang/<code>.js`. English is the fallback, and missing keys
 
 ## Progress and reset
 
-Each Profile's progress lives in `Scripts\profiles\<Profile>\profile.json`: its plays, Streaks, Random Games, session stats and the list of Notified Achievements. `Scripts\profiles\cabinet.json` holds what the household shares: the active Profile, the Table of the Day, the Table of the Week and the week's Challenge. Every save keeps the previous version as `*.bak.json`, and a missing or broken file comes back from it.
+Each Profile's progress lives in `Scripts\profiles\<Profile>\profile.json`: its plays, Streaks, Random Games, session stats, Challenge progress and the list of Notified Achievements. `Scripts\profiles\cabinet.json` holds what the household shares: the active Profile, the Table of the Day, the Table of the Week and the week's Challenge. Every save keeps the previous version as `*.bak.json`, and a missing or broken file comes back from it.
 
 Every Achievement counts the plays recorded for the active Profile since installation; PinballY's own statistics are not used.
 
