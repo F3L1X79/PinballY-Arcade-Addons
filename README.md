@@ -46,24 +46,13 @@ Requires **Windows** and **PinballY 1.1.0 Beta 10** or later (plus the *Windows 
 | `ACHIEVEMENT_TOAST_SCALE` | `1.0` | Size of an Achievement card: `1` = the original size, `2` = twice as large (from 0.5 to 3, with a dot: `1.6`). |
 | `ADD_ON_<NAME>` | `true` | `false` turns an add-on off, e.g. `ADD_ON_FORCE_BACKGLASS=false`. |
 
-Upgrading from a version where you edited `common\config.js`? Move your values into `.env.local` and run `git checkout common/config.js` before pulling.
-
 ## Your progress
 
-Saved in PinballY's `Settings.txt`, under keys starting with `custom.`. Close PinballY and delete lines to reset them (for example `custom.achievements.notified.*` announces every unlocked achievement again). Collection, completion and play-time achievements use PinballY's own statistics and count your past plays; the others count from installation onwards.
-
-## Languages
-
-Translations live in `lang\<code>.js`; English is the fallback, and missing keys are listed in `PinballY.log`. To add a language, copy `fr.js` (not `en.js`), translate it keeping the keys, `[Game.Xxx]` markers and `${...}` parameters, register it in `common\i18n.js` (an `import` and an `AVAILABLE_LANGUAGES` entry), and save it as UTF-8.
+Each Profile's progress is saved in the `profiles` folder next to `main.js`, which project updates never overwrite.
 
 ## Contributing
 
-- `main.js` starts the add-ons listed in `SCRIPTS`. `addons\` holds one file per add-on; shared code goes in `common\`, achievement definitions in `achievements\`, translations in `lang\`, tests in `tests\`.
-- Shared modules: `pinbally_host` (the only way to PinballY for testable modules), `period_table`, `random_game`, `wheel_dialog` (spontaneous dialogs, shown one at a time when the wheel is free), `achievement_toast` (Achievement announcements drawn in the bottom-right corner, trophy image in `assets\`), `main_menu` (entries after "Play").
-- Conventions: English code and comments, a header block per file, no JSDoc, no globals, every displayed text in all 6 languages, event handlers wrapped in `safeHandler`. Details in `.claude/rules/`.
-- Tests: `node --test` (Node.js 22+). `tests/persisted_data_pinning.test.js` locks saved keys and achievement IDs.
-
-PinballY scripting reference: `PinballY\Help\Javascript.html` ([online](https://mjrnet.org/pinscape/downloads/PinballY/Help/PinballY.html)); examples in [PinballY-Addons-and-Examples](https://github.com/PinballY/PinballY-Addons-and-Examples). Bugs and ideas: [GitHub issues](https://github.com/F3L1X79/PinballY-Arcade-Addons/issues).
+Module layout, conventions, tests, adding a language and resetting progress: see the [contributor guide](CONTRIBUTING.md).
 
 ## License
 

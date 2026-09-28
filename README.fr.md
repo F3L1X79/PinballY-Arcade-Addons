@@ -46,24 +46,13 @@ Nécessite **Windows** et **PinballY 1.1.0 Beta 10** ou plus récent (plus la fo
 | `ACHIEVEMENT_TOAST_SCALE` | `1.0` | Taille d'une carte de succès : `1` = taille d'origine, `2` = deux fois plus grande (de 0,5 à 3, avec un point : `1.6`). |
 | `ADD_ON_<NOM>` | `true` | `false` désactive un add-on, par exemple `ADD_ON_FORCE_BACKGLASS=false`. |
 
-Vous aviez modifié `common\config.js` dans une ancienne version ? Reportez vos valeurs dans `.env.local` et lancez `git checkout common/config.js` avant de faire un pull.
-
 ## Votre progression
 
-Enregistrée dans le `Settings.txt` de PinballY, sous des clés commençant par `custom.`. Fermez PinballY et supprimez des lignes pour les réinitialiser (par exemple `custom.achievements.notified.*` annonce de nouveau tous les succès débloqués). Les succès de collection, de complétion et de temps de jeu utilisent les statistiques de PinballY et comptent vos parties passées ; les autres comptent à partir de l'installation.
-
-## Langues
-
-Les traductions sont dans `lang\<code>.js` ; l'anglais sert de secours, et les clés manquantes sont listées dans `PinballY.log`. Pour ajouter une langue, copiez `fr.js` (pas `en.js`), traduisez-le en gardant les clés, les marqueurs `[Game.Xxx]` et les paramètres `${...}`, déclarez-le dans `common\i18n.js` (un `import` et une entrée dans `AVAILABLE_LANGUAGES`), et enregistrez-le en UTF-8.
+La progression de chaque Profil est enregistrée dans le dossier `profiles`, à côté de `main.js`, que les mises à jour du projet n'écrasent jamais.
 
 ## Contribuer
 
-- `main.js` démarre les add-ons listés dans `SCRIPTS`. `addons\` contient un fichier par add-on ; le code partagé va dans `common\`, les définitions de succès dans `achievements\`, les traductions dans `lang\`, les tests dans `tests\`.
-- Modules partagés : `pinbally_host` (seul accès à PinballY pour les modules testables), `period_table`, `random_game`, `wheel_dialog` (dialogues spontanés, affichés un par un quand la roue est libre), `achievement_toast` (annonces de succès dessinées en bas à droite, image du trophée dans `assets\`), `main_menu` (entrées après « Jouer »).
-- Conventions : code et commentaires en anglais, un bloc d'en-tête par fichier, pas de JSDoc, pas de globales, chaque texte affiché dans les 6 langues, gestionnaires d'événements enveloppés dans `safeHandler`. Détails dans `.claude/rules/`.
-- Tests : `node --test` (Node.js 22+). `tests/persisted_data_pinning.test.js` fige les clés enregistrées et les ID des succès.
-
-Référence du scripting PinballY : `PinballY\Help\Javascript.html` ([en ligne](https://mjrnet.org/pinscape/downloads/PinballY/Help/PinballY.html)) ; exemples dans [PinballY-Addons-and-Examples](https://github.com/PinballY/PinballY-Addons-and-Examples). Bugs et idées : [issues GitHub](https://github.com/F3L1X79/PinballY-Arcade-Addons/issues).
+Organisation du code, conventions, tests, ajout d'une langue et remise à zéro de la progression : voir le [guide du contributeur](CONTRIBUTING.md) (en anglais).
 
 ## Licence
 
