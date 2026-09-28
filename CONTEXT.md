@@ -1,6 +1,6 @@
-# PinballY add-ons
+# PinballY Expansion Pack
 
-Custom add-ons for the PinballY virtual pinball front end: they help the player choose what to play, reward play with achievements, and polish the interface.
+Unofficial add-ons for the PinballY virtual pinball front end, built on its JavaScript scripting API: they help the player choose what to play, reward play with achievements, and polish the interface.
 
 ## Language
 
