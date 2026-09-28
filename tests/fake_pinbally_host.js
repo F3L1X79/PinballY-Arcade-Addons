@@ -5,10 +5,11 @@
 // list, the wheel selection (and its filter) and the layout size, seed settings, fire
 // PinballY events, pick menu items, play launched games, and inspect shown
 // menus, launches, written settings keys, drawing layers, what was drawn,
-// sounds played and the lower status line; script filters are shown with
-// selectFilter(). Its in-memory file system is seeded with files and
-// folders (and unreadable images) and inspected (file contents, writes,
-// renames and deletes).
+// sounds played and the lower status line (which can start with the
+// player's own messages); script filters are shown with selectFilter().
+// Its in-memory file system is seeded with files and folders (and
+// unreadable images) and inspected (file contents, writes, renames and
+// deletes).
 // installGlobals() also exposes it as PinballY's globals (and the global
 // Date and timers, and the COM file objects over the same file system), so
 // code not yet on the host runs too. settle() waits on a real timer for
@@ -79,6 +80,8 @@ export function createFakePinballYHost({
     tables = [],
     layoutSize = { width: 1920, height: 1080 },
     programFolder = "C:\\PinballY\\",
+    // The player's own messages, from PinballY's lower status line option.
+    lowerStatusLineMessages = [],
 } = {}) {
     let nowMs = now.getTime();
     let currentLayoutSize = { ...layoutSize };
@@ -104,8 +107,8 @@ export function createFakePinballYHost({
     // Script filters by full id ("User.<id>"), and the id of the one shown.
     const filters = new Map();
     let currentFilterId = "All";
-    // The lower status line's messages.
-    const lowerStatusLine = [];
+    // The lower status line's entries, as PinballY's getText() gives them.
+    const lowerStatusLine = lowerStatusLineMessages.map(text => ({ text, isTemp: false }));
     const storedSettings = new Map();
     const writtenKeys = new Set();
     const handlers = new Map();
@@ -506,7 +509,7 @@ export function createFakePinballYHost({
         selectFilter: applyFilter,
         // The script filters' descriptions, as created.
         scriptFilters: () => [...filters.values()],
-        lowerStatusLine: () => [...lowerStatusLine],
+        lowerStatusLine: () => lowerStatusLine.map(entry => entry.text),
         seedSettings(values) {
             for (const [key, value] of Object.entries(values)) storedSettings.set(key, toStoredString(value));
         },
@@ -628,9 +631,9 @@ export function createFakePinballYHost({
                     removeDrawingLayer,
                     statusLines: {
                         lower: {
-                            getText: () => [...lowerStatusLine],
-                            add: (text) => { lowerStatusLine.push(text); },
-                            setText: (index, text) => { lowerStatusLine[index] = text; },
+                            getText: () => lowerStatusLine.map(entry => ({ ...entry })),
+                            add: (text) => { lowerStatusLine.push({ text, isTemp: false }); },
+                            setText: (index, text) => { lowerStatusLine[index].text = text; },
                         },
                     },
                 },

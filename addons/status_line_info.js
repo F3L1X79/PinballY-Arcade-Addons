@@ -2,6 +2,8 @@
 // Fills PinballY's lower status line with rotating info about the selected
 // table: its alphabetical position within the active filter, release year,
 // manufacturer, and the active Profile's play count and total play time.
+// The player's own messages from PinballY's options stay first: the table
+// info is added after them, never in their place.
 // Refreshes on "gameselect", "filterselect", "wheelmode" (back from a game)
 // and on a Profile switch.
 // ============================================================
@@ -88,11 +90,14 @@ export default function init() {
         return titleIndex >= 0 ? titleIndex + 1 : 0;
     }
 
-    function ensureStatusLineSlotCount(statusLine, count) {
-        const currentSlotCount = statusLine.getText().length;
-        for (let i = currentSlotCount; i < count; i++) {
-            statusLine.add("");
-        }
+    // The non-temporary entries on the line at start-up are the player's own
+    // messages from PinballY's options; the table info is written after them.
+    // Temporary entries (from show()) are not the player's and are not
+    // counted; this assumes none is on the line yet when the Add-on starts.
+    const statusLine = mainWindow.statusLines.lower;
+    const firstTableInfoSlot = statusLine.getText().filter(entry => !entry.isTemp).length;
+    for (let i = 0; i < STATUS_LINE_BUILDERS.length; i++) {
+        statusLine.add("");
     }
 
     function refreshStatusLine() {
@@ -101,10 +106,8 @@ export default function init() {
         const position = getCurrentTablePosition(currentTitle);
         const play = profileStore.getPlay(currentGame ? currentGame.configId : "");
 
-        ensureStatusLineSlotCount(mainWindow.statusLines.lower, STATUS_LINE_BUILDERS.length);
-
         STATUS_LINE_BUILDERS.forEach((buildText, i) => {
-            mainWindow.statusLines.lower.setText(i, buildText(position, currentGame, play));
+            statusLine.setText(firstTableInfoSlot + i, buildText(position, currentGame, play));
         });
     }
 
