@@ -12,10 +12,9 @@ import { getProfileStore } from "../common/profile_store.js";
 import { getChallenges } from "../common/challenge.js";
 import { createChallengeCard } from "../common/challenge_card.js";
 import { createChallengeTables } from "../common/challenge_tables.js";
-import { getMainMenu } from "../common/main_menu.js";
 
 export default function init() {
     const host = createPinballYHost();
     createChallengeCard(host, getChallenges(), getProfileStore());
-    createChallengeTables(host, getChallenges(), getMainMenu());
+    createChallengeTables(host, getChallenges());
 }

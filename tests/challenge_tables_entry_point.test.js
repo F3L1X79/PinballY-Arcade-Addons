@@ -1,8 +1,8 @@
 // ============================================================
 // The Challenges Add-on started by main.js on the fake PinballY globals,
 // with a decade Challenge already locked for the week: the Challenge
-// Tables entry sits in the main menu, and choosing it puts the decade's
-// tables on the wheel.
+// Tables filter is in the main menu's filters, and choosing it puts the
+// decade's tables on the wheel.
 // ============================================================
 
 import { test } from "node:test";
@@ -17,7 +17,7 @@ const TABLES = [
     { id: 3, configId: "Elvira", title: "Elvira", manufacturer: "Bally", year: 1989 },
 ];
 
-test("the Challenge Tables entry puts the Challenge's tables on the wheel", async () => {
+test("the Challenge Tables filter puts the Challenge's tables on the wheel", async () => {
     const fake = createFakePinballYHost({ now: new Date(2026, 8, 23, 10, 0, 0), tables: TABLES });
     fake.addFolder(`${PROFILES_FOLDER}\\Alice`);
     fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({
@@ -34,10 +34,9 @@ test("the Challenge Tables entry puts the Challenge's tables on the wheel", asyn
     await import("../main.js");
     await settle();
 
-    const { default: lang } = await import("../common/i18n.js");
-    fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }, { title: "Exit", cmd: 99 }]);
-    assert.ok(fake.currentMenu().items.some(item => item.title === lang.customMenuLabels.challengeTables));
-    fake.selectMenuItem(lang.customMenuLabels.challengeTables);
+    const [filter] = fake.scriptFilters().filter(({ id }) => id === "project.ChallengeTables");
+    assert.equal(filter.group, "[Top]");
+    fake.setCurrentFilter(`User.${filter.id}`);
     await settle();
 
     assert.deepEqual(fake.getWheelTables().map(game => game.title), ["Medieval Madness", "Attack from Mars"]);

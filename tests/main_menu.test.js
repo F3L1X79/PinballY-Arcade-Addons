@@ -65,7 +65,7 @@ test("an entry with a shown-when predicate appears only when it holds, checked o
     const { fake, mainMenu, openMainMenu } = setUp();
     let shown = false;
     mainMenu.add({ name: "list", label: "List", position: MAIN_MENU_POSITION.ACHIEVEMENT_LIST, action: () => {} });
-    mainMenu.add({ name: "challenge", label: "Challenge", position: MAIN_MENU_POSITION.CHALLENGE_TABLES, action: () => {}, shownWhen: () => shown });
+    mainMenu.add({ name: "week", label: "Week", position: MAIN_MENU_POSITION.TABLE_OF_THE_WEEK, action: () => {}, shownWhen: () => shown });
 
     openMainMenu();
     assert.deepEqual(titles(fake.currentMenu()), ["Play", "List", "Exit"]);
@@ -73,12 +73,12 @@ test("an entry with a shown-when predicate appears only when it holds, checked o
 
     shown = true;
     openMainMenu();
-    assert.deepEqual(titles(fake.currentMenu()), ["Play", "List", "Challenge", "Exit"]);
+    assert.deepEqual(titles(fake.currentMenu()), ["Play", "List", "Week", "Exit"]);
 });
 
 test("with every entry hidden by its predicate, the main menu is left as it is", () => {
     const { fake, mainMenu, openMainMenu } = setUp();
-    mainMenu.add({ name: "challenge", label: "Challenge", position: MAIN_MENU_POSITION.CHALLENGE_TABLES, action: () => {}, shownWhen: () => false });
+    mainMenu.add({ name: "week", label: "Week", position: MAIN_MENU_POSITION.TABLE_OF_THE_WEEK, action: () => {}, shownWhen: () => false });
 
     openMainMenu();
 
@@ -88,7 +88,7 @@ test("with every entry hidden by its predicate, the main menu is left as it is",
 test("a failing shown-when predicate hides only its own entry", () => {
     const { fake, mainMenu, openMainMenu } = setUp();
     mainMenu.add({ name: "list", label: "List", position: MAIN_MENU_POSITION.ACHIEVEMENT_LIST, action: () => {} });
-    mainMenu.add({ name: "challenge", label: "Challenge", position: MAIN_MENU_POSITION.CHALLENGE_TABLES, action: () => {},
+    mainMenu.add({ name: "week", label: "Week", position: MAIN_MENU_POSITION.TABLE_OF_THE_WEEK, action: () => {},
         shownWhen: () => { throw new Error("broken"); } });
 
     openMainMenu();

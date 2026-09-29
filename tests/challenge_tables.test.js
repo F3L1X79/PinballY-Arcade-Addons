@@ -1,10 +1,10 @@
 // ============================================================
-// Challenge Tables, through the Challenge module, the main menu and the
-// Challenge Tables filter on the fake PinballY host, with a real Profile
-// store, real Period Tables and a real Random Game module: the main menu
-// entry is shown only for the templates where it makes sense, while the
-// active Profile's Challenge is not completed, and choosing it puts on the
-// wheel the visible tables that would move the Challenge forward.
+// Challenge Tables, through the Challenge module and the Challenge Tables
+// filter on the fake PinballY host, with a real Profile store, real Period
+// Tables and a real Random Game module: the filter sits in the main menu
+// right under "All Tables", and choosing it puts on the wheel the visible
+// tables that would move the Challenge forward, or every table back when
+// there is none (other templates, Guest, no Challenge, completed).
 // ============================================================
 
 import { test } from "node:test";
@@ -15,9 +15,7 @@ import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../commo
 import { createRandomGame } from "../common/random_game.js";
 import { createChallenges } from "../common/challenge.js";
 import { createChallengeTables } from "../common/challenge_tables.js";
-import { createMainMenu } from "../common/main_menu.js";
 import { createAchievementToasts } from "../common/achievement_toast.js";
-import lang from "../common/i18n.js";
 
 // Monday 21 September 2026, 20:00; its week is keyed "2026-09-21".
 const MONDAY = new Date(2026, 8, 21, 20, 0, 0);
@@ -25,7 +23,7 @@ const TUESDAY = new Date(2026, 8, 22, 20, 0, 0);
 const WEEK = "2026-09-21";
 
 const PROFILES = "C:\\PinballY\\Scripts\\profiles";
-const ENTRY = lang.customMenuLabels.challengeTables;
+const FILTER_ID = "User.project.ChallengeTables";
 
 const table = (id, manufacturer, year, isHidden = false) =>
     ({ id, configId: `Table ${id}`, title: `Table ${id}`, manufacturer, year, isHidden });
@@ -60,27 +58,21 @@ function setUp({ challenge, active = "Alice", plays = {}, now = MONDAY } = {}) {
     const randomGame = createRandomGame(fake, store, { animateTo: async () => {}, skipAnimation: true });
     const challenges = createChallenges(fake, store,
         { tableOfTheDay, tableOfTheWeek, randomGame, toasts: createAchievementToasts(fake) });
-    createChallengeTables(fake, challenges, createMainMenu(fake));
+    createChallengeTables(fake, challenges);
     return { fake, store, tableOfTheDay, tableOfTheWeek };
 }
 
-const PLAY = { title: "Play", cmd: 1 };
-function openMainMenu(fake) {
-    fake.openMenu("main", [PLAY, { title: "Exit", cmd: 99 }]);
-    return fake.currentMenu().items.map(item => item.title);
-}
-const entryShown = fake => {
-    const shown = openMainMenu(fake).includes(ENTRY);
-    fake.closeMenu();
-    return shown;
-};
-// Chooses the entry in the main menu; the wheel's tables.
-async function chooseEntry(fake) {
-    openMainMenu(fake);
-    fake.selectMenuItem(ENTRY);
-    await Promise.resolve();
+// Chooses the filter, then the menu closes; the wheel's tables.
+function chooseFilter(fake) {
+    fake.setCurrentFilter(FILTER_ID);
+    fake.fire("wheelmode");
     return fake.getWheelTables().map(game => game.configId);
 }
+// Nothing to play: choosing the filter brings every table back.
+const offersNothing = fake => {
+    chooseFilter(fake);
+    return fake.currentFilterId() === "All";
+};
 
 function play(fake, game, seconds = 90) {
     fake.gameStarted(game);
@@ -91,30 +83,30 @@ function play(fake, game, seconds = 90) {
 test("manufacturerTables: the manufacturer's visible tables, leaving out those already counted", async () => {
     const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
 
-    assert.ok(entryShown(fake));
-    assert.deepEqual(await chooseEntry(fake), ["Table 1", "Table 2", "Table 5"]);
+    assert.ok(!offersNothing(fake));
+    assert.deepEqual(chooseFilter(fake), ["Table 1", "Table 2", "Table 5"]);
 
     play(fake, TABLES[1]);
     play(fake, TABLES[2]);
-    assert.deepEqual(await chooseEntry(fake), ["Table 1", "Table 5"]);
+    assert.deepEqual(chooseFilter(fake), ["Table 1", "Table 5"]);
 });
 
 test("decadeTables: the decade's visible tables, leaving out those already counted", async () => {
     const { fake } = setUp({ challenge: challengeOf("decadeTables", 1990) });
 
-    assert.deepEqual(await chooseEntry(fake), ["Table 3", "Table 5", "Table 6"]);
+    assert.deepEqual(chooseFilter(fake), ["Table 3", "Table 5", "Table 6"]);
 
     play(fake, TABLES[4]);
-    assert.deepEqual(await chooseEntry(fake), ["Table 3", "Table 6"], "chosen again while already on the wheel");
+    assert.deepEqual(chooseFilter(fake), ["Table 3", "Table 6"], "chosen again while already on the wheel");
 });
 
 test("neverPlayedTables: the visible tables the Profile never played", async () => {
     const { fake } = setUp({ challenge: challengeOf("neverPlayedTables"), plays: { "Table 1": RECENTLY, "Table 3": LONG_AGO } });
 
-    assert.deepEqual(await chooseEntry(fake), ["Table 2", "Table 5", "Table 6"]);
+    assert.deepEqual(chooseFilter(fake), ["Table 2", "Table 5", "Table 6"]);
 
     play(fake, TABLES[5]);
-    assert.deepEqual(await chooseEntry(fake), ["Table 2", "Table 5"]);
+    assert.deepEqual(chooseFilter(fake), ["Table 2", "Table 5"]);
 });
 
 test("dustyTables: the visible tables the Profile last played more than six months ago", async () => {
@@ -123,59 +115,63 @@ test("dustyTables: the visible tables the Profile last played more than six mont
         plays: { "Table 1": RECENTLY, "Table 2": LONG_AGO, "Table 3": LONG_AGO, "Table 4": LONG_AGO },
     });
 
-    assert.deepEqual(await chooseEntry(fake), ["Table 2", "Table 3"]);
+    assert.deepEqual(chooseFilter(fake), ["Table 2", "Table 3"]);
 
     play(fake, TABLES[1]);
-    assert.deepEqual(await chooseEntry(fake), ["Table 3"]);
+    assert.deepEqual(chooseFilter(fake), ["Table 3"]);
 });
 
 test("tableOfTheDayDays: the Table of the Day, until it counted today", async () => {
     const { fake, tableOfTheDay } = setUp({ challenge: challengeOf("tableOfTheDayDays") });
     const mondayTable = tableOfTheDay.getTable();
 
-    assert.deepEqual(await chooseEntry(fake), [mondayTable.configId]);
+    assert.deepEqual(chooseFilter(fake), [mondayTable.configId]);
 
     play(fake, mondayTable);
-    assert.ok(!entryShown(fake), "today already counted");
+    assert.ok(offersNothing(fake), "today already counted");
 
     fake.setNow(TUESDAY);
     fake.fire("wheelmode");
-    assert.deepEqual(await chooseEntry(fake), [tableOfTheDay.getTable().configId]);
+    assert.deepEqual(chooseFilter(fake), [tableOfTheDay.getTable().configId]);
 });
 
 test("tableOfTheWeekGames: the Table of the Week, even once played", async () => {
     const { fake, tableOfTheWeek } = setUp({ challenge: challengeOf("tableOfTheWeekGames") });
     const weekTable = tableOfTheWeek.getTable();
 
-    assert.deepEqual(await chooseEntry(fake), [weekTable.configId]);
+    assert.deepEqual(chooseFilter(fake), [weekTable.configId]);
     play(fake, weekTable);
-    assert.deepEqual(await chooseEntry(fake), [weekTable.configId]);
+    assert.deepEqual(chooseFilter(fake), [weekTable.configId]);
 });
 
-test("the entry is hidden for the other templates", () => {
+test("the other templates offer no table", () => {
     for (const template of ["differentTables", "differentManufacturers", "differentDecades", "activeDays",
         "endurance", "marathon", "randomGames", "sameTableGames"]) {
         const { fake } = setUp({ challenge: challengeOf(template) });
-        assert.ok(!entryShown(fake), template);
+        assert.ok(offersNothing(fake), template);
     }
 });
 
-test("the entry is hidden for Guest, with no Challenge, and once the Challenge is completed", () => {
-    assert.ok(!entryShown(setUp({ challenge: challengeOf("manufacturerTables", "Stern"), active: "guest" }).fake), "Guest");
-    assert.ok(!entryShown(setUp({ challenge: { week: WEEK, template: "", param: null, target: 0 } }).fake), "no Challenge");
+test("Guest, no Challenge and a completed Challenge offer no table", () => {
+    assert.ok(offersNothing(setUp({ challenge: challengeOf("manufacturerTables", "Stern"), active: "guest" }).fake), "Guest");
+    assert.ok(offersNothing(setUp({ challenge: { week: WEEK, template: "", param: null, target: 0 } }).fake), "no Challenge");
 
     const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern", 2) });
     play(fake, TABLES[0]);
-    assert.ok(entryShown(fake));
+    assert.ok(!offersNothing(fake));
     play(fake, TABLES[1]);
-    assert.ok(!entryShown(fake), "completed");
+    assert.ok(offersNothing(fake), "completed");
 });
 
-test("the Challenge Tables filter is listed in no filter menu", () => {
+// PinballY's "All Tables" has sort key "3000", "Favorites" "7000" and the
+// Hall of Fame "7500" in the [Top] group.
+test("the Challenge Tables filter sits in the main menu right under All Tables", () => {
     const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
 
     assert.equal(fake.scriptFilters().length, 1);
-    assert.equal(fake.scriptFilters()[0].group, undefined);
+    const [filter] = fake.scriptFilters();
+    assert.equal(filter.group, "[Top]");
+    assert.ok(filter.sortKey > "3000" && filter.sortKey < "7000", filter.sortKey);
 });
 
 // Back on the wheel with the Challenge Tables shown: the list is selected
@@ -184,7 +180,7 @@ const onChallengeTables = fake => fake.currentFilterId() === "User.project.Chall
 
 test("back on the wheel, the Challenge Tables shown leave out a table that just counted", async () => {
     const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
-    await chooseEntry(fake);
+    chooseFilter(fake);
 
     play(fake, TABLES[1]);
 
@@ -194,7 +190,7 @@ test("back on the wheel, the Challenge Tables shown leave out a table that just 
 
 test("once the Challenge is completed, the wheel goes back to every table", async () => {
     const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern", 2) });
-    await chooseEntry(fake);
+    chooseFilter(fake);
 
     play(fake, TABLES[0]);
     play(fake, TABLES[1]);
@@ -206,7 +202,7 @@ test("once the Challenge is completed, the wheel goes back to every table", asyn
 
 test("once the Table of the Day counted today, the wheel goes back to every table", async () => {
     const { fake, tableOfTheDay } = setUp({ challenge: challengeOf("tableOfTheDayDays") });
-    await chooseEntry(fake);
+    chooseFilter(fake);
 
     play(fake, tableOfTheDay.getTable());
 
@@ -215,7 +211,7 @@ test("once the Table of the Day counted today, the wheel goes back to every tabl
 
 test("after a switch to Guest, the wheel goes back to every table", async () => {
     const { fake, store } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
-    await chooseEntry(fake);
+    chooseFilter(fake);
 
     store.switchTo("guest");
     fake.fire("wheelmode");

@@ -81,7 +81,7 @@ The small card under the Profile badge, at the top right of the wheel screen, th
 _Avoid_: challenge widget, challenge popup, status line
 
 **Challenge Tables**:
-The visible tables that would move the active Profile's Challenge forward if played now, offered as a wheel selection from the main menu; only some Challenges have them, for example not one about total play time. The main menu entry is shown only while there is at least one, so it can disappear for a while during an open Challenge (the Table of the Day once today has counted). When none is left while they are on the wheel, every table comes back.
+The visible tables that would move the active Profile's Challenge forward if played now, offered as a wheel selection from the main menu, right under "All Tables"; only some Challenges have them, for example not one about total play time. The entry is always in the main menu: chosen with no Challenge Tables, or when none is left while they are on the wheel, every table comes back.
 _Avoid_: challenge filter, eligible tables
 
 **Challenge Toast**:
