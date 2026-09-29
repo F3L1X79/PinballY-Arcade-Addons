@@ -39,7 +39,7 @@ Chaque lundi, un nouveau Défi : sa carte suit votre progression sur l'écran de
 
 Des dizaines de Succès, du Bronze au Platine, annoncés sans interrompre vos parties et réunis dans « Succès personnels ».
 
-**Et aussi** : table au hasard sur une roue de la fortune, filtres « Hall of Fame » et « Tables Originales », horloge, ligne d'état, rappel pour noter une table, lancement sans flash noir, backglass masqué pendant une partie, sons de lancement et de succès.
+**Et aussi** : table au hasard sur une roue de la fortune, filtres « Tables les plus jouées » et « Tables Originales », horloge, ligne d'état, rappel pour noter une table, lancement sans flash noir, backglass masqué pendant une partie, sons de lancement et de succès.
 
 ## Installation
 
