@@ -266,6 +266,8 @@ export function createProfileStore(host) {
         hasPlayed: (configId) => (activeData.plays[configId] || NO_PLAY).count > 0,
         // Every play record of the named Profile, by table.
         getPlaysOf: (profileName) => profileWithData(profileName).data.plays,
+        // The IDs of the Achievements the named Profile was Notified of.
+        getNotifiedOf: (profileName) => profileWithData(profileName).data.notified,
         updateProfileData,
         getCabinetData: () => cabinet,
         updateCabinetData: (change) => {

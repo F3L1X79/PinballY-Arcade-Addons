@@ -1,10 +1,10 @@
 ﻿// ============================================================
 // Achievement List painter: draws the pieces of the drawn Achievement List
 // (the dimmed backdrop and panel, the header and footer, a section header,
-// an Achievement row, a rank emblem) into a drawing layer's context, in
-// the Steamball look validated with the prototype. It only draws what it is given: it holds no
-// state, reads no Achievement and listens to no event. Sizes are in layout
-// pixels, fonts in points.
+// an Achievement row, a rank emblem, a row's Unlock Rate) into a drawing
+// layer's context, in the Steamball look validated with the prototype. It
+// only draws what it is given: it holds no state, reads no Achievement and
+// listens to no event. Sizes are in layout pixels, fonts in points.
 // ============================================================
 
 import { ACHIEVEMENT_RANK, RANKS_IN_ORDER } from "./achievements.js";
@@ -52,6 +52,10 @@ export const LIST_LOOK = Object.freeze({
     progressTextWidth: 100,
     // Kept free on the right of a row's texts for the Unlock Rate.
     ownersWidth: 220,
+    ownerAvatarSize: 36,
+    ownerGap: 4,
+    // Between the Unlock Rate and the row's right edge.
+    ownersInset: 12,
 });
 
 function mixColors(from, to, ratio) {
@@ -324,4 +328,33 @@ export function drawRow(host, dc, width, { title, description, rank, unlocked, p
             x: look.textLeft + barWidth + 10, y: barY - 7, width: look.progressTextWidth - 10, size: 10, color: COLORS.description,
         });
     }
+}
+
+// A row's Unlock Rate, drawn on a layer of its own the size of the row's
+// right part (ownersWidth by rowHeight): the Avatars of the other Profiles
+// that have the Achievement, then the "+N" pill when there are more,
+// right-aligned. The pill is opaque: StyledText ignores a semi-transparent
+// background.
+export function drawOwners(host, dc, { avatarPaths, moreText }) {
+    const look = LIST_LOOK;
+    const size = look.ownerAvatarSize;
+    let pill = null;
+    if (moreText !== null) {
+        const text = host.createStyledText({
+            backgroundColor: COLORS.keyCap, cornerRadius: 9, padding: 5,
+            textStyle: { font: FONTS.display, size: 11, weight: 700, color: COLORS.title },
+        });
+        text.add(moreText);
+        pill = { text, ...text.measure(look.ownersWidth) };
+    }
+    const avatarsWidth = avatarPaths.length * (size + look.ownerGap);
+    let x = look.ownersWidth - look.ownersInset - avatarsWidth - (pill ? pill.width : 0);
+    const y = (look.rowHeight - size) / 2;
+    for (const path of avatarPaths) {
+        dc.fillRect(x - 1, y - 1, size + 2, size + 2, COLORS.border);
+        dc.drawImage(path, x, y, size, size);
+        x += size + look.ownerGap;
+    }
+    // A little wider than measured, so the last digit never wraps.
+    if (pill) pill.text.draw(dc, { x, y: (look.rowHeight - pill.height) / 2, width: pill.width + 2, height: pill.height });
 }

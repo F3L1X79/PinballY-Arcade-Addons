@@ -293,6 +293,8 @@ export default {
         keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
         browse: "Browse", // TODO: translation pass
         back: "Indietro",
+        // After at most four Avatars on a row: how many other Profiles have it too.
+        moreOwners: (count) => `+${count}`,
         // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {

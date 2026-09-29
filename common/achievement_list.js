@@ -4,17 +4,22 @@
 // in one drawn scrolling list over a dimmed wheel (see docs/adr/0005): a
 // header with the Profile, its total and its count per Achievement Rank,
 // then the Unlocked Achievements (a toast still waiting first, then the
-// most recently Notified) and the missing ones, each part under its
-// section header. Each row shows its rank emblem and, when missing, its
-// Achievement Progress.
+// most recently Notified) and the missing ones (the highest Unlock Rate
+// first, then the furthest Achievement Progress), each part under its
+// section header. Each row shows its rank emblem, when missing its
+// Achievement Progress, and its Unlock Rate: the Avatars of the other
+// Profiles Notified of it, once the household has two Profiles besides
+// Guest.
 // Next / Prev glide the highlighted line from one Achievement to the next,
 // wrapping; the other lines are dimmed. Exit closes the list and calls the
 // return given to open(); attract mode closes it too. While it is open,
 // every button is swallowed through "commandbuttondown".
 // Each item (a row or a section header) has its own layer, drawn once per
 // opening when it first shows and afterwards only moved and faded; the
-// header and footer sit on a mask layer above the rows. Unlocked and the
-// Achievement Progress are read again on each opening.
+// header and footer sit on a mask layer above the rows. The Unlock Rates
+// sit on a few layers of their own, one per on-screen slot, moved with the
+// rows. Unlocked, the Achievement Progress and every Profile's Notified
+// Achievements are read again on each opening.
 // Opens directly, not through the wheel dialog module: the player asked
 // for it.
 // ============================================================
@@ -23,13 +28,15 @@ import lang from "./i18n.js";
 import { safeHandler } from "./safe_handler.js";
 import { displayNameOf } from "./profile_name.js";
 import { RANKS_IN_ORDER } from "./achievements.js";
-import { LIST_LOOK, computeGeometry, drawBackdrop, drawMask, drawSectionHeader, drawRow } from "./achievement_list_painter.js";
+import {
+    LIST_LOOK, computeGeometry, drawBackdrop, drawMask, drawSectionHeader, drawRow, drawOwners,
+} from "./achievement_list_painter.js";
 
 const SCRIPT_NAME = "AchievementList";
 
 // Above PinballY's menus (custom layers 6000 and above), under the
 // Achievement Toast and the Profile picker. Exported for the tests' reader.
-export const ACHIEVEMENT_LIST_Z_INDEX = Object.freeze({ backdrop: 6000, items: 6001, mask: 6002 });
+export const ACHIEVEMENT_LIST_Z_INDEX = Object.freeze({ backdrop: 6000, items: 6001, owners: 6002, mask: 6003 });
 
 const ITEM_KIND = Object.freeze({ SECTION: "section", ROW: "row" });
 // The lines around the highlighted one, dimmed through their layer's alpha
@@ -41,6 +48,8 @@ const GLIDE_SNAP_PX = 0.5;
 const FRAME_MS = 16;
 const TRANSPARENT = 0x00000000;
 const ROW_PITCH = LIST_LOOK.rowHeight + LIST_LOOK.itemGap;
+// Then a "+N" pill for the others.
+const MAX_OWNER_AVATARS = 4;
 
 export function createAchievementList(host, { getAchievements, profileStore }) {
     const { achievementList: TEXT } = lang;
@@ -48,6 +57,11 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
     const maskLayer = host.createDrawingLayer(ACHIEVEMENT_LIST_Z_INDEX.mask);
     // One per item, by index, kept from one opening to the next.
     const itemLayers = [];
+    // The Unlock Rate layers, one per on-screen slot: item i uses slot i
+    // modulo the slot count, so the items shown at once never share one.
+    // A slot is drawn again only when its item changes: PinballY rereads an
+    // image file on every draw, most of a row's cost.
+    const ownerSlots = [];
 
     // The open list, null when closed: its items, their geometry, the
     // highlighted item's index, the scroll it glides to, the items drawn
@@ -79,24 +93,65 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
         return { text: unitTexts.short(progress.current, progress.target), ratio: progress.current / progress.target };
     }
 
+    // The Profiles other than Guest, each with the Achievements it was
+    // Notified of: Guest never counts in the Unlock Rate.
+    function readHousehold() {
+        return profileStore.listProfiles()
+            .filter(profile => !profile.isGuest)
+            .map(profile => ({ profile, notified: new Set(profileStore.getNotifiedOf(profile.name)) }));
+    }
+
+    // Each entry with its Achievement Progress, the Profiles other than
+    // Guest Notified of it (its Unlock Rate) and its place in the definitions.
+    function describeEntries(entries, household) {
+        return entries.map((entry, order) => ({
+            ...entry,
+            order,
+            progress: describeProgress(entry.achievement, entry.unlocked),
+            owners: household.filter(({ notified }) => notified.has(entry.achievement.id)).map(({ profile }) => profile),
+        }));
+    }
+
     // Unlocked ones whose toast still waits first, in natural order, then
-    // from the most recently Notified; the missing ones in natural order.
+    // from the most recently Notified; the missing ones from the highest
+    // Unlock Rate, then the furthest Achievement Progress, then in natural
+    // order.
     function orderEntries(entries) {
         const notified = profileStore.getProfileData().notified;
         const notifiedAt = entry => notified.indexOf(entry.achievement.id);
         const unlocked = entries.filter(entry => entry.unlocked);
+        const ratioOf = entry => (entry.progress ? entry.progress.ratio : 0);
         return {
             unlocked: [
                 ...unlocked.filter(entry => notifiedAt(entry) === -1),
                 ...unlocked.filter(entry => notifiedAt(entry) !== -1).sort((a, b) => notifiedAt(b) - notifiedAt(a)),
             ],
-            missing: entries.filter(entry => !entry.unlocked),
+            // The natural order is compared too: not every engine sorts stably.
+            missing: entries.filter(entry => !entry.unlocked)
+                .sort((a, b) => b.owners.length - a.owners.length || ratioOf(b) - ratioOf(a) || a.order - b.order),
+        };
+    }
+
+    // What a row shows of its Unlock Rate: the Avatars of the other Profiles
+    // that have it, then how many more; null when no other Profile has it.
+    function describeOwners(owners) {
+        const activeName = profileStore.getActiveProfile().name;
+        const others = owners.filter(profile => profile.name !== activeName);
+        if (others.length === 0) return null;
+        return {
+            avatarPaths: others.slice(0, MAX_OWNER_AVATARS).map(profile => profile.avatarPath),
+            moreText: others.length > MAX_OWNER_AVATARS ? TEXT.moreOwners(others.length - MAX_OWNER_AVATARS) : null,
         };
     }
 
     // The list's items, each with its top in pixels from the list's start.
     function buildItems(entries) {
-        const { unlocked, missing } = orderEntries(entries);
+        // Listing the Profiles checks each Avatar file, and every Profile
+        // but the active one is read from its file: once per opening.
+        const household = readHousehold();
+        const { unlocked, missing } = orderEntries(describeEntries(entries, household));
+        // Nothing to compare with while there is only one Profile besides Guest.
+        const showsUnlockRate = household.length > 1;
         const items = [];
         let top = 0;
         const push = item => {
@@ -110,7 +165,7 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
                 title: title.toLocaleUpperCase(),
                 count: TEXT.sectionCount(sectionEntries.length),
             });
-            for (const { achievement, unlocked: isUnlocked } of sectionEntries) {
+            for (const { achievement, unlocked: isUnlocked, progress, owners } of sectionEntries) {
                 push({
                     kind: ITEM_KIND.ROW,
                     height: LIST_LOOK.rowHeight,
@@ -118,7 +173,8 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
                     description: achievement.getDescription(),
                     rank: achievement.rank,
                     unlocked: isUnlocked,
-                    progress: describeProgress(achievement, isUnlocked),
+                    progress,
+                    owners: showsUnlockRate ? describeOwners(owners) : null,
                 });
             }
         }
@@ -181,12 +237,39 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
         shown.drawn.add(index);
     }
 
-    // Shows the items overlapping the rows area at their place, each dimmed
-    // by its distance to the highlighted line, and hides the others. An
-    // item sliding out hides under the header or the footer.
+    // The slot at this index, its layer created on first use.
+    function ownerSlot(index) {
+        while (ownerSlots.length <= index) {
+            const layer = host.createDrawingLayer(ACHIEVEMENT_LIST_Z_INDEX.owners);
+            layer.alpha = 0;
+            ownerSlots.push({ layer, itemIndex: -1 });
+        }
+        return ownerSlots[index];
+    }
+
+    // The Unlock Rate of the row at this index, on its slot's layer.
+    function ownersLayerOf(index) {
+        const { geometry: g } = shown;
+        const item = shown.items[index];
+        const slot = ownerSlot(index % shown.slotCount);
+        if (slot.itemIndex !== index) {
+            slot.layer.clear(TRANSPARENT);
+            slot.layer.draw(dc => drawOwners(host, dc, item.owners), LIST_LOOK.ownersWidth, item.height);
+            slot.layer.setScale({ ySpan: item.height / g.height });
+            slot.itemIndex = index;
+        }
+        return slot.layer;
+    }
+
+    // Shows the items overlapping the rows area at their place with their
+    // Unlock Rate, each dimmed by its distance to the highlighted line, and
+    // hides the others. An item sliding out hides under the header or the
+    // footer.
     function placeItems() {
         const { geometry: g, items } = shown;
         const centerX = (g.rowX + g.rowWidth / 2) / g.width - 0.5;
+        const ownersCenterX = (g.rowX + g.rowWidth - LIST_LOOK.ownersWidth / 2) / g.width - 0.5;
+        const shownOwners = new Set();
         items.forEach((item, index) => {
             const top = g.areaTop + item.top - glide.scroll;
             const isInArea = top + item.height > g.areaTop && top < g.areaTop + g.areaHeight;
@@ -196,12 +279,22 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
             }
             if (!shown.drawn.has(index)) drawItem(index);
             const layer = itemLayers[index];
-            layer.setPos(centerX, 0.5 - (top + item.height / 2) / g.height);
+            const centerY = 0.5 - (top + item.height / 2) / g.height;
+            layer.setPos(centerX, centerY);
             // A section header is never highlighted: always dimmed, even
             // right above the highlighted row.
             const distance = item.kind === ITEM_KIND.SECTION ? 1 : Math.min(1, Math.abs(item.top - glide.highlightTop) / ROW_PITCH);
             layer.alpha = 1 - (1 - DIMMED_ALPHA) * distance;
+            if (item.owners) {
+                const ownersLayer = ownersLayerOf(index);
+                ownersLayer.setPos(ownersCenterX, centerY);
+                ownersLayer.alpha = layer.alpha;
+                shownOwners.add(ownersLayer);
+            }
         });
+        for (const { layer } of ownerSlots) {
+            if (!shownOwners.has(layer)) layer.alpha = 0;
+        }
     }
 
     function stopGlide() {
@@ -289,9 +382,16 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
         maskLayer.draw(dc => drawMask(host, dc, geometry, { header: describeHeader(entries), footer: describeFooter() }));
         maskLayer.alpha = 1;
         for (const layer of itemLayers) layer.alpha = 0;
+        for (const slot of ownerSlots) {
+            slot.layer.alpha = 0;
+            slot.itemIndex = -1;
+        }
         shown = {
             items, listHeight, geometry, onExit, scroll: 0, drawn: new Set(),
             highlighted: items.findIndex(item => item.kind === ITEM_KIND.ROW),
+            // Enough for every item the rows area can show at once, even
+            // only section headers, partly out at both ends.
+            slotCount: Math.ceil(geometry.areaHeight / (LIST_LOOK.sectionHeight + LIST_LOOK.itemGap)) + 2,
         };
         jumpToTarget();
     }
@@ -300,7 +400,7 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
         if (!shown) return;
         stopGlide();
         shown = null;
-        for (const layer of [backdropLayer, maskLayer, ...itemLayers]) layer.alpha = 0;
+        for (const layer of [backdropLayer, maskLayer, ...itemLayers, ...ownerSlots.map(slot => slot.layer)]) layer.alpha = 0;
     }
 
     // Fires on every mapped button press; drives the list while it is open.

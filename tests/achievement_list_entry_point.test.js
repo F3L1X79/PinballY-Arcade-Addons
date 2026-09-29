@@ -99,11 +99,13 @@ test("the Achievement List entry follows Play, lists the real Achievements and E
     assert.equal(rowOf(ACHIEVEMENT.playTimeMilestoneTitles[10]).progress, progress("hours", 9, 10));
     assert.equal(rowOf(ACHIEVEMENT.decadeCompletionTitle(1990)).progress, progress("tables", 1, 2));
     assert.equal(rowOf(ACHIEVEMENT.manufacturerCompletionTitle("Bally")).progress, null, "a target of 1 shows none");
-    // The missing ones keep the natural order of the definitions.
+    // Guest alone has no Unlock Rate: the missing ones come by how far
+    // along their Achievement Progress is, then in their natural order.
     const missing = rows.filter(row => !row.unlocked).map(row => row.title);
     const indexOf = title => missing.indexOf(title);
-    assert.ok(indexOf(ACHIEVEMENT.playTimeMilestoneTitles[10]) < indexOf(ACHIEVEMENT.playTimeMilestoneTitles[100]));
-    assert.ok(indexOf(ACHIEVEMENT.collectionPercentTitles[100]) < indexOf(ACHIEVEMENT.playTimeMilestoneTitles[10]));
+    assert.ok(indexOf(ACHIEVEMENT.playTimeMilestoneTitles[10]) < indexOf(ACHIEVEMENT.collectionPercentTitles[75]), "9/10 before 3/4");
+    assert.ok(indexOf(ACHIEVEMENT.collectionPercentTitles[75]) < indexOf(ACHIEVEMENT.collectionPercentTitles[100]), "3/4 before 3/5");
+    assert.ok(indexOf(ACHIEVEMENT.playTimeMilestoneTitles[50]) < indexOf(ACHIEVEMENT.playTimeMilestoneTitles[100]), "9/50 before 9/100");
 
     pressAndGlide(fake, "Exit");
     assert.equal(isListOpen(fake), false);

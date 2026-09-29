@@ -7,7 +7,9 @@
 // Notified, then the missing ones), the highlighted line moving, skipping
 // the section headers and wrapping, the buttons swallowed only while it is
 // open, Exit and attract mode closing it, the rank emblems and the
-// Achievement Progress bars on the rows, the header's counts per rank.
+// Achievement Progress bars on the rows, the header's counts per rank, the
+// Unlock Rate (the other Profiles' Avatars) and the missing section's
+// order by Unlock Rate, then Achievement Progress.
 // ============================================================
 
 import { test } from "node:test";
@@ -53,12 +55,18 @@ function sampleAchievements() {
     ];
 }
 
+const avatarOf = name => `${PROFILES}\\${name}\\avatar.png`;
+
 // Alice is active. She was Notified of gamma, then alpha, then delta; the
-// toast of beta still waits.
-function setUp({ achievements = sampleAchievements(), notified = ["gamma", "alpha", "delta"] } = {}) {
+// toast of beta still waits. household: the other Profiles' notified
+// lists, by name, each Profile with its own Avatar.
+function setUp({ achievements = sampleAchievements(), notified = ["gamma", "alpha", "delta"], household = {} } = {}) {
     const fake = createFakePinballYHost();
     fake.addFile(`${PROFILES}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
-    fake.addFile(`${PROFILES}\\Alice\\profile.json`, JSON.stringify({ version: 1, notified }));
+    for (const [name, profileNotified] of Object.entries({ Alice: notified, ...household })) {
+        fake.addFile(`${PROFILES}\\${name}\\profile.json`, JSON.stringify({ version: 1, notified: profileNotified }));
+        fake.addFile(avatarOf(name), "PNG");
+    }
     const profileStore = createProfileStore(fake);
     const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore });
     // Opened from the main menu, as the player does.
@@ -308,4 +316,74 @@ test("an Achievement without an Achievement Rank is an error, not a blank emblem
     const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore: createProfileStore(fake) });
 
     assert.throws(() => list.open(), /mithril/);
+});
+
+const ownersByTitle = fake => Object.fromEntries(readRows(fake, TEXT).map(row => [row.title.replace(" title", ""), row.owners]));
+const avatarsOnly = (...names) => ({ avatars: names.map(avatarOf), more: null });
+
+test("a row shows the Avatars of the other Profiles Notified of it, never the active Profile's nor Guest's", () => {
+    const { fake } = setUp({ household: { Bob: ["alpha", "epsilon"], Carol: ["alpha"], guest: ["zeta", "alpha"] } });
+
+    assert.deepEqual(ownersByTitle(fake), {
+        beta: avatarsOnly(),
+        delta: avatarsOnly(),
+        alpha: avatarsOnly("Bob", "Carol"),
+        gamma: avatarsOnly(),
+        epsilon: avatarsOnly("Bob"),
+        zeta: avatarsOnly(),
+    });
+});
+
+test("a row shows at most four Avatars, then a \"+N\" pill for the other Profiles", () => {
+    const names = ["Bob", "Carol", "Dave", "Erin", "Frank", "Grace"];
+    const { fake } = setUp({ household: Object.fromEntries(names.map(name => [name, ["alpha"]])) });
+
+    const { alpha } = ownersByTitle(fake);
+    assert.equal(alpha.avatars.length, 4);
+    assert.ok(alpha.avatars.every(path => names.map(avatarOf).includes(path)));
+    assert.equal(alpha.more, TEXT.moreOwners(2));
+});
+
+test("with one Profile besides Guest, no Unlock Rate is shown, even what Guest was Notified of", () => {
+    const { fake } = setUp({ household: { guest: ["alpha", "epsilon"] } });
+
+    for (const [title, owners] of Object.entries(ownersByTitle(fake))) {
+        assert.deepEqual(owners, avatarsOnly(), `${title} shows no Unlock Rate`);
+    }
+});
+
+test("Guest viewing the list sees the other Profiles' Avatars", () => {
+    const { fake, list, profileStore } = setUp({ household: { Bob: ["alpha"] } });
+    pressAndGlide(fake, "Exit");
+    profileStore.switchTo("guest");
+
+    list.open();
+
+    const owners = ownersByTitle(fake);
+    assert.deepEqual(owners.alpha, avatarsOnly("Alice", "Bob"));
+    assert.deepEqual(owners.gamma, avatarsOnly("Alice"));
+    assert.deepEqual(owners.epsilon, avatarsOnly());
+});
+
+test("the missing section puts the highest Unlock Rate first, then the furthest Achievement Progress, then the definitions' order", () => {
+    const tables = (current, target) => ({ current, target, unit: PROGRESS_UNIT.TABLES });
+    const achievements = [
+        fakeAchievement("a", false),
+        fakeAchievement("b", false, tables(1, 5)),
+        fakeAchievement("c", false),
+        fakeAchievement("d", false),
+        fakeAchievement("e", false, tables(4, 5)),
+        fakeAchievement("f", false, tables(8, 10)),
+        fakeAchievement("g", false, tables(3, 5)),
+        fakeAchievement("h", false, null),
+    ];
+    const { fake } = setUp({
+        achievements,
+        notified: [],
+        // Guest's "a" never counts.
+        household: { Bob: ["c", "d", "g", "h"], Carol: ["d"], guest: ["a", "a"] },
+    });
+
+    const [, missing] = readSections(fake, TEXT);
+    assert.deepEqual(missing.rows.map(texts => texts[0].replace(" title", "")), ["d", "g", "c", "h", "e", "f", "b", "a"]);
 });

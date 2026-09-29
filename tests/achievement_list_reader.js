@@ -3,8 +3,8 @@
 // PinballY host: the texts of its header and footer, the items shown in
 // the rows area from top to bottom, the highlighted one (the only one not
 // dimmed), the whole list, walked with Next as a player would, with the
-// colours each row is drawn in, and the header's count per Achievement
-// Rank.
+// colours each row is drawn in and its Unlock Rate (the Avatars and the
+// "+N" pill beside it), and the header's count per Achievement Rank.
 // Never loaded by PinballY.
 // ============================================================
 
@@ -66,16 +66,28 @@ function highlightedLayer(fake) {
 // The texts of the highlighted line.
 export const highlightedTexts = fake => highlightedLayer(fake).texts();
 
+// The Unlock Rate shown beside an item's layer: the Avatars and the "+N"
+// pill of the shown layers sitting at the same height.
+function ownersBeside(fake, itemLayer) {
+    const beside = fake.drawingLayers().filter(layer => layer.zIndex === ACHIEVEMENT_LIST_Z_INDEX.owners
+        && layer.alpha > 0 && layer.position().y === itemLayer.position().y);
+    return {
+        avatars: beside.flatMap(layer => layer.images()),
+        more: beside.flatMap(layer => layer.texts())[0] || null,
+    };
+}
+
 // Every item's layer of the open list from top to bottom, section headers
-// included: read while pressing Next until the highlight comes back to
-// where it was.
-function readWholeListLayers(fake) {
+// included, with the Unlock Rate seen beside each: read while pressing
+// Next until the highlight comes back to where it was.
+function readWholeListLayers(fake, ownersOf = new Map()) {
     const order = [];
     // The shown items always follow each other in the list, so each new one
     // goes right after the shown item above it.
     function merge() {
         let insertAt = 0;
         for (const layer of shownItemLayers(fake)) {
+            ownersOf.set(layer, ownersBeside(fake, layer));
             const index = order.indexOf(layer);
             if (index === -1) order.splice(insertAt++, 0, layer);
             else insertAt = index + 1;
@@ -94,10 +106,10 @@ function readWholeListLayers(fake) {
 // Every item of the open list from top to bottom, as their texts.
 export const readWholeList = fake => readWholeListLayers(fake).map(layer => layer.texts());
 
-function readSectionLayers(fake, TEXT) {
+function readSectionLayers(fake, TEXT, ownersOf) {
     const sectionTitles = [TEXT.unlockedSection, TEXT.missingSection].map(title => title.toLocaleUpperCase());
     const sections = [];
-    for (const layer of readWholeListLayers(fake)) {
+    for (const layer of readWholeListLayers(fake, ownersOf)) {
         if (sectionTitles.includes(layer.texts()[0])) sections.push({ header: layer, rows: [] });
         else sections.at(-1).rows.push(layer);
     }
@@ -111,12 +123,14 @@ export const readSections = (fake, TEXT) => readSectionLayers(fake, TEXT)
 
 // The rows of the whole list, each with its title, description, the
 // short text of its Achievement Progress (null when it shows none),
-// whether it sits in the Unlocked section and the colours it is drawn in.
+// whether it sits in the Unlocked section, the colours it is drawn in and
+// its Unlock Rate ({ avatars: image paths, more: the "+N" text or null }).
 export function readRows(fake, TEXT) {
-    const [unlocked, missing] = readSectionLayers(fake, TEXT);
+    const ownersOf = new Map();
+    const [unlocked, missing] = readSectionLayers(fake, TEXT, ownersOf);
     const toRow = isUnlocked => layer => {
         const [title, description, progress = null] = layer.texts();
-        return { title, description, progress, unlocked: isUnlocked, fills: layer.fills() };
+        return { title, description, progress, unlocked: isUnlocked, fills: layer.fills(), owners: ownersOf.get(layer) };
     };
     return [...unlocked.rows.map(toRow(true)), ...missing.rows.map(toRow(false))];
 }
