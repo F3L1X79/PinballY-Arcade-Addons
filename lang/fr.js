@@ -286,72 +286,50 @@ export default {
 
     achievementList: {
         menuEntry: "Succès personnels",
-        totalLine: (unlockedCount, totalCount) => `Total : ${unlockedCount}/${totalCount}`,
-        familyLine: (family, unlockedCount, totalCount) => `${family} (${unlockedCount}/${totalCount})`,
+        // The header's title, the section titles, the key caps and the
+        // footer's hints are shown in capitals.
+        title: "Succès personnels",
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} succès débloqués (${percent} %)`,
+        unlockedSection: "Succès débloqués",
+        missingSection: "Succès à obtenir",
+        // After a section's title.
+        sectionCount: (count) => `(${count})`,
+        // PinballY's button names, as on the cabinet's key caps.
+        keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
+        browse: "Parcourir",
         back: "Retour",
-        // The Achievement Progress line, when there is one, sits between the
-        // description and the status.
-        cardMessage: (title, description, status, progress) => (progress === undefined
-            ? `${title}\n${description}\n\n${status}`
-            : `${title}\n${description}\n\n${progress}\n${status}`),
-        unlocked: "Débloqué",
-        notUnlocked: "Pas encore débloqué",
-        // A missing Achievement's Achievement Progress: short after its title
-        // in a family's list, long on its card.
-        titleWithProgress: (title, progress) => `${title} (${progress})`,
-        progressLine: progress => `Progression : ${progress}`,
+        // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} table${current > 1 ? "s" : ""} sur ${target}`,
             },
             hours: {
                 short: (current, target) => `${formatHours(current)}/${target} h`,
-                long: (current, target) => `${formatHours(current)} h sur ${target} h`,
             },
             daysInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} jour${current > 1 ? "s" : ""} d'affilée sur ${target}`,
             },
             weeksInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} semaine${current > 1 ? "s" : ""} d'affilée sur ${target}`,
             },
             daysPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} ${current > 1 ? "jours joués" : "jour joué"} sur ${target}`,
             },
             weeksPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} ${current > 1 ? "semaines jouées" : "semaine jouée"} sur ${target}`,
             },
             minutes: {
                 short: (current, target) => `${current}/${target} min`,
-                long: (current, target) => `${current} min sur ${target} min`,
             },
             randomGames: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} table${current > 1 ? "s" : ""} au hasard sur ${target}`,
             },
             manufacturers: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} fabricant${current > 1 ? "s" : ""} sur ${target}`,
             },
             challenges: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} défi${current > 1 ? "s" : ""} réussi${current > 1 ? "s" : ""} sur ${target}`,
             },
-        },
-        families: {
-            collection: "Collection",
-            playTime: "Temps de jeu",
-            periodTables: "Tables du jour et de la semaine",
-            sessions: "Sessions",
-            randomGame: "Table au hasard",
-            manufacturers: "Fabricants",
-            decades: "Décennies",
-            categories: "Catégories",
-            challenges: "Défis",
         },
     },
 

@@ -1,15 +1,17 @@
 ﻿// ============================================================
 // The Achievement List, started through main.js on the fake PinballY
 // globals: its main menu entry sits right after "Play", above the other
-// custom entries, and the real Achievements land in the right Achievement
-// Family, Unlocked ones first, each part in natural order, a missing one
-// with its Achievement Progress.
+// custom entries, and opens the drawn list of the real Achievements (the
+// Unlocked ones first, the missing ones in natural order with their
+// Achievement Progress). Exit reopens the main menu on the entry; opened
+// from the Profile Stats, Exit shows the Profile Stats again.
 // ============================================================
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { pressAndGlide, readRows, isListOpen } from "./achievement_list_reader.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 const SECONDS_PER_HOUR = 3600;
@@ -32,16 +34,18 @@ const TABLES = [
     table(5, "Space Shuttle", "Zaccaria", 1987, ["SciFi"], 0),
 ];
 
-// Guest's play record matches PinballY's play stats above.
+// Guest's play record matches PinballY's play stats above. Guest was
+// Notified of the 10 % Collection Achievement, then of the first table.
 const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\profiles\\guest\\profile.json";
 const GUEST_PLAYS = Object.fromEntries(TABLES.filter(game => game.playCount > 0).map(game =>
     [game.configId, { count: game.playCount, seconds: game.playTime, lastPlayed: "2026-09-01T20:00:00" }]));
+const GUEST_NOTIFIED = ["collectionMilestone:10percent", "collectionMilestone:firstTable"];
 
 const ADD_ONS_UNDER_TEST = ["customMenuCommands", "achievements"];
 
-test("the Achievement List entry follows Play and lists the real Achievements by family", async () => {
+test("the Achievement List entry follows Play, lists the real Achievements and Exit goes back one level", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
-    fake.addFile(GUEST_PROFILE_FILE, JSON.stringify({ version: 1, plays: GUEST_PLAYS, notified: [] }));
+    fake.addFile(GUEST_PROFILE_FILE, JSON.stringify({ version: 1, plays: GUEST_PLAYS, notified: GUEST_NOTIFIED }));
     // Never uninstalled: node --test runs each test file in its own process.
     fake.installGlobals();
     for (const key of Object.keys(config.addOns)) {
@@ -53,12 +57,12 @@ test("the Achievement List entry follows Play and lists the real Achievements by
     const TEXT = lang.achievementList;
     const ACHIEVEMENT = lang.achievements;
     const MENU_LABELS = lang.customMenuLabels;
-    const withProgress = (title, unit, current, target) =>
-        TEXT.titleWithProgress(title, TEXT.progressUnits[unit].short(current, target));
+    const progress = (unit, current, target) => TEXT.progressUnits[unit].short(current, target);
     await import("../main.js");
     await settle();
 
-    fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }, { title: "Exit", cmd: 99 }]);
+    const openMainMenu = () => fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }, { title: "Exit", cmd: 99 }]);
+    openMainMenu();
     assert.deepEqual(fake.currentMenu().items.map(item => item.title), [
         "Play",
         TEXT.menuEntry,
@@ -71,64 +75,55 @@ test("the Achievement List entry follows Play and lists the real Achievements by
     ]);
 
     fake.selectMenuItem(TEXT.menuEntry);
-    const familiesMenu = fake.currentMenu();
-    const familyLines = familiesMenu.items.filter(item => item.cmd > 0 && item.title !== TEXT.back);
-    const familyNames = familyLines.map(item => item.title.replace(/ \(\d+\/\d+\)$/, ""));
-    assert.deepEqual(familyNames, [
-        "collection", "playTime", "periodTables", "sessions", "randomGame", "manufacturers", "decades", "categories",
-    ].map(family => TEXT.families[family]));
+    const rows = readRows(fake, TEXT);
+    // A threshold without its title in lang/en.js would show as undefined.
+    assert.ok(rows.every(row => typeof row.title === "string" && row.title !== "" && row.description !== ""), "every Achievement has its texts");
+    const rowOf = title => rows.find(row => row.title === title);
 
-    function openFamily(family) {
-        const line = familyLines.find(item => item.title.startsWith(TEXT.families[family]));
-        fake.selectMenuItem(line.title);
-        const items = fake.currentMenu().items.filter(item => typeof item.checked === "boolean");
-        // A threshold without its title in lang/en.js would show as undefined.
-        assert.ok(items.every(item => typeof item.title === "string" && item.title !== ""), `${family}: every Achievement has a title`);
-        const shown = items.map(item => (item.checked ? "✓ " : "  ") + item.title);
-        fake.selectMenuItem(TEXT.back);
-        return shown;
-    }
+    const unlocked = rows.filter(row => row.unlocked).map(row => row.title);
+    // The ones whose toast still waits, in natural order, then from the most
+    // recently Notified.
+    assert.deepEqual(unlocked.slice(-2), [ACHIEVEMENT.firstTableTitle(), ACHIEVEMENT.collectionPercentTitles[10]]);
+    assert.deepEqual(new Set(unlocked), new Set([
+        ...["Gottlieb", "Stern", "Williams"].map(name => ACHIEVEMENT.manufacturerCompletionTitle(name)),
+        ACHIEVEMENT.firstTableTitle(),
+        ...[10, 25, 50].map(percent => ACHIEVEMENT.collectionPercentTitles[percent]),
+        ...[1, 5].map(hours => ACHIEVEMENT.playTimeMilestoneTitles[hours]),
+        ...[1970, 2020].map(year => ACHIEVEMENT.decadeCompletionTitle(year)),
+        ...["Fantasy", "Monsters"].map(name => ACHIEVEMENT.categoryCompletionTitle(name)),
+    ]));
+    assert.ok(rows.filter(row => row.unlocked).every(row => row.progress === null), "an Unlocked row shows no Achievement Progress");
 
-    assert.deepEqual(openFamily("collection"), [
-        `✓ ${ACHIEVEMENT.firstTableTitle()}`,
-        ...[10, 25, 50].map(percent => `✓ ${ACHIEVEMENT.collectionPercentTitles[percent]}`),
-        `  ${withProgress(ACHIEVEMENT.collectionPercentTitles[75], "tables", 3, 4)}`,
-        `  ${withProgress(ACHIEVEMENT.collectionPercentTitles[100], "tables", 3, 5)}`,
-    ]);
-    assert.deepEqual(openFamily("playTime"), [
-        ...[1, 5].map(hours => `✓ ${ACHIEVEMENT.playTimeMilestoneTitles[hours]}`),
-        ...[10, 50, 100].map(hours => `  ${withProgress(ACHIEVEMENT.playTimeMilestoneTitles[hours], "hours", 9, hours)}`),
-    ]);
-    assert.deepEqual(openFamily("periodTables"), [
-        `  ${ACHIEVEMENT.dailyFirstPlayTitle()}`,
-        `  ${ACHIEVEMENT.weeklyFirstPlayTitle()}`,
-        ...[10, 25, 50, 100].map(days => `  ${withProgress(ACHIEVEMENT.dailyPeriodsPlayedTitles[days], "daysPlayed", 0, days)}`),
-        ...[4, 10, 26, 52].map(weeks => `  ${withProgress(ACHIEVEMENT.weeklyPeriodsPlayedTitles[weeks], "weeksPlayed", 0, weeks)}`),
-        ...[3, 7, 14, 30].map(days => `  ${withProgress(ACHIEVEMENT.dailyStreakTitles[days], "daysInARow", 0, days)}`),
-        ...[4, 12].map(weeks => `  ${withProgress(ACHIEVEMENT.weeklyStreakTitles[weeks], "weeksInARow", 0, weeks)}`),
-    ]);
-    assert.deepEqual(openFamily("sessions"), [
-        ...[30, 60].map(minutes => `  ${withProgress(ACHIEVEMENT.marathonTitles[minutes], "minutes", 0, minutes)}`),
-        `  ${ACHIEVEMENT.rageQuitTitle()}`,
-        `  ${ACHIEVEMENT.grandReturnTitle()}`,
-    ]);
-    assert.deepEqual(openFamily("randomGame"), [
-        ...[10, 25, 50, 100].map(count => `  ${withProgress(ACHIEVEMENT.randomGamesTitles[count], "randomGames", 0, count)}`),
-    ]);
-    assert.deepEqual(openFamily("manufacturers"), [
-        ...["Gottlieb", "Stern", "Williams"].map(name => `✓ ${ACHIEVEMENT.manufacturerCompletionTitle(name)}`),
-        ...[3, 5, 8, 10].map(count => `  ${withProgress(ACHIEVEMENT.dayManufacturersTitles[count], "manufacturers", 0, count)}`),
-        ...["Bally", "Zaccaria"].map(name => `  ${ACHIEVEMENT.manufacturerCompletionTitle(name)}`),
-    ]);
-    assert.deepEqual(openFamily("decades"), [
-        ...[1970, 2020].map(year => `✓ ${ACHIEVEMENT.decadeCompletionTitle(year)}`),
-        `  ${ACHIEVEMENT.decadeCompletionTitle(1980)}`,
-        `  ${withProgress(ACHIEVEMENT.decadeCompletionTitle(1990), "tables", 1, 2)}`,
-    ]);
-    assert.deepEqual(openFamily("categories"), [
-        ...["Fantasy", "Monsters"].map(name => `✓ ${ACHIEVEMENT.categoryCompletionTitle(name)}`),
-        `  ${withProgress(ACHIEVEMENT.categoryCompletionTitle("SciFi"), "tables", 1, 3)}`,
-    ]);
+    assert.equal(rowOf(ACHIEVEMENT.collectionPercentTitles[75]).progress, progress("tables", 3, 4));
+    assert.equal(rowOf(ACHIEVEMENT.collectionPercentTitles[100]).progress, progress("tables", 3, 5));
+    assert.equal(rowOf(ACHIEVEMENT.playTimeMilestoneTitles[10]).progress, progress("hours", 9, 10));
+    assert.equal(rowOf(ACHIEVEMENT.decadeCompletionTitle(1990)).progress, progress("tables", 1, 2));
+    assert.equal(rowOf(ACHIEVEMENT.manufacturerCompletionTitle("Bally")).progress, null, "a target of 1 shows none");
+    // The missing ones keep the natural order of the definitions.
+    const missing = rows.filter(row => !row.unlocked).map(row => row.title);
+    const indexOf = title => missing.indexOf(title);
+    assert.ok(indexOf(ACHIEVEMENT.playTimeMilestoneTitles[10]) < indexOf(ACHIEVEMENT.playTimeMilestoneTitles[100]));
+    assert.ok(indexOf(ACHIEVEMENT.collectionPercentTitles[100]) < indexOf(ACHIEVEMENT.playTimeMilestoneTitles[10]));
+
+    pressAndGlide(fake, "Exit");
+    assert.equal(isListOpen(fake), false);
+    assert.equal(fake.executedCommands().at(-1), globalThis.command.ShowMainMenu, "the main menu reopens");
+    openMainMenu();
+    assert.deepEqual(fake.currentMenu().items.filter(item => item.selected).map(item => item.title), [TEXT.menuEntry],
+        "on the Achievement List entry");
+    fake.closeMenu();
+    openMainMenu();
+    assert.deepEqual(fake.currentMenu().items.filter(item => item.selected), [], "only once");
+
+    // From the Profile Stats' Achievements line, Exit shows them again.
+    fake.selectMenuItem(lang.profileStats.menuEntry);
+    const achievementsLine = fake.currentMenu().items.find(item => item.title === lang.profileStats.achievements(
+        unlocked.length, rows.length)).title;
+    fake.selectMenuItem(achievementsLine);
+    assert.ok(isListOpen(fake));
+    pressAndGlide(fake, "Exit");
+    assert.equal(isListOpen(fake), false);
+    assert.equal(fake.currentMenu().items[0].title, lang.profileStats.title(lang.profiles.guestName));
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });

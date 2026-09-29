@@ -282,72 +282,50 @@ export default {
 
     achievementList: {
         menuEntry: "Erfolgsliste",
-        totalLine: (unlockedCount, totalCount) => `Gesamt: ${unlockedCount}/${totalCount}`,
-        familyLine: (family, unlockedCount, totalCount) => `${family} (${unlockedCount}/${totalCount})`,
+        // The header's title, the section titles, the key caps and the
+        // footer's hints are shown in capitals.
+        title: "Achievement List", // TODO: translation pass
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} achievements unlocked (${percent}%)`, // TODO: translation pass
+        unlockedSection: "Unlocked achievements", // TODO: translation pass
+        missingSection: "Achievements to earn", // TODO: translation pass
+        // After a section's title.
+        sectionCount: (count) => `(${count})`,
+        // PinballY's button names, as on the cabinet's key caps.
+        keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
+        browse: "Browse", // TODO: translation pass
         back: "Zurück",
-        // The Achievement Progress line, when there is one, sits between the
-        // description and the status.
-        cardMessage: (title, description, status, progress) => (progress === undefined
-            ? `${title}\n${description}\n\n${status}`
-            : `${title}\n${description}\n\n${progress}\n${status}`),
-        unlocked: "Freigeschaltet",
-        notUnlocked: "Noch nicht freigeschaltet",
-        // A missing Achievement's Achievement Progress: short after its title
-        // in a family's list, long on its card.
-        titleWithProgress: (title, progress) => `${title} (${progress})`,
-        progressLine: progress => `Fortschritt: ${progress}`,
+        // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} Tischen`,
             },
             hours: {
                 short: (current, target) => `${formatHours(current)}/${target} h`,
-                long: (current, target) => `${formatHours(current)} von ${target} Stunden`,
             },
             daysInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} Tagen in Folge`,
             },
             weeksInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} Wochen in Folge`,
             },
             daysPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} gespielten Tagen`,
             },
             weeksPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} gespielten Wochen`,
             },
             minutes: {
                 short: (current, target) => `${current}/${target} min`,
-                long: (current, target) => `${current} von ${target} Minuten`,
             },
             randomGames: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} zufälligen Tischen`,
             },
             manufacturers: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} Herstellern`,
             },
             challenges: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} von ${target} Herausforderungen`,
             },
-        },
-        families: {
-            collection: "Sammlung",
-            playTime: "Spielzeit",
-            periodTables: "Tisch des Tages und der Woche",
-            sessions: "Sitzungen",
-            randomGame: "Zufallsspiel",
-            manufacturers: "Hersteller",
-            decades: "Jahrzehnte",
-            categories: "Kategorien",
-            challenges: "Herausforderungen",
         },
     },
 

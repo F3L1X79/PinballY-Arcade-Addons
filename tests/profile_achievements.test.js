@@ -12,6 +12,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { readRows } from "./achievement_list_reader.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 const SECONDS_PER_HOUR = 3600;
@@ -120,12 +121,11 @@ test("each Profile unlocks and is announced its own Achievements", async () => {
     // The Achievement List shows Bob's Achievements.
     fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
     fake.selectMenuItem(lang.achievementList.menuEntry);
-    const TEXT = lang.achievementList;
-    const manufacturersLine = fake.currentMenu().items
-        .find(item => item.title && item.title.startsWith(TEXT.families.manufacturers));
-    fake.selectMenuItem(manufacturersLine.title);
-    const checked = fake.currentMenu().items.filter(item => item.checked).map(item => item.title);
-    assert.deepEqual(checked, [lang.achievements.manufacturerCompletionTitle("Bally")]);
+    const manufacturerTitles = ["Williams", "Bally"].map(name => lang.achievements.manufacturerCompletionTitle(name));
+    const unlockedManufacturers = readRows(fake, lang.achievementList)
+        .filter(row => row.unlocked && manufacturerTitles.includes(row.title))
+        .map(row => row.title);
+    assert.deepEqual(unlockedManufacturers, [lang.achievements.manufacturerCompletionTitle("Bally")]);
 
     // No Notified flag is left in PinballY's settings.
     assert.deepEqual([...fake.writtenSettingsKeys()].filter(key => key.startsWith("custom.achievements.")), []);

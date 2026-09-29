@@ -2,7 +2,8 @@
 // Main menu module tests: entries added through its interface appear in
 // PinballY's main menu right after "Play", in their fixed position order
 // whatever order the Add-ons added them in, and selecting one runs its
-// action. Other menus are left alone.
+// action; reopening on an entry puts the cursor on it. Other menus are
+// left alone.
 // ============================================================
 
 import { test } from "node:test";
@@ -94,4 +95,20 @@ test("a failing shown-when predicate hides only its own entry", () => {
     openMainMenu();
 
     assert.deepEqual(titles(fake.currentMenu()), ["Play", "List", "Exit"]);
+});
+
+test("reopening on an entry shows the main menu with the cursor on it, once", () => {
+    const { fake, mainMenu, openMainMenu } = setUp();
+    mainMenu.add({ name: "list", label: "List", position: MAIN_MENU_POSITION.ACHIEVEMENT_LIST, action: () => {} });
+    mainMenu.add({ name: "stats", label: "Stats", position: MAIN_MENU_POSITION.PROFILE_STATS, action: () => {} });
+    const selectedTitles = () => fake.currentMenu().items.filter(item => item.selected).map(item => item.title);
+
+    mainMenu.reopenOn("stats");
+
+    assert.equal(fake.executedCommands().at(-1), fake.getBuiltInCommand("ShowMainMenu"));
+    openMainMenu();
+    assert.deepEqual(selectedTitles(), ["Stats"]);
+    fake.closeMenu();
+    openMainMenu();
+    assert.deepEqual(selectedTitles(), [], "the next opening starts as usual");
 });

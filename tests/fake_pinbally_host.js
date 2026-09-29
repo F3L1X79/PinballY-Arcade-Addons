@@ -28,6 +28,7 @@ export const settle = () => new Promise(resolve => realSetTimeout(resolve, 10));
 // PinballY's own commands used by the add-ons; custom ones start above them.
 const BUILT_IN_COMMANDS = {
     PlayGame: 1, ShowGameSetupMenu: 2, RateGame: 3, MenuReturn: 4, MenuPageUp: 5, MenuPageDown: 6, Quit: 7,
+    ShowMainMenu: 8,
 };
 const FIRST_CUSTOM_COMMAND = 1000;
 

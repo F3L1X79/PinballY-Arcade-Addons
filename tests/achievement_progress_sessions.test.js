@@ -16,7 +16,7 @@ const MEDIEVAL = table(1, "Medieval Madness", "Williams", 1997);
 const LONGEST_SECONDS = 30 * 60 - 10;
 
 test("marathons show whole minutes, Random Games and Day's Manufacturers their counts", async () => {
-    const { fake, lang, play, familyTitles, cardText, withProgress, progressCard } = await startScenario({
+    const { fake, lang, play, readShown, unlockedRow, missingRow } = await startScenario({
         now: new Date(2026, 8, 23, 10, 0, 0),
         tables: [MEDIEVAL],
         files: {
@@ -29,25 +29,23 @@ test("marathons show whole minutes, Random Games and Day's Manufacturers their c
     const ACHIEVEMENT = lang.achievements;
     const halfHour = ACHIEVEMENT.marathonTitles[30];
 
-    assert.deepEqual(familyTitles("sessions"), [
-        withProgress(halfHour, "minutes", 29, 30),
-        withProgress(ACHIEVEMENT.marathonTitles[60], "minutes", 29, 60),
-        ACHIEVEMENT.rageQuitTitle(),
-        ACHIEVEMENT.grandReturnTitle(),
+    const fullHour = ACHIEVEMENT.marathonTitles[60];
+    assert.deepEqual(readShown([halfHour, fullHour, ACHIEVEMENT.rageQuitTitle(), ACHIEVEMENT.grandReturnTitle()]), [
+        missingRow(halfHour, "minutes", 29, 30),
+        missingRow(fullHour, "minutes", 29, 60),
+        missingRow(ACHIEVEMENT.rageQuitTitle()),
+        missingRow(ACHIEVEMENT.grandReturnTitle()),
     ]);
-    assert.equal(cardText("sessions", withProgress(halfHour, "minutes", 29, 30)),
-        progressCard(halfHour, ACHIEVEMENT.marathonDescription(30), "minutes", 29, 30));
-    assert.deepEqual(familyTitles("randomGame"),
-        [10, 25, 50, 100].map(count => withProgress(ACHIEVEMENT.randomGamesTitles[count], "randomGames", 7, count)));
-    const dayManufacturers = [3, 5, 8, 10].map(count => withProgress(ACHIEVEMENT.dayManufacturersTitles[count], "manufacturers", 2, count));
-    assert.deepEqual(familyTitles("manufacturers").filter(title => dayManufacturers.includes(title)), dayManufacturers);
+    const randomGames = [10, 25, 50, 100];
+    assert.deepEqual(readShown(randomGames.map(count => ACHIEVEMENT.randomGamesTitles[count])),
+        randomGames.map(count => missingRow(ACHIEVEMENT.randomGamesTitles[count], "randomGames", 7, count)));
+    const dayManufacturers = [3, 5, 8, 10];
+    assert.deepEqual(readShown(dayManufacturers.map(count => ACHIEVEMENT.dayManufacturersTitles[count])),
+        dayManufacturers.map(count => missingRow(ACHIEVEMENT.dayManufacturersTitles[count], "manufacturers", 2, count)));
 
     // A half-hour session reaches the target exactly: the marathon unlocks.
     await play(MEDIEVAL, 30 * 60);
-    assert.deepEqual(familyTitles("sessions").slice(0, 2), [
-        halfHour,
-        withProgress(ACHIEVEMENT.marathonTitles[60], "minutes", 30, 60),
-    ]);
+    assert.deepEqual(readShown([halfHour, fullHour]), [unlockedRow(halfHour), missingRow(fullHour, "minutes", 30, 60)]);
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });

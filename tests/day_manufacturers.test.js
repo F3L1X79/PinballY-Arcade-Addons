@@ -11,6 +11,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { readRows } from "./achievement_list_reader.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 const SESSION_MS = 5 * 60 * 1000;
@@ -100,19 +101,15 @@ test("three manufacturers in one calendar day unlock the first multi-manufacture
 
     fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
     fake.selectMenuItem(lang.achievementList.menuEntry);
-    const manufacturersLine = fake.currentMenu().items
-        .find(item => item.title && item.title.includes(lang.achievementList.families.manufacturers));
-    fake.selectMenuItem(manufacturersLine.title);
-    const LIST = lang.achievementList;
-    const withRecord = count => LIST.titleWithProgress(TEXT.dayManufacturersTitles[count], LIST.progressUnits.manufacturers.short(4, count));
-    const shownTitles = [TEXT.dayManufacturersTitles[3], withRecord(5), withRecord(8)];
-    const dayManufacturersItems = fake.currentMenu().items
-        .filter(item => shownTitles.includes(item.title))
-        .map(({ title, checked }) => ({ title, checked }));
-    assert.deepEqual(dayManufacturersItems, [
-        { title: TEXT.dayManufacturersTitles[3], checked: true },
-        { title: withRecord(5), checked: false },
-        { title: withRecord(8), checked: false },
+    const shownTitles = [3, 5, 8].map(count => TEXT.dayManufacturersTitles[count]);
+    const dayManufacturersRows = readRows(fake, lang.achievementList)
+        .filter(row => shownTitles.includes(row.title))
+        .map(({ title, progress, unlocked }) => ({ title, progress, unlocked }));
+    const withRecord = count => lang.achievementList.progressUnits.manufacturers.short(4, count);
+    assert.deepEqual(dayManufacturersRows, [
+        { title: TEXT.dayManufacturersTitles[3], progress: null, unlocked: true },
+        { title: TEXT.dayManufacturersTitles[5], progress: withRecord(5), unlocked: false },
+        { title: TEXT.dayManufacturersTitles[8], progress: withRecord(8), unlocked: false },
     ]);
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);

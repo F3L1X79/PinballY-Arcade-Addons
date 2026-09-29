@@ -4,7 +4,9 @@
 // inserts them into PinballY's main menu right after "Play", in a
 // fixed position order, so the Add-on order in main.js never decides where
 // an entry lands. It owns the entry commands and runs the matching action
-// when one is selected. Listens to "menuopen" and "command".
+// when one is selected, and can reopen the main menu with the cursor on an
+// entry (a screen going back one level). Listens to "menuopen" and
+// "command".
 // ============================================================
 
 import { safeHandler } from "./safe_handler.js";
@@ -26,11 +28,13 @@ export const MAIN_MENU_POSITION = Object.freeze({
 export function createMainMenu(host) {
     // Sorted by position.
     const entries = [];
+    // The entry the cursor goes to on the next main menu opening, or null.
+    let entryToSelect = null;
 
     // shownWhen: optional, the entry is left out of the menu when it returns
     // false. Guarded on its own, so a failing one hides only its own entry.
     function add({ name, label, position, action, shownWhen = () => true }) {
-        const entry = { label, position, action, shownWhen: safeHandler(SCRIPT_NAME, shownWhen), cmd: host.allocateCommand(name) };
+        const entry = { name, label, position, action, shownWhen: safeHandler(SCRIPT_NAME, shownWhen), cmd: host.allocateCommand(name) };
         const insertAt = entries.findIndex(other => other.position > position);
         if (insertAt === -1) entries.push(entry);
         else entries.splice(insertAt, 0, entry);
@@ -41,12 +45,24 @@ export function createMainMenu(host) {
     host.on("menuopen", safeHandler(SCRIPT_NAME, ev => {
         if (ev.id !== "main") return;
         const shown = entries.filter(entry => entry.shownWhen());
+        const selected = shown.find(entry => entry.name === entryToSelect);
+        entryToSelect = null;
         if (shown.length === 0) return;
         ev.addMenuItem(
             { after: host.getBuiltInCommand("PlayGame") },
             shown.map(({ label, cmd }) => ({ title: label, cmd }))
         );
+        if (!selected) return;
+        // PinballY ignores edits to ev.items unless menuUpdated is set.
+        for (const item of ev.items) item.selected = item.cmd === selected.cmd;
+        ev.menuUpdated = true;
     }));
+
+    // Opens the main menu with the cursor on the named entry.
+    function reopenOn(name) {
+        entryToSelect = name;
+        host.doCommand(host.getBuiltInCommand("ShowMainMenu"));
+    }
 
     // Fires on every command; async because an action may animate the
     // wheel, so its rejections are logged too.
@@ -55,7 +71,7 @@ export function createMainMenu(host) {
         if (entry) await entry.action();
     }));
 
-    return { add };
+    return { add, reopenOn };
 }
 
 let sharedMainMenu = null;

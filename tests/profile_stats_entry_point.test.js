@@ -9,6 +9,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { chromeTexts, pressAndGlide } from "./achievement_list_reader.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 
@@ -64,10 +65,11 @@ test("the Profile Stats entry follows the Achievement List and shows Guest's own
         "Exit",
     ]);
 
-    // The Achievement List's own total, read from its first line.
+    // The Achievement List's own total, read from its header.
+    const readListTotalLine = () => chromeTexts(fake).find(text => /^\d+ \/ \d+ /.test(text));
     fake.selectMenuItem(lang.achievementList.menuEntry);
-    const listTotalLine = fake.currentMenu().items[0].title;
-    fake.selectMenuItem(lang.achievementList.back);
+    const listTotalLine = readListTotalLine();
+    pressAndGlide(fake, "Exit");
 
     openMainMenu();
     fake.selectMenuItem(TEXT.menuEntry);
@@ -79,7 +81,7 @@ test("the Profile Stats entry follows the Achievement List and shows Guest's own
 
     const achievementsLine = shown[5];
     fake.selectMenuItem(achievementsLine);
-    assert.equal(fake.currentMenu().items[0].title, listTotalLine);
+    assert.equal(readListTotalLine(), listTotalLine);
     const [unlocked, total] = listTotalLine.match(/\d+/g).map(Number);
     assert.equal(achievementsLine, TEXT.achievements(unlocked, total));
 

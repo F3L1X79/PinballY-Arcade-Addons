@@ -1,8 +1,8 @@
 // ============================================================
 // Completed Challenges in the player's record, through main.js on the fake
-// PinballY globals: the Challenges Achievement Family, after Categories in
-// the Achievement List, unlocks on the Profile's completed count and shows
-// its Achievement Progress; Profile Stats shows "Challenges completed:
+// PinballY globals: the Challenges Achievements in the Achievement List
+// unlock on the Profile's completed count and show their Achievement
+// Progress; Profile Stats shows "Challenges completed:
 // X/Y", counting the week's Challenge as soon as it is completed. Guest
 // has neither.
 // ============================================================
@@ -11,6 +11,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 
 // Wednesday 23 September 2026: its week is keyed "2026-09-21".
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -47,7 +48,7 @@ const CABINET = {
 
 const ADD_ONS_UNDER_TEST = ["achievements", "challenges", "profilePicker"];
 
-test("completed Challenges unlock the Challenges family and fill the Profile Stats line", async () => {
+test("completed Challenges unlock the Challenges Achievements and fill the Profile Stats line", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
     fake.addFolder(`${PROFILES_FOLDER}\\Alice`);
     fake.addFile(`${PROFILES_FOLDER}\\Alice\\profile.json`,
@@ -67,24 +68,16 @@ test("completed Challenges unlock the Challenges family and fill the Profile Sta
     const ACHIEVEMENT = lang.achievements;
 
     const openMainMenu = () => fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
-    function familyLines() {
+    // How the Achievement List shows each Challenges Achievement:
+    // "✓ title" when Unlocked, "title progress" otherwise.
+    function challengeRows() {
         openMainMenu();
         fake.selectMenuItem(LIST.menuEntry);
-        const lines = fake.currentMenu().items.filter(item => item.cmd > 0 && item.title !== LIST.back).map(item => item.title);
-        fake.selectMenuItem(LIST.back);
-        return lines;
-    }
-    function challengeTitles() {
-        openMainMenu();
-        fake.selectMenuItem(LIST.menuEntry);
-        fake.selectMenuItem(fake.currentMenu().items
-            .find(item => item.title && item.title.startsWith(LIST.families.challenges)).title);
-        const titles = fake.currentMenu().items
-            .filter(item => typeof item.checked === "boolean")
-            .map(item => `${item.checked ? "✓ " : ""}${item.title}`);
-        fake.selectMenuItem(LIST.back);
-        fake.selectMenuItem(LIST.back);
-        return titles;
+        const rows = readRows(fake, LIST);
+        pressAndGlide(fake, "Exit");
+        const titles = Object.values(ACHIEVEMENT.challengesCompletedTitles);
+        return rows.filter(row => titles.includes(row.title))
+            .map(row => (row.unlocked ? `✓ ${row.title}` : `${row.title} ${row.progress}`));
     }
     function statsLines() {
         openMainMenu();
@@ -93,8 +86,8 @@ test("completed Challenges unlock the Challenges family and fill the Profile Sta
         fake.selectMenuItem(STATS.back);
         return lines;
     }
-    const withProgress = (count, current) => LIST.titleWithProgress(ACHIEVEMENT.challengesCompletedTitles[count],
-        LIST.progressUnits.challenges.short(current, count));
+    const withProgress = (count, current) =>
+        `${ACHIEVEMENT.challengesCompletedTitles[count]} ${LIST.progressUnits.challenges.short(current, count)}`;
     async function play(game) {
         fake.gameStarted(game);
         await settle();
@@ -105,11 +98,7 @@ test("completed Challenges unlock the Challenges family and fill the Profile Sta
         await settle();
     }
 
-    const families = familyLines();
-    assert.deepEqual(families.slice(-2).map(line => line.replace(/ \(\d+\/\d+\)$/, "")),
-        [LIST.families.categories, LIST.families.challenges]);
-    assert.equal(families.at(-1), LIST.familyLine(LIST.families.challenges, 1, 6));
-    assert.deepEqual(challengeTitles(), [
+    assert.deepEqual(challengeRows(), [
         `✓ ${ACHIEVEMENT.challengesCompletedTitles[1]}`,
         withProgress(5, 4), withProgress(10, 4), withProgress(25, 4), withProgress(50, 4), withProgress(100, 4),
     ]);
@@ -120,11 +109,11 @@ test("completed Challenges unlock the Challenges family and fill the Profile Sta
     await play(TABLES[0]);
     assert.ok(statsLines().includes(STATS.challengesCompleted(4, 5)), "not completed after one table");
     await play(TABLES[1]);
-    assert.deepEqual(challengeTitles().slice(0, 3), [
-        `✓ ${ACHIEVEMENT.challengesCompletedTitles[1]}`,
+    assert.deepEqual(challengeRows().slice(0, 3), [
         `✓ ${ACHIEVEMENT.challengesCompletedTitles[5]}`,
+        `✓ ${ACHIEVEMENT.challengesCompletedTitles[1]}`,
         withProgress(10, 5),
-    ]);
+    ], "the latest one first");
     const after = statsLines();
     assert.ok(after.includes(STATS.challengesCompleted(5, 6)), after.join(" / "));
     const { notified } = JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`));
@@ -138,10 +127,10 @@ test("completed Challenges unlock the Challenges family and fill the Profile Sta
     const nextWeek = statsLines();
     assert.ok(nextWeek.includes(STATS.challengesCompleted(5, 6)), nextWeek.join(" / "));
 
-    // Guest has no Challenge: neither the family nor the line.
+    // Guest has no Challenge: neither the Achievements nor the line.
     getProfileStore().switchTo("guest");
     await settle();
-    assert.ok(!familyLines().some(line => line.startsWith(LIST.families.challenges)));
+    assert.deepEqual(challengeRows(), []);
     assert.ok(!statsLines().some(line => line && line.startsWith(STATS.challengesCompleted(0, 0).split(":")[0])));
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);

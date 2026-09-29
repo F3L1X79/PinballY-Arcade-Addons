@@ -14,7 +14,8 @@
 // The caller marks an achievement Notified when its toast starts.
 // ============================================================
 
-// Listed in the order the Achievement List shows them.
+// The kind of an Achievement; the Challenges one exists only while its
+// Add-on is enabled.
 export const ACHIEVEMENT_FAMILY = Object.freeze({
     COLLECTION: "collection",
     PLAY_TIME: "playTime",

@@ -8,9 +8,10 @@
 // table there puts the wheel on it, switching to the all-tables filter when
 // the current one hides it.
 // Created from the PinballY host, the Profile store, the Achievement List
-// (its counts, and opening it from the Achievements line), the Table of
-// the Day and Table of the Week, and the Challenge module (null when the
-// Challenges Add-on is disabled: no Challenges line). Every number and list
+// (its counts, and opening it from the Achievements line, Exit there
+// showing this screen again), the Table of the Day and Table of the Week,
+// and the Challenge module (null when the Challenges Add-on is disabled:
+// no Challenges line). Every number and list
 // is read again each time a menu opens. Listens to "command". Opens its
 // menus directly, not through the wheel dialog module: the player asked for
 // them.
@@ -188,7 +189,8 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
         const list = tableLists.find(tableList => tableList.command === ev.id);
         const tableIndex = tableCommands.indexOf(ev.id);
         if (ev.id === achievementsCommand) {
-            achievementList.open();
+            // Exit from the list comes back here.
+            achievementList.open(() => show());
         } else if (list) {
             showTableList(list);
         } else if (tableIndex >= 0 && tableIndex < shown.tables.length) {

@@ -35,6 +35,7 @@ import lang from "../common/i18n.js";
 import { safeHandler } from "../common/safe_handler.js";
 
 const SCRIPT_NAME = "AchievementsEngine";
+const ACHIEVEMENT_LIST_ENTRY = "achievementList";
 
 // Null when the Challenges Add-on is disabled: then neither the Challenges
 // family nor the Profile Stats line exists.
@@ -61,12 +62,14 @@ export default function init() {
     const achievementToasts = getAchievementToasts();
     const profileStore = getProfileStore();
 
-    const achievementList = createAchievementList(createPinballYHost(), getAllAchievements);
-    getMainMenu().add({
-        name: "achievementList",
+    const achievementList = createAchievementList(createPinballYHost(), { getAchievements: getAllAchievements, profileStore });
+    const mainMenu = getMainMenu();
+    mainMenu.add({
+        name: ACHIEVEMENT_LIST_ENTRY,
         label: lang.achievementList.menuEntry,
         position: MAIN_MENU_POSITION.ACHIEVEMENT_LIST,
-        action: achievementList.open,
+        // Exit goes back one level: the main menu, on this entry.
+        action: () => achievementList.open(() => mainMenu.reopenOn(ACHIEVEMENT_LIST_ENTRY)),
     });
     const profileStats = createProfileStats(createPinballYHost(), {
         profileStore,
@@ -75,7 +78,7 @@ export default function init() {
         tableOfTheWeek: getTableOfTheWeek(),
         challenges: getEnabledChallenges(),
     });
-    getMainMenu().add({
+    mainMenu.add({
         name: "profileStats",
         label: lang.profileStats.menuEntry,
         position: MAIN_MENU_POSITION.PROFILE_STATS,

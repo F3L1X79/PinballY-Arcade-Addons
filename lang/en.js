@@ -200,72 +200,50 @@ export default {
     // The Achievement List screen (see common/achievement_list.js).
     achievementList: {
         menuEntry: "Achievement List",
-        totalLine: (unlockedCount, totalCount) => `Total: ${unlockedCount}/${totalCount}`,
-        familyLine: (family, unlockedCount, totalCount) => `${family} (${unlockedCount}/${totalCount})`,
+        // The header's title, the section titles, the key caps and the
+        // footer's hints are shown in capitals.
+        title: "Achievement List",
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} achievements unlocked (${percent}%)`,
+        unlockedSection: "Unlocked achievements",
+        missingSection: "Achievements to earn",
+        // After a section's title.
+        sectionCount: (count) => `(${count})`,
+        // PinballY's button names, as on the cabinet's key caps.
+        keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
+        browse: "Browse",
         back: "Back",
-        // The Achievement Progress line, when there is one, sits between the
-        // description and the status.
-        cardMessage: (title, description, status, progress) => (progress === undefined
-            ? `${title}\n${description}\n\n${status}`
-            : `${title}\n${description}\n\n${progress}\n${status}`),
-        unlocked: "Unlocked",
-        notUnlocked: "Not unlocked yet",
-        // A missing Achievement's Achievement Progress: short after its title
-        // in a family's list, long on its card.
-        titleWithProgress: (title, progress) => `${title} (${progress})`,
-        progressLine: progress => `Progress: ${progress}`,
+        // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} tables`,
             },
             hours: {
                 short: (current, target) => `${formatHours(current)}/${target} h`,
-                long: (current, target) => `${formatHours(current)} of ${target} hours`,
             },
             daysInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} days in a row`,
             },
             weeksInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} weeks in a row`,
             },
             daysPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} days played`,
             },
             weeksPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} weeks played`,
             },
             minutes: {
                 short: (current, target) => `${current}/${target} min`,
-                long: (current, target) => `${current} of ${target} minutes`,
             },
             randomGames: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} Random Games`,
             },
             manufacturers: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} manufacturers`,
             },
             challenges: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} of ${target} Challenges`,
             },
-        },
-        families: {
-            collection: "Collection",
-            playTime: "Play Time",
-            periodTables: "Tables of the Day and Week",
-            sessions: "Sessions",
-            randomGame: "Random Game",
-            manufacturers: "Manufacturers",
-            decades: "Decades",
-            categories: "Categories",
-            challenges: "Challenges",
         },
     },
 

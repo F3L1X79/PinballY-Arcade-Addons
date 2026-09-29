@@ -282,72 +282,50 @@ export default {
 
     achievementList: {
         menuEntry: "Lista de conquistas",
-        totalLine: (unlockedCount, totalCount) => `Total: ${unlockedCount}/${totalCount}`,
-        familyLine: (family, unlockedCount, totalCount) => `${family} (${unlockedCount}/${totalCount})`,
+        // The header's title, the section titles, the key caps and the
+        // footer's hints are shown in capitals.
+        title: "Achievement List", // TODO: translation pass
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} achievements unlocked (${percent}%)`, // TODO: translation pass
+        unlockedSection: "Unlocked achievements", // TODO: translation pass
+        missingSection: "Achievements to earn", // TODO: translation pass
+        // After a section's title.
+        sectionCount: (count) => `(${count})`,
+        // PinballY's button names, as on the cabinet's key caps.
+        keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
+        browse: "Browse", // TODO: translation pass
         back: "Voltar",
-        // The Achievement Progress line, when there is one, sits between the
-        // description and the status.
-        cardMessage: (title, description, status, progress) => (progress === undefined
-            ? `${title}\n${description}\n\n${status}`
-            : `${title}\n${description}\n\n${progress}\n${status}`),
-        unlocked: "Desbloqueada",
-        notUnlocked: "Ainda não desbloqueada",
-        // A missing Achievement's Achievement Progress: short after its title
-        // in a family's list, long on its card.
-        titleWithProgress: (title, progress) => `${title} (${progress})`,
-        progressLine: progress => `Progresso: ${progress}`,
+        // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} mesas`,
             },
             hours: {
                 short: (current, target) => `${formatHours(current)}/${target} h`,
-                long: (current, target) => `${formatHours(current)} de ${target} horas`,
             },
             daysInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} dias seguidos`,
             },
             weeksInARow: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} semanas seguidas`,
             },
             daysPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} dias jogados`,
             },
             weeksPlayed: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} semanas jogadas`,
             },
             minutes: {
                 short: (current, target) => `${current}/${target} min`,
-                long: (current, target) => `${current} de ${target} minutos`,
             },
             randomGames: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} mesas aleatórias`,
             },
             manufacturers: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} fabricantes`,
             },
             challenges: {
                 short: (current, target) => `${current}/${target}`,
-                long: (current, target) => `${current} de ${target} desafios`,
             },
-        },
-        families: {
-            collection: "Coleção",
-            playTime: "Tempo de jogo",
-            periodTables: "Mesas do dia e da semana",
-            sessions: "Sessões",
-            randomGame: "Mesa aleatória",
-            manufacturers: "Fabricantes",
-            decades: "Décadas",
-            categories: "Categorias",
-            challenges: "Desafios",
         },
     },
 

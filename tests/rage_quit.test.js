@@ -9,6 +9,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { readRows } from "./achievement_list_reader.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 
@@ -73,11 +74,8 @@ test("only a session of 30 seconds to under a minute unlocks the rage quit for g
 
     fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
     fake.selectMenuItem(lang.achievementList.menuEntry);
-    const sessionsLine = fake.currentMenu().items
-        .find(item => item.title && item.title.includes(lang.achievementList.families.sessions));
-    fake.selectMenuItem(sessionsLine.title);
-    const rageQuitItem = fake.currentMenu().items.find(item => item.title === TEXT.rageQuitTitle());
-    assert.equal(rageQuitItem.checked, true);
+    const rageQuitRow = readRows(fake, lang.achievementList).find(row => row.title === TEXT.rageQuitTitle());
+    assert.equal(rageQuitRow.unlocked, true);
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });

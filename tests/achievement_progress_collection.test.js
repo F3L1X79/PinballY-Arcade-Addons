@@ -18,7 +18,7 @@ const [FIRST, SECOND] = TABLES;
 const PLAYED_SECONDS = 5 * 3600 - 10;
 
 test("collection milestones show the tables played, play time the hours rounded down", async () => {
-    const { fake, lang, getProfileStore, play, familyTitles, cardText, withProgress, progressCard } = await startScenario({
+    const { fake, lang, getProfileStore, play, readShown, unlockedRow, missingRow } = await startScenario({
         now: new Date(2026, 8, 23, 10, 0, 0),
         tables: TABLES,
         folders: [`${PROFILES_FOLDER}\\Alice`],
@@ -35,41 +35,39 @@ test("collection milestones show the tables played, play time the hours rounded 
     });
     const ACHIEVEMENT = lang.achievements;
 
-    assert.deepEqual(familyTitles("collection"), [
-        ACHIEVEMENT.firstTableTitle(),
-        ACHIEVEMENT.collectionPercentTitles[10],
-        withProgress(ACHIEVEMENT.collectionPercentTitles[25], "tables", 2, 3),
-        withProgress(ACHIEVEMENT.collectionPercentTitles[50], "tables", 2, 5),
-        withProgress(ACHIEVEMENT.collectionPercentTitles[75], "tables", 2, 8),
-        withProgress(ACHIEVEMENT.collectionPercentTitles[100], "tables", 2, 10),
+    const collection = [ACHIEVEMENT.firstTableTitle(), ...[10, 25, 50, 75, 100].map(percent => ACHIEVEMENT.collectionPercentTitles[percent])];
+    assert.deepEqual(readShown(collection), [
+        unlockedRow(collection[0]),
+        unlockedRow(collection[1]),
+        missingRow(collection[2], "tables", 2, 3),
+        missingRow(collection[3], "tables", 2, 5),
+        missingRow(collection[4], "tables", 2, 8),
+        missingRow(collection[5], "tables", 2, 10),
     ]);
 
-    const fiveHours = ACHIEVEMENT.playTimeMilestoneTitles[5];
-    assert.deepEqual(familyTitles("playTime"), [
-        ACHIEVEMENT.playTimeMilestoneTitles[1],
-        withProgress(fiveHours, "hours", 4.9, 5),
-        withProgress(ACHIEVEMENT.playTimeMilestoneTitles[10], "hours", 4.9, 10),
-        withProgress(ACHIEVEMENT.playTimeMilestoneTitles[50], "hours", 4.9, 50),
-        withProgress(ACHIEVEMENT.playTimeMilestoneTitles[100], "hours", 4.9, 100),
+    const playTime = [1, 5, 10, 50, 100].map(hours => ACHIEVEMENT.playTimeMilestoneTitles[hours]);
+    assert.deepEqual(readShown(playTime), [
+        unlockedRow(playTime[0]),
+        missingRow(playTime[1], "hours", 4.9, 5),
+        missingRow(playTime[2], "hours", 4.9, 10),
+        missingRow(playTime[3], "hours", 4.9, 50),
+        missingRow(playTime[4], "hours", 4.9, 100),
     ]);
-    assert.equal(cardText("playTime", withProgress(fiveHours, "hours", 4.9, 5)),
-        progressCard(fiveHours, ACHIEVEMENT.playTimeMilestoneDescription(5), "hours", 4.9, 5));
 
     // Ten more seconds reach the 5 hours exactly: the Achievement unlocks
     // as its Achievement Progress reaches its target.
     await play(SECOND, 10);
-    assert.deepEqual(familyTitles("playTime").slice(0, 3), [
-        ACHIEVEMENT.playTimeMilestoneTitles[1],
-        fiveHours,
-        withProgress(ACHIEVEMENT.playTimeMilestoneTitles[10], "hours", 5, 10),
+    assert.deepEqual(readShown(playTime.slice(0, 3)), [
+        unlockedRow(playTime[0]),
+        unlockedRow(playTime[1]),
+        missingRow(playTime[2], "hours", 5, 10),
     ]);
 
     // Nothing played: the targets of 1 show no Achievement Progress.
     getProfileStore().switchTo("Alice");
     await settle();
-    assert.deepEqual(familyTitles("collection").slice(0, 2),
-        [ACHIEVEMENT.firstTableTitle(), ACHIEVEMENT.collectionPercentTitles[10]]);
-    assert.equal(familyTitles("playTime")[0], ACHIEVEMENT.playTimeMilestoneTitles[1]);
+    assert.deepEqual(readShown([...collection.slice(0, 2), playTime[0]]),
+        [missingRow(collection[0]), missingRow(collection[1]), missingRow(playTime[0])]);
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });

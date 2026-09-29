@@ -4,10 +4,11 @@
 // what the player sees (title naming the active Profile, games played,
 // total time, collection completion, Achievements, both Streaks,
 // favourite manufacturer and decade, the most played and never played
-// tables lists), that the Achievements line opens the Achievement List, that
-// a listed table puts the wheel on it (switching to all tables when the
-// current filter hides it), that Back from a list returns to its entry, and
-// that every number is read again each time the screen opens.
+// tables lists), that the Achievements line opens the Achievement List and
+// Exit there comes back, that a listed table puts the wheel on it
+// (switching to all tables when the current filter hides it), that Back
+// from a list returns to its entry, and that every number is read again
+// each time the screen opens.
 // ============================================================
 
 import { test } from "node:test";
@@ -19,6 +20,7 @@ import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../commo
 import { createAchievementList } from "../common/achievement_list.js";
 import { ACHIEVEMENT_FAMILY } from "../common/achievements.js";
 import lang from "../common/i18n.js";
+import { chromeTexts, pressAndGlide } from "./achievement_list_reader.js";
 
 const TEXT = lang.profileStats;
 const LIST_TEXT = lang.achievementList;
@@ -64,7 +66,7 @@ function setUp({ guest = { plays: GUEST_PLAYS }, others = {}, tables = TABLES } 
     }
     const profileStore = createProfileStore(fake);
     const achievements = [fakeAchievement("a", true), fakeAchievement("b", false), fakeAchievement("c", true)];
-    const achievementList = createAchievementList(fake, () => achievements);
+    const achievementList = createAchievementList(fake, { getAchievements: () => achievements, profileStore });
     const profileStats = createProfileStats(fake, {
         profileStore,
         achievementList,
@@ -189,7 +191,10 @@ test("the Achievements line matches the Achievement List and opens it", () => {
     profileStats.open();
     fake.selectMenuItem(TEXT.achievements(3, 3));
 
-    assert.deepEqual(fake.currentMenu().items[0], { title: LIST_TEXT.totalLine(3, 3), cmd: -1 });
+    assert.ok(chromeTexts(fake).includes(LIST_TEXT.totalLine(3, 3, 100)), "the list shows the same counts");
+    pressAndGlide(fake, "Exit");
+    assert.deepEqual(chromeTexts(fake), [], "Exit closes the list");
+    assert.equal(fake.currentMenu().items[0].title, TEXT.title(lang.profiles.guestName), "and shows the Profile Stats again");
 });
 
 test("both Streaks show the current Streak, 0 once broken, and the longest one", () => {

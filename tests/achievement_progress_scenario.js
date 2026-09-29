@@ -1,13 +1,14 @@
 // ============================================================
 // Shared scenario for the Achievement Progress tests: starts main.js on the
 // fake PinballY globals with the given tables and Profile files, plays
-// tables for real and reads what the Achievement List shows (a family's
-// titles, an Achievement's card). Each test file runs in its own process,
-// so each starts one scenario.
+// tables for real and reads how the Achievement List shows the given
+// Achievements (Unlocked or missing, and their Achievement Progress). Each
+// test file runs in its own process, so each starts one scenario.
 // ============================================================
 
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
+import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 
 export const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
 // Longer than a toast's whole life (rise, hold, fade).
@@ -58,42 +59,29 @@ export async function startScenario({ now, tables, files = {}, folders = [] }) {
         await showEveryToast();
     }
 
-    function closeMenus() {
-        for (let guard = 0; guard < 5 && fake.currentMenu(); guard++) {
-            fake.selectMenuItem(TEXT.back);
-        }
-    }
-
-    function openFamily(family) {
+    // How the list shows each of these Achievements, by title, in the given
+    // order: { title, progress, unlocked }, progress being the short text
+    // of its Achievement Progress or null. Opened from the main menu and
+    // closed again with Exit.
+    function readShown(titles) {
         fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
         fake.selectMenuItem(TEXT.menuEntry);
-        const line = fake.currentMenu().items.find(item => item.title && item.title.startsWith(TEXT.families[family]));
-        fake.selectMenuItem(line.title);
+        const rows = readRows(fake, TEXT);
+        pressAndGlide(fake, "Exit");
+        return titles.map(title => {
+            const row = rows.find(shownRow => shownRow.title === title);
+            if (!row) throw new Error(`"${title}" is not in the Achievement List.`);
+            return { title, progress: row.progress, unlocked: row.unlocked };
+        });
     }
 
-    // The titles a family shows, in order.
-    function familyTitles(family) {
-        openFamily(family);
-        const titles = fake.currentMenu().items.filter(item => typeof item.checked === "boolean").map(item => item.title);
-        closeMenus();
-        return titles;
-    }
+    const unlockedRow = title => ({ title, progress: null, unlocked: true });
+    // Without a unit, a missing Achievement showing no Achievement Progress.
+    const missingRow = (title, unit, current, target) => ({
+        title,
+        progress: unit === undefined ? null : TEXT.progressUnits[unit].short(current, target),
+        unlocked: false,
+    });
 
-    // The card of the Achievement shown under that title in its family.
-    function cardText(family, shownTitle) {
-        openFamily(family);
-        fake.selectMenuItem(shownTitle);
-        const text = fake.currentMenu().items[0].title;
-        closeMenus();
-        return text;
-    }
-
-    const withProgress = (title, unit, current, target) =>
-        TEXT.titleWithProgress(title, TEXT.progressUnits[unit].short(current, target));
-
-    // The card of a missing Achievement, with its Achievement Progress.
-    const progressCard = (title, description, unit, current, target) =>
-        TEXT.cardMessage(title, description, TEXT.notUnlocked, TEXT.progressLine(TEXT.progressUnits[unit].long(current, target)));
-
-    return { fake, lang, getProfileStore, play, showEveryToast, familyTitles, cardText, withProgress, progressCard };
+    return { fake, lang, getProfileStore, play, showEveryToast, readShown, unlockedRow, missingRow };
 }

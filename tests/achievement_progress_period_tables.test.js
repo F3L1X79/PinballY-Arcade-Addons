@@ -15,7 +15,7 @@ const TABLE_OF_THE_DAY = table(1, "Medieval Madness", "Williams", 1997);
 const TABLE_OF_THE_WEEK = table(2, "Attack from Mars", "Bally", 1995);
 
 test("Streak Achievements stay Unlocked after a break, missing ones show the current Streak", async () => {
-    const { fake, lang, play, familyTitles, cardText, withProgress, progressCard } = await startScenario({
+    const { fake, lang, play, readShown, unlockedRow, missingRow } = await startScenario({
         // Wednesday: its week started on Monday 21 September.
         now: new Date(2026, 8, 23, 10, 0, 0),
         tables: [TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK],
@@ -39,32 +39,38 @@ test("Streak Achievements stay Unlocked after a break, missing ones show the cur
     const ACHIEVEMENT = lang.achievements;
     const streakOfThirty = ACHIEVEMENT.dailyStreakTitles[30];
 
-    const beforePlay = familyTitles("periodTables");
-    assert.ok(beforePlay.includes(ACHIEVEMENT.dailyStreakTitles[7]), "the 12-day record keeps 7 days in a row Unlocked");
-    assert.ok(beforePlay.includes(withProgress(streakOfThirty, "daysInARow", 0, 30)),
-        "a broken Streak is back to 0 for a missing Achievement, whatever the record");
+    assert.deepEqual(readShown([ACHIEVEMENT.dailyStreakTitles[7], streakOfThirty]), [
+        // The 12-day record keeps 7 days in a row Unlocked.
+        unlockedRow(ACHIEVEMENT.dailyStreakTitles[7]),
+        // A broken Streak is back to 0 for a missing Achievement, whatever the record.
+        missingRow(streakOfThirty, "daysInARow", 0, 30),
+    ]);
 
     await play(TABLE_OF_THE_DAY);
-    assert.deepEqual(familyTitles("periodTables"), [
-        ACHIEVEMENT.dailyFirstPlayTitle(),
-        ACHIEVEMENT.weeklyFirstPlayTitle(),
-        ACHIEVEMENT.dailyPeriodsPlayedTitles[10],
-        ACHIEVEMENT.dailyPeriodsPlayedTitles[25],
-        ACHIEVEMENT.weeklyPeriodsPlayedTitles[4],
-        ACHIEVEMENT.dailyStreakTitles[3],
-        ACHIEVEMENT.dailyStreakTitles[7],
-        withProgress(ACHIEVEMENT.dailyPeriodsPlayedTitles[50], "daysPlayed", 41, 50),
-        withProgress(ACHIEVEMENT.dailyPeriodsPlayedTitles[100], "daysPlayed", 41, 100),
-        withProgress(ACHIEVEMENT.weeklyPeriodsPlayedTitles[10], "weeksPlayed", 9, 10),
-        withProgress(ACHIEVEMENT.weeklyPeriodsPlayedTitles[26], "weeksPlayed", 9, 26),
-        withProgress(ACHIEVEMENT.weeklyPeriodsPlayedTitles[52], "weeksPlayed", 9, 52),
-        withProgress(ACHIEVEMENT.dailyStreakTitles[14], "daysInARow", 1, 14),
-        withProgress(streakOfThirty, "daysInARow", 1, 30),
-        withProgress(ACHIEVEMENT.weeklyStreakTitles[4], "weeksInARow", 2, 4),
-        withProgress(ACHIEVEMENT.weeklyStreakTitles[12], "weeksInARow", 2, 12),
+    const daysPlayed = [10, 25, 50, 100].map(days => ACHIEVEMENT.dailyPeriodsPlayedTitles[days]);
+    const weeksPlayed = [4, 10, 26, 52].map(weeks => ACHIEVEMENT.weeklyPeriodsPlayedTitles[weeks]);
+    const dayStreaks = [3, 7, 14, 30].map(days => ACHIEVEMENT.dailyStreakTitles[days]);
+    const weekStreaks = [4, 12].map(weeks => ACHIEVEMENT.weeklyStreakTitles[weeks]);
+    assert.deepEqual(readShown([
+        ACHIEVEMENT.dailyFirstPlayTitle(), ACHIEVEMENT.weeklyFirstPlayTitle(), ...daysPlayed, ...weeksPlayed, ...dayStreaks, ...weekStreaks,
+    ]), [
+        unlockedRow(ACHIEVEMENT.dailyFirstPlayTitle()),
+        unlockedRow(ACHIEVEMENT.weeklyFirstPlayTitle()),
+        unlockedRow(daysPlayed[0]),
+        unlockedRow(daysPlayed[1]),
+        missingRow(daysPlayed[2], "daysPlayed", 41, 50),
+        missingRow(daysPlayed[3], "daysPlayed", 41, 100),
+        unlockedRow(weeksPlayed[0]),
+        missingRow(weeksPlayed[1], "weeksPlayed", 9, 10),
+        missingRow(weeksPlayed[2], "weeksPlayed", 9, 26),
+        missingRow(weeksPlayed[3], "weeksPlayed", 9, 52),
+        unlockedRow(dayStreaks[0]),
+        unlockedRow(dayStreaks[1]),
+        missingRow(dayStreaks[2], "daysInARow", 1, 14),
+        missingRow(dayStreaks[3], "daysInARow", 1, 30),
+        missingRow(weekStreaks[0], "weeksInARow", 2, 4),
+        missingRow(weekStreaks[1], "weeksInARow", 2, 12),
     ]);
-    assert.equal(cardText("periodTables", withProgress(streakOfThirty, "daysInARow", 1, 30)),
-        progressCard(streakOfThirty, ACHIEVEMENT.dailyStreakDescription(30), "daysInARow", 1, 30));
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });
