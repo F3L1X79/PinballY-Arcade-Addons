@@ -3,8 +3,8 @@
 // modules reach PinballY (settings, clock, timers, visible tables, wheel
 // selection and filter, main window menus / UI mode / events / drawing layers,
 // StyledText, commands and running them, table launch, program folder,
-// sound playback, logfile.log, and the few file operations the Profile
-// store needs).
+// monitor count, backglass window, sound playback, logfile.log, and the few
+// file operations the Profile store needs).
 // Every call passes straight through to PinballY's globals; tests use the
 // in-memory fake host from tests/fake_pinbally_host.js instead. No side
 // effects on import.
@@ -15,6 +15,8 @@ const ADODB_READ_ALL = -1;
 const ADODB_SAVE_OVERWRITE = 2;
 // Behind PinballY's own background layer (z 0), so the probe never shows.
 const IMAGE_PROBE_Z_INDEX = -1000;
+// GetSystemMetrics index: the number of display monitors on the desktop.
+const SM_CMONITORS = 80;
 
 // Text through ADODB.Stream, which encodes UTF-8 so accented names and paths
 // survive (Scripting.FileSystemObject only knows ANSI and UTF-16).
@@ -95,6 +97,8 @@ function createFileSystem() {
 export function createPinballYHost() {
     // Created on the first sound played: most sessions never play one.
     let mediaPlayer = null;
+    // Bound on the first monitor count, then kept.
+    let user32 = null;
 
     return {
         settings: {
@@ -146,6 +150,13 @@ export function createPinballYHost() {
 
         // drawImage resolves relative paths from this folder, not from Scripts/.
         getProgramFolder: () => systemInfo.programDir,
+        // Read again on each call: a screen can be plugged in or out while
+        // PinballY runs.
+        countMonitors: () => {
+            if (!user32) user32 = dllImport.bind("User32.dll", "int WINAPI GetSystemMetrics(int nIndex);");
+            return user32.GetSystemMetrics(SM_CMONITORS);
+        },
+        showBackglass: (visible) => { backglassWindow.showWindow(visible); },
         // Through the Windows Media Player COM component, like the launch
         // sound; throws when it is unavailable or the file is missing
         // (Windows Media Player itself fails silently on a missing file).

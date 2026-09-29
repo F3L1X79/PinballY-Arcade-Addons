@@ -50,6 +50,5 @@ test("no Challenge, Challenge Card, Challenges Achievements or Profile Stats lin
     const statsLines = fake.currentMenu().items.map(item => item.title);
     assert.ok(statsLines.length > 2, "the Profile Stats are shown");
     assert.ok(!statsLines.includes(lang.profileStats.challengesCompleted(0, 0)), statsLines.join(" / "));
-    // The fake has no backglass window for the Force Backglass Add-on.
-    assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR") && !line.startsWith("[ForceBackglass]")), []);
+    assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });

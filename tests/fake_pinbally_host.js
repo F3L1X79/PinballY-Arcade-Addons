@@ -1,11 +1,12 @@
 ﻿// ============================================================
 // In-memory fake PinballY host for the node tests. Offers the same
 // interface as common/pinbally_host.js, plus controls for the tests: set
-// the date (a manual clock that also runs the host's timers), the table
-// list, the wheel selection (and its filter) and the layout size, seed settings, fire
-// PinballY events, pick menu items, play launched games, and inspect shown
-// menus, launches, written settings keys, drawing layers, what was drawn,
-// sounds played and the lower status line (which can start with the
+// the date (a manual clock that also runs the host's timers), the monitor
+// count, the table list, the wheel selection (and its filter) and the
+// layout size, seed settings, fire PinballY events, pick menu items, play
+// launched games, and inspect shown menus, launches, written settings keys,
+// drawing layers, what was drawn, sounds played, the backglass window
+// shown or hidden, and the lower status line (which can start with the
 // player's own messages, and get a temporary one as PinballY's show() puts
 // it); script filters are shown with selectFilter().
 // Its in-memory file system is seeded with files and folders (and
@@ -85,6 +86,8 @@ export function createFakePinballYHost({
     // The player's own messages, from PinballY's status line options.
     upperStatusLineMessages = [],
     lowerStatusLineMessages = [],
+    // The monitors Windows reports: a cabinet has one per screen.
+    monitorCount = 2,
 } = {}) {
     let nowMs = now.getTime();
     let currentLayoutSize = { ...layoutSize };
@@ -126,6 +129,8 @@ export function createFakePinballYHost({
     const launchList = [];
     const logLines = [];
     const executedCommands = [];
+    // Every showWindow() call on the backglass window, in order.
+    const backglassShowCalls = [];
 
     function readSetting(key, defaultValue, convert) {
         return storedSettings.has(key) ? convert(storedSettings.get(key)) : defaultValue;
@@ -487,6 +492,8 @@ export function createFakePinballYHost({
             runMode = "starting";
         },
         getProgramFolder: () => programFolder,
+        countMonitors: () => monitorCount,
+        showBackglass: (visible) => { backglassShowCalls.push(visible); },
         playSound,
         files: fileSystem,
         log: (text) => { logLines.push(text); },
@@ -607,6 +614,7 @@ export function createFakePinballYHost({
 
         logLines: () => [...logLines],
         executedCommands: () => [...executedCommands],
+        backglassShowCalls: () => [...backglassShowCalls],
 
         // Exposes this fake as PinballY's globals; returns the function that
         // restores the previous globals.
@@ -615,6 +623,7 @@ export function createFakePinballYHost({
                 "optionSettings", "gameList", "mainWindow", "command", "logfile", "Date",
                 "StyledText", "systemInfo", "createAutomationObject",
                 "setTimeout", "clearTimeout", "setInterval", "clearInterval",
+                "backglassWindow", "dllImport",
             ];
             const previous = globalNames.map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)]);
 
@@ -676,6 +685,15 @@ export function createFakePinballYHost({
                 clearInterval: removeTimer,
                 StyledText: FakeStyledText,
                 systemInfo: { programDir: programFolder },
+                backglassWindow: { showWindow: (visible) => { backglassShowCalls.push(visible); } },
+                // Only User32's GetSystemMetrics, for the monitor count
+                // (SM_CMONITORS); any other DLL throws.
+                dllImport: {
+                    bind: (dllName) => {
+                        if (dllName.toLowerCase() !== "user32.dll") throw new Error(`The fake host has no DLL "${dllName}".`);
+                        return { GetSystemMetrics: (index) => (index === 80 ? monitorCount : 0) };
+                    },
+                },
                 // Only Windows Media Player, where setting the URL plays the
                 // file, and the file objects over the in-memory file system
                 // (no .env.local unless a test adds one, so common/config.js
