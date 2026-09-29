@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Popups</h1>
+
+<p>
+   PinballY uses popup boxes to display messages and detailed information.
+   Popup boxes are functionally similar to Windows dialog boxes, but they're
+   visually styled to fit the arcade graphics environment, rather than appearing
+   as separate windows.  They're also operable with the basic pin cab buttons
+   rather than requiring a mouse.  Popups are mostly limited to information displays,
+   as they don't have a full complement of input controls like Windows dialogs do.
+   PinballY resorts to regular Windows dialogs for anything involving keyboard
+   input or other complex input gestures.
+</p>
+
+<h2>Popup events</h2>
+
+<p>
+   When a popup opens or closes, the system fires <b>popupopen</b> and
+   <b>popupclose</b> events (respectively).  See <a href="PopupEvent.html">PopupEvent</a>
+   for details.
+</p>
+
+
+<h2>System popups</h2>
+
+<p>
+   Here's a list of the system popup display types, with the ID strings
+   reported in the .popupID property of the object returned from
+   <a href="MainWindowObject.html#getUIMode">mainWindow.getUIMode()</a> while the
+   popup is being displayed.
+</p>
+
+<ul>
+   <li>"about box": the program about box
+   <li>"batch capture preview": the batch capture preview dialog
+   <li>"capture delay": the capture delay selection dialog box
+   <li>"media list": the media list for the current game
+   <li>"message": a message box, with an error, warning, or informational alert
+   <li>"flyer": a game flyer
+   <li>"game info": the detailed game information box
+   <li>"high scores": the high scores box
+   <li>"instructions": a game instruction card
+   <li>"rate game": the game rating dialog (for entering a star rating)
+   <li>"game audio volume": the game audio volume adjustment dialog (for adjusting the
+   audio playback volume for the game's media)
+</ul>
+
+<a name="custom"></a>
+<h2>Custom popups</h2>
+
+<p>
+   The <a href="MainWindowObject.html#showPopup">mainWindow.showPopup()</a> method
+   lets you create your own completely custom popup dialog, using the same basic
+   display style as the system popups, but with your own custom contents.
+</p>
+<p>
+   The argument to mainWindow.showPopup() is a descriptor object specifying the
+   layout and contents of the popup.  The descriptor has the following properties:
+</p>
+<ul>
+   <li><b>backgroundColor:</b>  The background color for the whole popup area,
+   as an HTML-style RGB (red/green/blue) value.  Specify this as a hex number with
+   two hex digits each for the red, green, and blue components, each from 0x00 to
+   0xFF.  For example, solid blue is 0x0000FF, and a 50% gray is 0x808080.  See any
+   HTML color chart for example hues, and replace the "#" in the HTML notation with
+   the Javascript "0x" prefix for a hex number.  The background color is ignored
+   if a background image is specified.
+
+   <li><b>backgroundImage:</b>  The name of a file (JPEG or PNG) to display as
+   the background image.  If specified, this supersedes the background color and
+   opacity, and it can help determine the sizing if you don't explicitly specify
+   the width and height.
+   
+   <li><b>borderColor:</b>  The RGB color for the popup border, as an HTML-style
+   0xRRGGBB value, just like the backgroundColor property.
+   
+   <li><b>borderWidth:</b>  The width in pixels of the border to draw around
+   the popup.  If this is omitted, no border is shown.
+   
+   <li><b>draw:</b>  A Javascript function that draws the contents of the
+   popup programmatically.  This lets you create complex layouts that mix text
+   and graphics with precise positioning.  If you set the <b>draw</b> property
+   to a function, the mainWindow.showPopup() method will call this function
+   after setting up the initial popup area to let you fill in the display
+   graphics.  See <a href="CustomDrawing.html">Custom Drawing</a> for
+   details on how this works.
+   <p>
+      The <b>draw</b> function is optional.  You don't need to provide a
+      drawing function if you just want to fill the popup with a fixed
+      image, since you can do that by providing a <b>backgroundImage</b>
+      property naming the image file you want to load.
+   </p>
+   
+   <li><b>height:</b>  The height of the popup, as a percentage of the layout
+   width of the window.  You can omit this if you want the system to use a
+   suitable default or if you want to calculate the height dynamically based
+   on the popup's contents.  See "default sizing" and "dynamic layout
+   height" below.
+   
+   <li><b>id:</b>  A string identifying the popup.  This is an arbitrary
+   identifier for your use in keeping track of the UI state; it's reported
+   back to you in
+   <a href="PopupEvent.html">PopupEvent</a> events and in the UI state
+   returned from <a href="MainWindowObject.html#getUIMode">mainWindow.getUIMode()</a>.
+   
+   <li><b>opacity:</b>  The opacity of the background color, as a value from 0
+   to 1, with 0 being fully transparent and 1 being fully opaque.  Most of the
+   system popups use a dark background and an opacity of around 0.8 to 0.9,
+   so that the playfield graphics remain faintly visible under the popup.  You
+   can use the opacity to achieve a similar effect.  The opacity is ignored if
+   a background image is supplied, since the image's own alpha channel information
+   is used instead to determine its opacity.  If you want to use partial transparency
+   with a background image, use the PNG format (since it supports full alpha channel
+   information), and apply the desired transparency to the image itself with a
+   photo editor program.
+   
+   <li><b>textColor:</b>  The initial text color for text drawn within the
+   popup, as an HTML style 0xRRGGBB value, just like backgroundColor.
+   Defaults to white (0xFFFFFF) if not specified.
+   
+   <li><b>width:</b>  The width of the popup, as a percentage of the layout
+   <b>height</b> of the window.  Note that the window height is used as the basis
+   here even though we're talking about the width of the popup, because this
+   preserves the aspect ratio of the object as the window scales.  Internally,
+   the system uses a normalized window aspect ratio of 16:9 (height:width),
+   which is the standard aspect ratio of an HD or 4K monitor in portrait mode.
+   So 100% of the standard layout width is 9/16 = .5625.
+   
+   <li><b>x:</b>  The horizontal offset of the popup, as a percentage of the
+   main window's layout width.  If this is omitted, the popup is centered
+   horizontally.
+   
+   <li><b>y:</b>  The vertical offset of the popup, as a percentage of the
+   main window's layout height.  If this is omitted, PinballY automatically
+   positions the popup according to the standard rules it uses for its own
+   system popups, which are designed to make the popup look visually
+   centered in the top portion of the screen above the wheel icons and
+   status area at the bottom.
+  
+</ul>
+
+<h3>Default sizing</h3>
+<p>
+   If you omit the width and/or height settings in the descriptor, the
+   system figures a default size as follows:
+</p>
+<ul>
+   <li>If a background image is specified, and both the width and height
+      properties are omitted from the popup descriptor, the natural size of the
+      background image is used, normalized to a notional 1920x1080 layout.
+      (The window layout doesn't actually have to be 1920x1080; whatever
+      the actual size is, the image is scaled as though it were being
+      displayed in a 1920x1080 window.)
+
+   <li>If a background image is specified, and <i>either</i> the width <i>or</i> height
+   is specified, but not both, the dimension that's specified is applied,
+   and the other dimension is chosen so that the natural aspect ratio
+   of the image is preserved.
+
+   <li>If there's no background image, and you omit the width, the system
+   uses a default width of 80% of the layout width.
+
+   <li>If there's no background image, and you omit the height, the system
+   requires you to calculate a pixel height for the content area and return
+   it from the <b>draw</b> function you provide in the popup descriptor.
+   An error is thrown if you don't supply a <b>draw</b> function or it
+   doesn't return a height value.  See "dynamic layout height" below.
+</ul>
+
+<a name="dynamicLayoutHeight"></a>
+<h3>Dynamic layout height</h3>
+<p>
+   In some cases, you might want to adjust your popup's overall display
+   height according to its contents, so that it's just tall enough to
+   display the specific contents you draw into the popup.  The required
+   height might not be predictable in advance, so the popup system
+   gives you a way to calculate the height from your Javascript code,
+   on the fly as you do the drawing.  This lets you determine precisely
+   the needed height needed to contain the actual contents you display.
+</p>
+<p>   
+   To use a dynamically calculated height, you have to leave all of
+   the "pre-calculated" height elements in the popup descriptor blank.
+   Specifically:
+</p>
+<ul>
+   <li>In the popup descriptor, specify the desired width via the
+   <b>width</b> property, but omit the <b>height</b> property.
+
+   <li>Don't specify a <b>backgroundImage</b> property.  Doing so
+   implicitly sets a pre-calculated height based on the image's
+   natural size.  If you need to display
+   a background image with a flexible-height popup, draw it
+   within your <b>draw</b> function using the drawing context's
+   drawImage() method.
+
+   <li>You must, of course, provide a custom drawing function
+   via the <b>draw</b> property of the popup descriptor.
+
+   <li>In your custom drawing function, keep track of the layout
+   sizes of the items you're displaying.  You can use the
+   drawing context's measureText() function to figure the size
+   of a text item, for example.
+
+   <li>Return the final computed height as the return value
+   from your custom drawing function.
+</ul>
+
+<p>
+   The system can tell that it has to use the "dynamic" method to
+   determine the height when it sees that you haven't provided any
+   way for it to pre-calculate the height, either from an explicit
+   <b>height</b> property or from an implied height based on a
+   <b>backgroundImage</b> property.
+</p>
+<p>
+   When the dynamic height method is required, the system
+   calls your drawing function <i>twice</i>.  The
+   first time, the call is only to figure out the height, and doesn't
+   do any actual on-screen drawing.  There are three important implications
+   of this two-pass process:
+</p>
+<ul>
+   <li>First, the actual layout height isn't
+   yet known on the first call, since the whole point of the first
+   call is to determine that information.  So if you call getSize()
+   on the drawing context, the height returned will be invalid.
+
+   <li>Second, any drawing you do on this first pass is ignored and
+   won't actually appear on-screen, so it's okay if the exact
+   drawing positions of objects are wrong on this first pass.
+   For example, if you want to align something with the bottom
+   of the popup, you won't be able to get that position right on
+   the first pass because the overall popup height won't be known
+   at that point.  The actual drawing occurs on the second pass,
+   at which point the final height is known, so your vertical
+   position calculations will be valid.
+
+   <li>Third, because the function will be called twice, it's
+   important that you don't do anything "global" within the
+   function.  Anything you do will happen twice, so you don't
+   want to do anything that triggers a side effect that the
+   user can see (for example, showing an alert box), and you
+   don't want to do anything that changes the values of global
+   variables.
+</ul>
+
+<h3>Calculating the height in the drawing function</h3>
+<p>
+   If you use the "dynamic layout height" procedure described
+   above, your custom drawing function must return a value indicating
+   the desired pixel height for the popup box.  This is necessary if
+   you don't specify a height for the popup in the popup descriptor
+   and you don't supply a background image, since that doesn't give
+   the system any way to figure the required height on its own.
+</p>
+<p>
+   To calculate the required height, you should keep
+   track of the positions and heights of the objects you draw, and
+   use that to calculate the overall height needed for the contents.
+   Return the result as the return value from the function.
+</p>
+<p>
+   The system ignores the returned height value if you provide a
+   height explicitly in the original popup descriptor object, or
+   if you specify a background image in the popup descriptor.  In
+   either case, the pre-determined height supersedes the custom draw
+   function's calculated height.
+</p>
+   
+
+</body>
+</html>

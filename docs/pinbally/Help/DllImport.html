@@ -1,0 +1,2343 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Calling Native DLLs from Javascript</h1>
+
+<p>
+   PinballY has a special set of Javascript extensions for calling
+   external native code.  These extensions are available through
+   a system object called <b>dllImport</b>.
+   (Oof, that's full of ambiguous looking letters, isn't it?  That's
+   D-L-L-Import, DLL standing for Dynamic Link Library.)
+</p>
+<p>
+   DLL Importing can be used to make calls directly to most Windows API
+   functions from Javascript, to access system functionality beyond what's
+   provided through the Javascript classes provided in PinballY.  Rather
+   than trying to provide built-in Javascript support for the massive
+   number of Windows API functions, we thought it would work better
+   in the long run to let you call Windows yourself, directly.
+</p>
+<p>
+   You can also use DLL importing
+   to call your own custom code, written in any other programming
+   language that can create DLLs, such as C, C++, Visual Basic, or C#.
+   The PinballY DLL import system tries to make it relatively painless
+   to call external code, by providing automatic type conversions
+   between Javascript and native types, so that you can call external
+   functions directly without having to worry too much about type
+   conversions.
+</p>
+<p>
+   The DLL import feature is a PinballY add-on.  You
+   won't find it in Web browsers or in standard Javascript.  (Which
+   also means you won't be able to read about it in other Javascript
+   manuals; you'll have to make do with the material here.)
+</p>
+<p>
+   The obvious warnings about calling out to native code apply: simple
+   errors in native code calls can crash the whole program, and if
+   you get creative enough, you can 
+   even destabilize the system, corrupt disk files, or do
+   other system damage.  Javascript and PinballY can't do much to
+   protect against errant calls through the DLL layer, because the
+   whole point is to give you access to the broader Windows
+   native environment, which is all beyond the reach of Javascript's
+   supervision.
+</p>
+
+<h2>An example</h2>
+<p>
+   The DLL importer combines quite a lot of concepts and
+   technologies, so there's a lot to cover.  Before we get into
+   the details, it might help to look at an example, to
+   see how all of the pieces fit together.
+</p>
+<p>
+   This example uses a few basic Windows API calls to get a list
+   of the current top-level windows on the desktop.  One important
+   thing to notice is that we're calling Windows functions
+   <i>directly from Javascript</i>, without having to write any
+   DLL code of our own.   This is a complete example that you can
+   drop into your main.js file and run, without having to set
+   anything up outside of PinballY.  (You can <i>also</i> use the
+   DLL importer to call your own DLL code, but the point here
+   is that you don't have to write a DLL just to call Windows
+   functions.  The DLL importer lets you call just about any
+   native code directly.)
+</p>
+<p>
+   If you're already familiar with the basic principles of using
+   DLLs in other languages - C, C++, C#, Visual Basic - you'll
+   find that the basic process of calling a DLL is the same.
+   The only differences come from the need to reconcile
+   Javascript's very abstract dataype system with the low-level
+   types used in native code.  The DLL importer tries to smooth
+   over those differences and make the exchange of data relatively
+   automatic and painless, but there are some details that
+   unavoidably poke through the covers.
+</p>
+
+<div class="code">
+// Define the native struct types used in the DLL functions we
+// want to call.  These definitions go into an internal table in
+// the dllImport object, so we can refer to the types by name in
+// subsequent bind() calls once they're defined.  We use "C"
+// language syntax to define native types, since that's what
+// all of the Windows APIs use.  That way, we can usually just
+// copy and paste definitions from the SDKs.  There's no need
+// to puzzle out how the types map to Javascript; we just state
+// everything directly in terms of the original, native types.
+dllImport.define(`
+    typedef struct _RECT {
+        LONG left;
+        LONG top;
+        LONG right;
+        LONG bottom;
+    } RECT, *PRECT, *LPRECT;
+    typedef BOOL (CALLBACK *WNDENUMPROC)(HWND hwnd, LPARAM lParam);
+`);
+
+// Bind the DLL functions we want to call.  This step creates a
+// callable Javascript function for each DLL function we need.
+// This is a one-time step; we can call these functions repeatedly
+// once they're bound.
+//
+// The return value from bind() is an object, with properties
+// named for the functions declared.  E.g., User32.GetDesktopWindow()
+// will be a Javascript function we can call to invoke the native
+// Windows routine GetDesktopWindow().
+let User32 = dllImport.bind("User32.dll", `
+    HWND WINAPI GetDesktopWindow();
+    BOOL WINAPI EnumChildWindows(HWND hwnd, WNDENUMPROC lpEnumFunc, LPARAM lParam);
+    BOOL WINAPI GetParent(HWND hwnd);
+    BOOL WINAPI GetWindowTextW(HWND hwnd, LPWSTR buf, int nMaxCount);
+    BOOL WINAPI GetWindowRect(HWND hWnd, LPRECT lpRect);
+`);
+
+// Create a string buffer for retrieving window titles.  Unicode
+// characters are equivalent to 16-bit integers, so we need a Uint16
+// typed array to receive the string data.  Uint16Array is a
+// standard built-in Javascript type that we can use anywhere a
+// Unicode string buffer is needed in a DLL call.
+//
+// One of the things that makes "C" style functions (like Win API
+// call!) harder to use than Javascript is that most strings have
+// to be set up as fixed-length character buffers.  We have to
+// pre-allocate this array with the maximum string length we're
+// willing to accept.
+let title = new Uint16Array(256);
+
+// Create a native RECT struct for retrieving window coordinates.
+// The DLL importer lets us create native structs of any type that
+// we've defined via dllImport.define().
+let rc = dllImport.create("RECT");
+
+// Make a list of the names and positions of the direct children
+// of the main desktop window.  EnumChildWindows() is one of those
+// Windows functions that takes a "callback" function defined by
+// the caller.  Windows calls this function repeatedly, once for
+// each window.  We can provide a Javascript anonymous function
+// as the callback.
+let wins = [];
+let parent = User32.GetDesktopWindow();
+User32.EnumChildWindows(parent, (hwnd) =&gt; {
+    if (User32.GetParent(hwnd) == parent)
+    {
+        User32.GetWindowTextW(hwnd, title, title.length);
+        User32.GetWindowRect(hwnd, rc);
+        wins.push({
+            title: title.toString(),
+            rc: { left: rc.left, top: rc.top, right: rc.right, bottom: rc.bottom }
+        });
+    }
+});
+</div>
+
+   
+
+<h2>Binding a function</h2>
+<p>
+   To call an external DLL function, you first have to "bind" the DLL
+   function.  This step connects the native code to Javascript.  You
+   tell the system the name of the DLL you want to call, the name
+   of the function in the DLL, and the "type signature" of the
+   function, meaning the datatypes of the arguments and
+   return value.  The bind operation uses that information to load
+   the DLL into memory (if it's not already loaded), look up the
+   native code address of the function, and create a Javascript
+   function that represents the native code function. 
+</p>
+
+<div class="code">
+let User32 = dllImport.bind("User32.dll", "HWND WINAPI GetDesktopWindow()");
+</div>
+
+<p>
+   <b>Important:</b> Be sure to use <b>WINAPI</b> keyword when required.
+   Almost all Windows API functions use it.  This specifies the "calling
+   convention", which determines how arguments are passed on the native stack
+   when calling the native function.  Using the wrong calling convention
+   will corrupt memory, which can crash the whole program or cause
+   erratic behavior.
+</p>
+
+<p>
+   The return value from bind() is an object, containing one property
+   for each function you declared, with the same name as the function.
+   For example, in the call above, we get an object with the one
+   property <b>GetDesktopWindow</b>.
+</p>
+<p>
+   Each property of the bind() object is a callable Javascript
+   function that invokes the corresponding native DLL function.  So
+   when we want to call the native GetDesktopWindow() function, we
+   can now just write:
+</p>
+<div class="code">
+let hwnd = User32.GetDesktopWindow();
+</div>
+<p>
+   The first argument to bind() is the name of the DLL, in this case
+   the standard Windows library User32.dll, which contains many of the
+   basic UI functions in Windows.  The second argument is the declaration
+   of the function's return type and argument types using "C" programming
+   language syntax.
+</p>
+<p>
+   The DLL importer uses C syntax for the function declarations primarily
+   because that's what's the Microsoft API documentation uses almost
+   everywhere.  This
+   makes it easy to copy and paste API definitions from the SDK
+   documentation directly into your Javascript code, often with no
+   changes.  The C syntax is used in all cases, even if you're using
+   a DLL written in some language other than C.  You can't substitute VB
+   or C# syntax; you have to translate it to C terms.
+</p>
+
+<p>
+   You can bind several functions in the same DLL at once.  You can do
+   this in two ways:
+</p>
+<ul>
+   <li>Use a long string with multiple function declarations, with a semicolon (;)
+   at the end of each name
+   <li>Use an array of strings
+</ul>
+
+<p>
+   The Javascript "back-quote" notation is especially handy for the
+   long string option, since it lets you spread out a string across
+   multiple lines.  That makes a long list of declarations easily
+   readable.
+
+<div class="code">
+User32 = dllImport.bind("User32.dll", `
+   HWND WINAPI GetDesktopWindow();
+   BOOL WINAPI GetWindowRect(HWND, LPRECT);
+`);
+</div>
+
+<h2>DLL filenames and paths</h2>
+<p>
+   When you bind a function, the DLL name you specify can be a plain filename,
+   such as the "User32.dll" we've been using in our examples, or it can use a
+   full, absolute path.  In the absence of a
+   path, Windows will look in the PinballY program folder for the DLL and
+   then in the standard Windows system folders.  That makes it a no-brainer
+   to always use plain filenames (with no path) for all standard Windows DLLs.
+   Custom DLLs of your own are also best loaded with no path name, as
+   a path name will create headaches if you ever move any files around.
+   It's best to copy your custom DLLs into the PinballY program folder
+   to ensure that they can be found without having to specify any
+   paths.
+</p>
+
+<h2>Windows SDK "A" and "W" functions</h2>
+<p>
+   Many of the common
+   Windows API functions have slightly different names in the DLL than in
+   the SDK documentation.  For example, there's no actual DLL function
+   called MessageBox.  Instead, there are two variants of the functions,
+   one called MessageBoxA and  one called MessageBoxW.  The "A" stands for
+   ANSI (8-bit character strings), and the "W" is for WIDE (16-bit Unicode
+   strings).
+</p>
+<p>
+   Most Windows API functions that take character string arguments
+   (directly or within structs) have these "A" and "W" variants.  If
+   you run into any strange missing function errors, double-check the
+   SDK documentation to see if the function you're trying to call
+   needs an "A" or "W" suffix.
+<p>
+   In PinballY Javascript, it's best to use the "W" variants when you're
+   faced with a choice.  Javascript itself uses Unicode for all strings
+   internally, so you'll avoid unnecessary string conversions by using
+   the "W" functions.
+</p>
+
+<h2>Calling a bound function</h2>
+
+<p>
+   Once a DLL function is bound, you invoke the DLL function simply
+   by calling the Javascript function returned from the "bind" call.
+</p>
+
+<div class="code">
+let User32 = dllImport.bind("User32.dll", "HWND WINAPI GetDesktopWindow()");
+let hwndDesktop = User32.GetDesktopWindow();
+</div>
+
+<p>
+   When you call a bound function, the argument type list that you provided
+   in the "bind" call is used to automatically convert arguments from
+   Javascript format to the native datatypes, and to convert the return
+   value from native format back to Javascript.  That means you don't have to
+   worry too much about the type conversion details when you call a bound DLL
+   function; you can mostly just treat it like any other Javascript function.
+   See <a href="#typeConversions">below</a> for details on the how automatic
+   type conversions are handled.
+</p>
+
+<a name="outParams"></a>
+<h2>"Out" pointer parameters</h2>
+
+<p>
+   Many Windows API functions return information in "out" parameters.
+   That means that you pass a <i>pointer to a variable</i> to the
+   function, and the function writes some result information into
+   that variable before returning.
+</p>
+<p>
+   Javascript doesn't have any concept of "pointer to a variable".
+   The closest equivalent in Javascript is that you can pass an
+   object to a function, and the function can modify the properties
+   of that object before returning.  But that obviously won't
+   work with native code, which has no idea what a Javascript
+   object looks like.
+</p>
+<p>
+   To deal with this mismatch, the DLL importer lets you create
+   native data objects, which you can then pass to DLL functions
+   in the arguments.  
+</p>
+<p>
+   For example, suppose you wanted to call a function that returns
+   information in an "int" (integer) variable:
+</p>
+<div class="code">
+let MyDll = dllImport.bind("MyDll.dll", "void GetInfo(int *result)");
+</div>
+
+<p>
+   In C or C++, it's easy to call a function like this: you just
+   pass the address of an "int" variable with the "&amp;" operator.
+   But of course that doesn't exist Javascript, nor does the entire
+   concept of the "address" of something.  So how do we
+   call this function?  The answer is that we have to create a
+   <i>native</i> "int" variable, not a Javascript variable.  We
+   do that through dllImport.create(), specifying the type of the
+   variable we want to create:
+</p>
+<div class="code">
+let i = dllImport.create("int");
+</div>
+
+<p>
+   Things get pretty trippy at this point; I hope you liked
+   <i>Inception</i>.  <b>i</b> is a Javascript
+   variable that contains a Javascript object representing a native
+   <b>int</b> variable.  If you look at <b>i</b> itself, you'll see
+   a Javascript object.  If you want to get to the native <b>int</b>
+   variable, you can use <b>i.value</b>, which is a getter/setter
+   property that accesses the underlying native <b>int</b>
+   variable.  If you assign to <b>i.value</b>, you'll store a
+   value in the native variable.  If you use <b>i.value</b> in
+   an expression, you'll get a Javascript number corresponding
+   to the native <b>int</b> value.  
+</p>
+<img src="NativeObject illustration.png" class="example">
+<p>
+   If you pass <b>i</b> to a DLL function that requires a
+   <i>pointer to</i> a native int, the DLL importer
+   will pass the address of the native <b>int</b> variable.  So
+   this is the answer to the earlier question of how we call
+   that GetInfo() function that requires a pointer to an int.
+</p>
+<div class="code">
+// call DLL function "void GetInfo(int *result)", passing
+// a pointer to the native int stored in NativeObject i
+MyDll.GetInfo(i);
+
+// on return, i.value reflects what GetInfo wrote into *result
+alert("The result from GetInfo is " + i.value);
+</div>
+
+<p>
+   For more on using these special native value containers,
+   see <a href="NativeObject.html">NativeObject objects</a>.
+</p>
+
+<p>
+   This "pass by pointer" method works for struct types, not
+   just basic types like "int".  That's important, because
+   many Windows APIs use the same pattern with structs.
+   So next up, let's look at how to define native struct types
+   in Javascript.
+</p>
+
+<h2>HANDLE and HWND variables as "out" parameters</h2>
+
+<p>
+   Some Windows APIs return handle values as "out" parameters rather than
+   as the function return value.  In such a situation, the API will take
+   a HANDLE* or HWND* pointer as an argument, with the intention that
+   the caller will pass in the address of a HANDLE variable, where the
+   callee will store the requested handle value before returning.
+</p>
+<p>
+   You can code these calls same way as other "out" parameter calls:
+</p>
+<ul>
+   <li>First, create a Javascript variable containing an empty HANDLE or
+   HWND object, using "new" to create the appropriate empty handle type
+   <li>Then pass that variable in the argument slot where the
+   HANDLE* or HWND* is required.  Javascript will automatically pass
+   the address of the HANDLE object's internal native handle element
+   to the native API, which will allow the API to store the return
+   value at the appropriate memory location.
+   <li>After the function returns,
+   the Javascript HANDLE/HWND object will contain the native handle
+   value stored by the function.
+</ul>
+<p>
+   For example, the OpenThreadToken() API returns a thread token as
+   a HANDLE value in its fourth argument, which is specified in the
+   API as a HANDLE* "out" variable.  Here's how you can call the
+   function to obtain the token handle.
+</p>
+<div class="code">
+// create an empty HANDLE object to receive the token handle
+let hToken = new HANDLE();
+
+// ask Windows for the token handle
+if (Advapi32.OpenThreadToken(Advapi32.GetCurrentThread(), TOKEN_QUERY, 1, hToken)) {
+    // Success - hToken now contains the thread token
+}
+</div>
+
+<p>
+   You can use the same technique when an HWND* out parameter is used.  In
+   that case, use <tt>new HWND()</tt> to create the empty window handle object
+   that will hold the result.
+</p>
+   
+
+<a name="dllImportDefine"></a>
+<h2>Defining C struct types</h2>
+<p>
+   Many Windows API functions use C "struct" (structure) types as
+   arguments (or, more commonly, pointers to struct types).
+   For example, the GetWindowRect() API function takes
+   a pointer to a RECT structure, which has elements for the
+   corner coordinates of a rectangle:
+</p>
+<div class="code">
+let User32 = dllImport.bind("User32.dll", "BOOL WINAPI GetWindowRect(HWND, struct RECT *)");
+</div>
+
+<p>
+   If you just run that bind() call without doing any preparation
+   first, it'll fail with an error, because "struct RECT" isn't
+   a built-in type.  You have to define it before you can use it
+   in a function definition.
+</p>
+<p>
+   There is, naturally, a dllImport() call to do this: define().
+   As with the function declaration itself, you use the
+   standard C syntax for declaring a struct type:
+</p>
+<div class="code">
+dllImport.define("struct RECT { LONG left; LONG top; LONG right; LONG bottom; }");
+</div>
+
+<p>
+   The define() method doesn't return anything.  It just parses the
+   type definition and adds it to an internal table of type names
+   inside the dllImport object.  Once the type is entered into the
+   internal table, you can use it in subsequent bind() calls.
+</p>
+
+<p>
+   The define() call above uses <i>almost</i> the same syntax that Windows
+   SDK documentation uses for RECT.
+   But they actually take this one step further, by defining a couple
+   of "typedef" types for the structure.  typedef is a C language
+   feauture that creates a global alias for a type.  It simply adds a
+   new global name for the type that you can use in other places, such as
+   in function declarations.  Here's a revision to the above, using the
+   full typedef that the SDK uses:
+</p>
+<div class="code">
+dllImport.define("typedef struct _RECT { LONG left; LONG top; LONG right; LONG bottom; } RECT, *PRECT");
+</div>
+
+<p>
+   You'll see that naming pattern throughout the Windows SDK headers: "typedef struct _FOO { ... } FOO, *PFOO".
+   That actually defines <i>three</i> related types:
+   the struct name itself, with an underscore prefix on the name (<b>struct _FOO</b>),
+   a global alias with the plain name (<b>FOO</b>), and a global "pointer" alias
+   with the "P" prefix (<b>PFOO</b>).  There's almost always a fourth alias as well, <b>LPFOO</b>.
+   The "LP" prefix stands for "long pointer".  Long pointers are holdovers from the
+   16-bit Windows 3 era - they're exactly the same as regular pointers now - but the
+   Windows headers still use them everywhere.  So let's add the "LP" to our typedef
+   to make it complete:
+</p>
+<div class="code">
+dllImport.define("typedef struct _RECT { LONG left; LONG top; LONG right; LONG bottom; } RECT, *PRECT, *LPRECT");
+</div>
+<p>
+   So there you have it: that's the form of the typedef you'll need to enter for virtually every struct
+   you'll need in a Windows API call.  With this definition in place, the bind()
+   call for GetWindowRect() that we showed earlier will finally work properly.
+</p>
+
+<p><b>Using back-quote strings:</b>
+   For long struct definitions, you might prefer to use Javascript's
+   "back-quote string" style, which lets you spread out a string across multiple lines of
+   text.  That lets you paste a multi-line struct from the SDK without having to compress
+   it into one line, which makes the result a lot more readable.
+</p>
+<div class="code">
+dllImport.define(`
+typedef struct _STARTUPINFOW {
+  DWORD  cb;
+  LPWSTR lpReserved;
+  LPWSTR lpDesktop;
+  LPWSTR lpTitle;
+  DWORD  dwX;
+  DWORD  dwY;
+  DWORD  dwXSize;
+  DWORD  dwYSize;
+  DWORD  dwXCountChars;
+  DWORD  dwYCountChars;
+  DWORD  dwFillAttribute;
+  DWORD  dwFlags;
+  WORD   wShowWindow;
+  WORD   cbReserved2;
+  LPBYTE lpReserved2;
+  HANDLE hStdInput;
+  HANDLE hStdOutput;
+  HANDLE hStdError;
+} STARTUPINFOW, *LPSTARTUPINFOW;
+`);
+</div>
+
+<h2>Using structs as "out" parameters</h2>
+
+<p>
+   As mentioned above in <a href="#outParams">Out parameters</a>,
+   many Windows API functions take pointers to structs as parameters,
+   so that they can return information to the caller by writing into
+   the struct.
+</p>
+<p>
+   Whenever a DLL function requires a struct or a pointer to a
+   struct as a parameter, you can directly pass a Javascript object
+   as the argument, and the DLL importer will create a temporary
+   copy of the native struct from the Javascript object's properties.
+   This is described below under <a href="#typeConversion">Automatic
+   type conversions</a>.  However, this is a purely one-way
+   process: you can pass information <i>to</i> a DLL function
+   this way, but you can't get any information back from the
+   function.  The reason is that the DLL function doesn't get
+   a direct reference to your Javascript object - it just gets
+   that <i>temporary copy</i> of the native struct that the
+   DLL importer creates.  Anything that the DLL function writes
+   into the struct go into the <i>temporary</i> struct, which
+   is lost after the function returns.
+</p>
+<p>
+   The solution is exactly the same as the solution described
+   earlier for simple types like "int pointer" parameters.  You
+   use dllImport.create() to explicitly create your own copy
+   of the native struct, and you pass that struct to the DLL
+   function.
+</p>
+
+<div class="code">
+let rc = dllImport.create("RECT");
+User32.GetWindowRect(hwnd, rc);
+</div>
+
+<p>
+   As with our earlier example of creating a native "int" variable,
+   the RECT struct that we created here is represented as a Javascript
+   object that contains the native data structure.  You can access the
+   struct's named field as though they were Javascript properties of
+   the object:
+</p>
+<div class="code">
+alert("The window is at (" + rc.left + ", " + rc.top" +
+    "), (" + rc.right + ", " + rc.bottom + ")");
+</div>
+
+<p>
+   Note that there's no .value property of a struct type, as there
+   is for a basic type like "int".  Instead, you use the named
+   struct elements.
+</p>
+
+<h2>Native pointer types</h2>
+
+<p>
+   Structs often contain pointer types.  If you encounter one
+   of these, you can access pointer fields just like anything
+   else.  The type system will give you a Javascript object
+   representing the native pointer contained in the field.
+   To access the struct or basic type value that the pointer
+   points to, use the .at property:
+</p>
+<div class="code">
+let x = p.at;   // x now accesses the native object that p points to
+</div>
+
+<p>
+   You can also explicitly create a native pointer variable,
+   just like any other native type:
+</p>
+<div class="code">
+let p = dllImport.create("int*");
+</div>
+
+<p>
+   When you first create a pointer type, it will be initialized with
+   a null pointer, so attempting to get the underlying value with .at
+   will throw an error.  You can assign another pointer value to it by
+   setting its value:
+</p>
+<div class="code">
+p.value = otherPointer.value;  // assign the value from some other native pointer
+</div>
+
+<p>
+   You can get the address of a native object for storing in
+   a native pointer variable using the NativeObject.addressOf()
+   function:
+</p>
+<div class="code">
+let i = dllImport.create("int");
+p.value = NativeObject.addressOf(i);
+</div>
+
+<p>
+   To protect against memory corruption and application crashes,
+   you can only assign a pointer value from a pointer to the same
+   type.  The one exception is the special "void" pointer ("void*"),
+   which C uses as a generic pointer to anything.  In keeping with
+   C's general philosophy that it should give you enough rope to hang yourself,
+   the native "void*" type relaxes the normal type restrictions and
+   lets you assign unlike pointer types.  This goes both directions;
+   you can assign anything to a void* pointer, and you can assign
+   any other pointer type from a void* pointer.  So in special
+   situations when the normal type rules are too restrictive,
+   you can say "I know what I'm doing here, just do as I say" by
+   laundering your pointers through
+   a void* intermediary.  If none of this makes any sense
+   to you, it's probably just as well; it's usually better to
+   avoid this sort of thing anyway.
+</p>
+   
+<p>
+   For more on this native pointer container type, see
+   <a href="NativePointer.html">NativePointer objects</a>.
+</p>
+
+
+<h2>Native object memory management</h2>
+
+<p>
+   If you've done any programming in C or C++, you know that those
+   languages require you to do all of your memory management
+   explicitly: you have write code to create and destroy every
+   object you use.  Javascript, in contrast, handles most of
+   that automatically.
+</p>
+<p>
+   The DLL import approach to managing native objects is somewhere
+   between the low-level details of C/C++ and the completely
+   automatic, invisible garbage collection in Javascript.
+</p>
+<p>
+   <b>When you create a native object with dllImport.create(),</b>
+   you're really creating two objects: a Javascript
+   NativeObject object, and a block of memory containing
+   the native type named in the create() call.  The Javascript
+   object is managed automatically, just like any other
+   Javascript object.  The native memory block is also
+   managed automatically: it will remain valid as long as
+   there are any references to it from Javascript objects.
+   So you don't have to do any special manual memory
+   management for objects you create with dllImport.create().
+</p>
+<p>
+   If you pass an object you create with dllImport.create()
+   to native code in a DLL, be sure that you understand how
+   the native callee will use that memory.  In particular,
+   pay attention to whether or not the callee expects the
+   memory to stay valid after the call returns.  If the
+   callee retains the pointer and expects it to remain valid,
+   you'll have to ensure that the Javascript NativeObject that
+   refers to the native memory stays "alive", so that
+   Javascript's garbage collector doesn't delete it.
+   Remember, the native memory underlying a NativeObject
+   that you create with dllImport.create() stays valid
+   as long as its NativeObject stays alive.  To keep a
+   Javascript object alive, all you have to do is reference
+   it from a global variable.
+</p>
+<p>
+   <b>When you get a NativeObject from a DLL call</b> - for example,
+   if a DLL function returns a pointer to a struct - the
+   NativeObject is managed automatically like any other
+   Javascript object.  However, the underlying native memory
+   is under the control of the native DLL code.  This has
+   some important implications.
+</p>
+<ul>
+   <li>First, Javascript can't delete externally allocated
+   native memory when it's no longer usable, because Javascript
+   has no way of knowing how the DLL might be using the memory.
+   Depending on the design of the DLL or API you're using, you
+   might be required to make a special call into the DLL to
+   manually delete the object when you're done with it.
+   You'll have to read the documentation for the DLL or API
+   you're using to find out if there's any special "delete" or
+   "free" call you're supposed to make when you're done with
+   the object.  Failing to make those calls when you're expected
+   to can lead to "memory leaks", where the memory that an
+   object takes up can't be re-used because you never tell
+   the system that you're done with it.  If you repeatedly
+   allocate objects without ever freeing any of them, they
+   unused objects will eventually take up all of memory and
+   the program will crash.
+
+   <li>Second, for the same reason that Javascript can't
+   automatically delete the object when you're done with it,
+   Javascript also can't <i>prevent</i> the native object
+   from being deleted before you're done with it.  There's
+   a common source of bugs in C/C++ programming known as
+   "dangling pointers", where you delete an object before
+   you're done using it, so any pointers to that object are
+   now pointing to invalid memory.  That type of error is
+   normally impossible in Javascript, but it can happen
+   with a NativeObject that comes from external native
+   code, because the external code might delete the object
+   without Javascript's permission or knowledge.  Again, you'll
+   have to check your DLL or API documentation to determine
+   the lifetime of any memory allocations that come from the
+   DLL side.
+</ul>
+
+<a name="typeConversions"></a>
+<h2>Argument type conversions</h2>
+<p>
+   When you pass arguments from Javascript to a DLL function, the
+   DLL importer automatically converts the Javascript values to the
+   native types listed in the function declaration.  Here's a summary
+   of the conversion rules.
+</p>
+
+<style type="text/css">
+.typeTable td:last-of-type {
+    text-align: left;
+}
+table.typeTable, table.typeTable td, table.typeTable th {
+    border: 1px solid #e8e8e8;
+}
+</style>
+<table class="dataTable typeTable">
+   <tr><th>Native parameter type</th><th>Javascript type</th><th>Conversion rule</th></tr>
+   <tr>
+      <td>bool</td>
+      <td>Any</td>
+      <td>The Javascript value is converted to boolean using the standard
+         Javascript implicit type conversions.  If the result is <b>true</b>,
+         the native C <b>true</b> value is used (equivalent to integer value 1).
+         If the result is <b>false</b>, the native C <b>false</b> value is used
+         (equivalent to integer value 0).
+      </td>
+   </tr>
+   <tr>
+      <td>char, INT8</td>
+      <td>Any</td>
+      <td>The Javascript value is converted to a number using the standard
+         Javascript implicit conversions.  Any fractional part is discarded
+         (<b>not</b> rounded).  If the final value is out of the valid
+         range for char (-128 to +127), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td>unsigned char, UINT8</td>
+      <td>Any</td>
+      <td>The Javascript value is converted to a number using the standard
+         Javascript implicit conversions.  Any fractional part is discarded
+         (<b>not</b> rounded).  If the final value is out of the valid
+         range for unsigned char (0 to 255), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td>short, INT16</td>
+      <td>Any</td>
+      <td>The Javascript value is converted to a number using the standard
+         Javascript implicit conversions.  Any fractional part is discarded
+         (<b>not</b> rounded).  If the final value is out of the valid
+         range for short (-32768 to +32767), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td>unsigned short, UINT16</td>
+      <td>Any</td>
+      <td>The Javascript value is converted to a number using the standard
+         Javascript implicit conversions.  Any fractional part is discarded
+         (<b>not</b> rounded).  If the final value is out of the valid
+         range for unsigned short (0 to 65535), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td>int, long, INT32</td>
+      <td>Any</td>
+      <td>The Javascript value is converted to a number using the standard
+         Javascript implicit conversions.  Any fractional part is discarded
+         (<b>not</b> rounded).  If the final value is out of the valid
+         range for a 32-bit int (-2147483648 to +2147483647), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td>unsigned int, unsigned long, UINT32</td>
+      <td>Any</td>
+      <td>The Javascript value is converted to a number using the standard
+         Javascript implicit conversions.  Any fractional part is discarded
+         (<b>not</b> rounded).  If the final value is out of the valid
+         range for a 32-bit unsigned int (0 to 4294967295), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td rowspan="5">__int64, INT64</td>
+      <td>Number</td>
+      <td>Any fractional part of the number is discarded (<b>not</b> rounded),
+         and the value is converted to a 64-bit native integer.
+         If the value is out of range
+         (-9223372036854775808 to +9223372036854775807), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td><a href="Int64.html">Int64</a></td>
+      <td>The stored 64-bit value is used.</td>
+   </tr>
+   <tr>
+      <td><a href="Uint64.html">Int64</a></td>
+      <td>If the unsigned value is above the maximum value for a signed
+         64-bit integer (9223372036854775807), an error is thrown.  Otherwise,
+         the stored value is simply treated as signed.
+      </td>
+   </tr>
+   <tr>
+      <td>String</td>
+      <td>If the unsigned value is above the maximum value for a signed
+         64-bit integer (9223372036854775807), an error is thrown.  Otherwise,
+         the stored value is simply treated as signed.
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>The Javascript value is converted to a string using the standard
+         Javascript implicit conversions, then the string is parsed as
+         a 64-bit integer value, using the same rules as the
+         <a href="Int64.html">Int64</a> constructor.
+      </td>
+   </tr>
+   <tr>
+      <td rowspan="5">unsigned __int64, UINT64</td>
+      <td>Number</td>
+      <td>Any fractional part of the number is discarded (<b>not</b> rounded),
+         and the value is converted to a 64-bit native integer.
+         If the value is out of range
+         (-9223372036854775808 to +9223372036854775807), an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td><a href="Int64.html">Int64</a></td>
+      <td>The stored 64-bit value is used.</td>
+   </tr>
+   <tr>
+      <td><a href="Uint64.html">Int64</a></td>
+      <td>If the unsigned value is above the maximum value for a signed
+         64-bit integer (9223372036854775807), an error is thrown.  Otherwise,
+         the stored value is simply treated as signed.
+      </td>
+   </tr>
+   <tr>
+      <td>String</td>
+      <td>If the unsigned value is above the maximum value for a signed
+         64-bit integer (9223372036854775807), an error is thrown.  Otherwise,
+         the stored value is simply treated as signed.
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>The Javascript value is converted to a string using the standard
+         Javascript implicit conversions, then the string is parsed as
+         a 64-bit integer value, using the same rules as the
+         <a href="Int64.html">Int64</a> constructor.
+      </td>
+   </tr>
+   <tr>
+      <td>float</td>
+      <td>Any</td>
+      <td>
+         The Javascript value is converted to a Number using the
+         standard Javascript implicit type conversion rules, then
+         that value is reinterpreted as a single-precision (32-bit)
+         floating point value.  If the value is outside of the range
+         that a float can represent (-3.402823466e+38F to +3.402823466e+38F),
+         an error is thrown.  Javascript numbers store more precision
+         than a float, so the extra precision is lost in the
+         conversion, but this doesn't cause an error.
+      </td>
+   </tr>
+   <tr>
+      <td>double</td>
+      <td>Any</td>
+      <td>
+         The Javascript value is converted to a Number using the
+         standard Javascript implicit type conversion rules.  The
+         internal storage format of a Javascript Number is identical
+         to a native double, so the value is just copied directly
+         to the native callee.  There's no possibility of overflow
+         or loss of precision for this conversion.
+      </td>
+   </tr>
+   <tr>
+      <td>INT_PTR, SSIZE_T, ptrdiff_t</td>
+      <td>Any</td>
+      <td>
+         These native types are equivalent to INT32 when running
+         the 32-bit version of PinballY, and equivalent to INT64 when
+         running the 64-bit PinballY.  The conversions are handled
+         identically to the corresponding INTxx type, depending on
+         which PinballY version you're running.
+      </td>
+   </tr>
+   <tr>
+      <td>UINT_PTR, SIZE_T</td>
+      <td>Any</td>
+      <td>
+         These native types are equivalent to UINT32 when running
+         the 32-bit version of PinballY, and equivalent to UINT64 when
+         running the 64-bit PinballY.  The conversions are handled
+         identically to the corresponding UINTxx type, depending on
+         which PinballY version you're running.
+      </td>
+   </tr>
+   <tr>
+      <td rowspan="3">HANDLE</td>
+      <td>null, undefined</td>
+      <td>A native NULL handle value is used (equivalent to a native null pointer)</td>
+   </tr>
+   <tr>
+      <td>Number</td>
+      <td>The numeric value is reinterpreted as a native HANDLE value.
+         No error checking is performed to determine if the resulting
+         handle is valid.  A zero numeric value is equivalent to a
+         native NULL handle value, so 0 has the same meaning as null
+         or undefined.
+      </td>
+   </tr>
+   <tr>
+      <td><a href="HandleObject.html">HANDLE object</a></td>
+      <td>The native handle value stored in the object is used.</td>
+   </tr>
+   <tr>
+      <td rowspan="2">LPSTR, LPCSTR</td>
+      <td>ArrayBuffer, Int8Array, Uint8Array</td>
+      <td>The callee receives a direct pointer to the byte array underlying
+         the Javascript array object.  Any changes that the callee makes to
+         the contents of the array will be visible to the Javascript code
+         on return.
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>The value is converted to a String using the standard Javascript
+         implicit type conversion rules.  The string is then converted
+         to a single-byte character string, using the local system's
+         localized ANSI character set, a null terminator byte is added,
+         and the result is stored   in a temporary memory buffer.
+         The callee receives a pointer to the temporary memory buffer.
+         Note that Javascript uses Unicode strings internally, whereas
+         an LPSTR or LPCSTR uses single-byte ANSI characters.  Some
+         Unicode characters from the source string might not be
+         representable in the ANSI character set.  Any characters
+         that can't be represented are replaced with a "default"
+         character representing an unknown code point, usually
+         drawn on screen as an empty rectangle.
+      </td>
+   </tr>
+   <tr>
+      <td rowspan="2">LPTSTR, LPCTSTR, LPWSTR, LPTWSTR</td>
+      <td>ArrayBuffer, Int16Array, Uint16Array</td>
+      <td>The callee receives a direct pointer to the byte or integer
+         array underlying the Javascript array object.  Any changes
+         that the callee makes to the contents of the array will be
+         visible to the Javascript code on return.
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>The value is converted to a String using the standard Javascript
+         implicit type conversion rules.  The string is then copied into
+         a temporary memory buffer, with a null terminator added.  LPTSTR,
+         LPCTSTR, LPWSTR, and LPCWSTR are native Unicode string types,
+         and Javascript uses Unicode strings internally, so no character
+         set conversion is necessary.
+      </td>
+   </tr>
+   <tr>
+      <td rowspan="4">Pointer to struct or union</td>
+      <td>Object</td>
+      <td>
+         <ul>
+            <li>A copy of the native struct is created in a temporary memory area
+            <li>All bytes of the struct are set to zero
+            <li>If the struct has an element named exactly <b>cbSize</b>,
+            and it's any 16-, 32-, or 64-bit integer type, the size in
+            bytes of the native struct is stored in the element
+            <li>For each property of the Javascript object passed as
+            the argument: if the property name exactly matches the name
+            of an element of the native struct, the property value is
+            converted to that element's native type (using the same rules
+            outlined in the rest of this table) and then stored in the
+            element's slot in the temporary copy of the struct
+            <li>A pointer to the temporary struct is passed to the callee
+            <li>The temporary struct is deleted when the callee returns
+         </ul>
+      </td>
+   </tr>
+   <tr>
+      <td>Array</td>
+      <td>If a Javascript array is passed as a parameter requiring a
+         native pointer type, the rules for native array arguments below
+         are used.
+      </td>
+   <tr>
+      <td><a href="NativeObject">NativeObject</a></td>
+      <td>
+         If the NativeObject contains a struct of the exact same type,
+         a pointer to the native struct contained in the object is passed
+         to the callee.  Otherwise an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>An error is thrown</td>
+   </tr>
+   <tr>
+      <td rowspan="3">Inline struct or union</td>
+      <td>Object</td>
+      <td>Same as for a pointer to struct or union above, except that
+         in 32-bit mode, or if the struct's physical memory layout
+         fits within 8 bytes, the temporary copy of the native struct is
+         allocated inline on the stack, rather than being passed as
+         a pointer.  Microsoft's 64-bit calling conventions require
+         passing even nominally inline structs as pointers if they're
+         over 8 bytes.
+      </td>
+   </tr>
+   <tr>
+      <td><a href="NativeObject">NativeObject</a></td>
+      <td>The contents of the native object are copied to a temporary
+         memory area, either inline with the stack arguments (in 32-bit
+         mode or if the struct fits within 8 bytes), or separately,
+         with a pointer to the temp struct passed in the arguments.
+         An error is thrown if the native object's type doesn't match
+         the parameter type.
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>An error is thrown</td>
+   </tr>
+   <tr>
+      <td rowspan="3">Array</td>
+      <td>Array</td>
+      <td>A temporary native array is created, using the native type
+         defined for the array parameter, and the number of elements
+         in the Javascript array.  The Javascript array elements are
+         then copied into the temporary array, using the same conversion
+         rules as described in the rest of this table to convert
+         the elements to native types.  The callee receives a pointer
+         to the temporary native array.  The temporary array is
+         deleted when the callee returns.
+      </td>
+   </tr>
+   <tr>
+      <td>Typed Array</td>
+      <td>If one of the Javascript built-in Typed Array types
+         (Int8Array, Uint16Array, etc) is passed to a native array
+         argument, and the type of the array exactly matches the
+         type of the native argument, the callee receives a pointer
+         to the underlying native array within the Javascript
+         object.  Otherwise an error is thrown.
+      </td>
+   </tr>
+   <tr>
+      <td><a href="NativeObject">NativeObject</a></td>
+      <td>
+         If the native object contains an array of the same type,
+         the native callee receives a pointer to the native array
+         data within the object.  An error is thrown if the native
+         object isn't a matching array type.
+      </td>
+   </tr>
+   <tr>
+      <td rowspan="4">Pointer</td>
+      <td>Array</td>
+      <td>A temporary native array is created, using the underlying
+         native type of the pointer, with the same number of elements
+         as the Javascript array argument.  For example, if the
+         argument type is "int *" (pointer to int), and a Javascript
+         array with 10 elements is passed as the argument, as 10-element
+         int array is created as the temporary array.  The Javascript array
+         elements are then copied into the temporary array, using the
+         conversion rules described in this table to
+         convert the individual elements to the native types referred
+         to by the pointer.  The callee receives a pointer
+         to the temporary native array.  The temporary array is
+         deleted when the callee returns.
+      </td>
+   </tr>
+   <tr>
+      <td>Typed Array</td>
+      <td>If one of the Javascript built-in Typed Array types
+         (Int8Array, Uint16Array, etc) is passed to a native array
+         argument, and the type of the array exactly matches
+         the type referred to by the pointer, the callee receives
+         a pointer to the underlying native array within the
+         Javascript object.  Otherwise an error is thrown.
+         For example, a UINT32* argument requires a Uint32Array
+         typed array.
+      </td>
+   </tr>
+   <tr>
+      <td><a href="NativeObject">NativeObject</a></td>
+      <td>
+         The handling depends on the type of native data contained
+         in the object:
+         <ul>
+            <li>If it's a pointer with a compatible type, the
+            pointer value is passed directly to the callee.
+            For example, if the parameter is declared as a UINT32*,
+            and the native object also contains a UINT32* value,
+            that pointer is passed to the callee.
+
+            <li>If the native data is a value of the same type
+            that the pointer refers to (e.g., the parameter is
+            an INT32*, and the native object value is an INT32),
+            a pointer to the native value in memory is passed.
+            This allows passing values for OUT parameters.
+
+            <li>Otherwise an error is thrown.
+         </ul>
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>
+         A temporary variable is created with the native type that
+         the pointer refers to.  For example, if the parameter
+         is an INT32*, a temporary INT32 variable is created.  The
+         Javascript value is then converted into that type and
+         stored in the temporary variable, using the rules
+         described in this table for the relevant types.  A pointer
+         to the temporary variable is passed to the callee.  The
+         temporary variable is deleted when the callee returns.
+      </td>
+   </tr>
+   <tr>
+      <td rowspan="2">Function pointer</td>
+      <td>Function (named or anonymous/closure)</td>
+      <td>
+         A callable native-code function representing the Javascript
+         function is created, and a pointer to this native function is
+         passed to the callee.  The callee can use the native function
+         pointer to invoke the Javascript function.
+      </td>
+   </tr>
+   <tr>
+      <td>Other</td>
+      <td>An error is thrown</td>
+   </tr>
+      
+         
+         
+</table>
+
+<p>
+   <b>Standard type conversions:</b>
+   The "standard implicit type conversions" mentioned several times
+   in the list above are the ones that Javascript normally performs
+   when type conversions are called for when working entirely in the
+   Javascript domain.  For example, using any type of value in a
+   Javascript arithmetic expression implicitly converts the value to
+   a Number.  You can find more about the standard conversion rules
+   in any Javascript language reference.
+</p>
+<p>
+   In addition to the standard conversions, the DLL importer also
+   converts any <a href="Int64.html">Int64 or Uint64</a> value to
+   a Number as part of any of the conversions listed above that
+   implicitly convert to Number at any point.  In this case, an
+   error is thrown if the 64-bit integer value is outside of
+   the range that can be exactly represented in a Javascript
+   Number (-9007199254740991 to +9007199254740991).
+</p>
+
+
+<p>
+   <b>Objects:</b>  As described in the table, a Javascript
+   object can be passed to a native callee when a struct pointer
+   is required.  This is accomplished by creating a temporary
+   copy of the native struct, populating it from the Javascript
+   object's properties, and passing the callee a pointer to the
+   temporary struct.
+</p>
+<p>
+   Note that this is a strictly one-way
+   data transfer, because of the temporary nature of the
+   struct passed to the native callee.  Any changes that the
+   callee makes to the struct are lost on return, since the
+   temporary struct is deleted after the native code returns.
+   If you need to receive information
+   back from the native function through the struct, you must
+   explicitly create your own copy of the native struct using
+   dllImport.create(), and pass that to the DLL function.
+   See <a href="#outParams">Out parameters</a>.
+</p>
+
+<p>
+   <b>Strings:</b>  The DLL importer has some special provisions
+   for string handling.  See <a href="#strings">below</a> for
+   details.
+</p>
+
+<p>
+   <b>More details on ArrayBuffer:</b>  The Javascript ArrayBuffer type lets you
+   create a native byte array and manipulate it from Javascript.
+   It's an excellent "type of last resort" for special
+   cases that the DLL Import system can't handle with its automatic
+   type conversions.  You can pass an ArrayBuffer object for any
+   native function argument that requires a pointer to any type.
+   The DLL import layer will pass the underlying memory pointer
+   directly to the native code.  It's up to you to prepare the
+   bytes contained in the ArrayBuffer in the appropriate format
+   for the callee before the call, and/or to interpret the
+   results left in the buffer on return.  If the callee will
+   write into the buffer, it's up to you to make sure that the
+   buffer is large enough for what the callee expects.
+</p>
+<p>
+   ArrayBuffer should only be used when you can't use something
+   more structured, like a native type created with dllImport.create()
+   (see <a href="#outParams">Out parameters</a>) or via one of
+   the automatic conversions listed above.
+   You can use ArrayBuffer in cases where it's not
+   possible (or not convenient) to express the type of the
+   function argument as a C struct type.  For most Windows
+   APIs, this isn't a concern, as the Windows APIs are
+   designed around C callers to start with.  But other DLLs
+   might have different data formats that don't translate
+   well to C terms.
+</p>
+
+<a name="strings"></a>
+<h2>Strings</h2>
+<p>
+   Javascript makes it easy to work with character strings.  A
+   String in Javascript is a first-class object that you can
+   operate on as a unit, without having to worry about the details
+   of how the text inside is actually stored.  C code and machine
+   code aren't nearly as high-level.  To them, a string is just an
+   array of bytes (or 16-bit integers, in the case of a Unicode)
+   string).  The Windows DLL conventions are all designed around
+   the C way of doing things, so DLL interfaces think in terms
+   of those low-level "character array" strings used in C rather
+   than the high-level "objects" in Javascript.
+</p>
+<p>
+   The DLL importer tries to smooth over this mismatch for you
+   by converting automatically between the two views of strings
+   whenever possible.  Here's a summary of the type conversions
+   that the DLL importer applies. 
+</p>
+<p>
+   <style type="text/css">
+.typeInfoTable td:nth-child(3) {
+    text-align: left;
+}
+   </style>
+   <table class="dataTable typeInfoTable">
+      <tr><th>Native type</th><th>Javascript value</th><th>Conversion</th></tr>
+      <tr>
+         <td><a href="#lpstr">LPSTR, LPCSTR</a></td>
+         <td>String</td>
+         <td>The Javascript string is converted to single-byte
+            characters, using the local ANSI character set, a null
+            terminator is added, and the characters are copied into
+            a native byte array.  A pointer to the byte array is then passed
+            to the native code.  Any changes to the buffer made in the
+            native code are <b>not</b> returned to Javascript.
+         </td>
+      </tr>
+      <tr>
+         <td><a href="#lpstr">LPTSTR, LPCTSTR, LPWSTR, LPCWSTR</a></td>
+         <td>String</td>
+         <td>The Javascript string is converted to Unicode characters,
+            a null terminator is added, and the characters are copied
+            into a native wide-character (16-bit int) array.  A pointer
+            to the character array is passed to the native code.
+            Changes made to the buffer in the native code are
+            <b>not</b> returned to Javascript.
+         </td>
+      </tr>
+      <tr>
+         <td>LPSTR, LPCSTR</td>
+         <td>Int8Array, Uint8Array</td>
+         <td>A pointer to the object's internal byte array is passed directly
+            to the native code, with no copying.  Since the native code
+            has access to the Javascript buffer, any changes that the
+            native callee makes to the buffer are visible to the Javascript
+            code on return.  Note that LPCSTR means that the callee
+            <i>promises</i> not to change the buffer (the "C" is for
+            "constant"), but there's no enforcement, so the buffer
+            could be changed if the callee does something wrong.
+         </td>
+      </tr>
+      <tr>
+         <td>LPSTR, LPCSTR</td>
+         <td>Other typed arrays</td>
+         <td>Invalid
+         </td>
+      </tr>
+      <tr>
+         <td>LPTSTR, LPCTSTR, LPWSTR, LPCWSTR</td>
+         <td>Int16Array, Uint16Array</td>
+         <td>A pointer to the object's internal int array is passed directly
+            to the native code, with no copying.  Any changes made in
+            the native callee are visible to the Javascript caller.
+         </td>
+      </tr>
+      <tr>
+         <td>LPTSTR, LPCTSTR, LPWSTR, LPCWSTR</td>
+         <td>Other typed arrays</td>
+         <td>Invalid
+         </td>
+      </tr>
+      <tr>
+         <td>All LPxxSTR types</td>
+         <td>Any other type</td>
+         <td>
+            For any Javascript type other than the ones listed above, the
+            Javascript value is converted to a string (using the normal
+            Javascript conversion rules), the string is null-terminated
+            and copied into a buffer of the appropriate character type,
+            and the callee is passed a pointer to the buffer.  Changes
+            made to the buffer are not returned to Javascript.
+         </td>
+      </tr>
+      <tr>
+         <td>char*, const char*, unsigned char*, const unsigned char*, INT8*, const INT8*, UINT8*, const UINT8*</td>
+         <td>String</td>
+         <td>The Javascript string is converted to an 8-bit character string
+            array, null-terminated, and copied into a buffer.  The address of
+            the buffer is passed to the native code.  Changes made to the
+            buffer are not returned to Javascript.
+         </td>
+      </tr>
+      <tr>
+         <td>unsigned char*, const unsigned char*, UINT8*, const UINT8*</td>
+         <td>Uint8Array</td>
+         <td>A pointer to the Uint8Array's byte array is passed directly
+            to the native code, with no copying.  Changes that the
+            callee makes to the array are visible to the calling Javscript
+            code on return.
+         </td>
+      </tr>
+      <tr>
+         <td>unsigned short*, const unsigned short*, UINT16*, const UINT16*</td>
+         <td>String</td>
+         <td>The Javascript string is converted to a null-terminated Unicode
+            character array and copied into a buffer.  The address of the
+            buffer is passed to the native callee.  Changes to the buffer
+            are not returned to Javascript.
+         </td>
+      </tr>
+      <tr>
+         <td>unsigned short*, const unsigned short*, UINT16*, const UINT16*</td>
+         <td>Uint16Array</td>
+         <td>A pointer to the Uint16Array's byte array is passed directly
+            to the native code, with no copying.
+         </td>
+      </tr>
+            
+   </table>
+</p>
+
+<p>
+   <b>Convenience functions for Int8Array, Uint8Array, Int16Array, and Uint16Array:</b>
+   The PinballY system scripts provide you with some extra functions
+   to make it easier to use these array types to transfer strings
+   to and from DLL functions.
+</p>
+<p>
+   You can generally pass Javascript strings directly to any
+   native function that requires a pointer to a string or string
+   buffer, but that's only good for getting a string <i>to</i> a
+   DLL function.  Many native DLL functions return string values
+   by storing them in buffers you provide.  For that, you need
+   Int8Array, Uint8Array, Int16Array, or Uint16Array, since these
+   provide the buffers that the native code needs, and let you
+   retrieve the results in Javascript.
+</p>
+<p>
+   The only snag is that typed arrays don't act
+   like ordinary strings in Javascript.  So these types
+   are great for getting data back from DLL functions, but
+   once you have data back in one of these objects, you'll
+   usually want to convert it to a Javascript string.  Similarly,
+   you might need to create one of the array objects from a
+   string.  The convenience functions let you do these
+   conversions in one step.
+</p>
+<ul>
+   <li><b>Int8Array, Uint8Array.fromString(<i>string</i>, <i>length</i>):</b>
+   Returns an Int8Array or Uint8Array containing the characters of the
+   given string expressed as 8-bit character code values.  You
+   can optionally specify the length of the result buffer, which can
+   be useful when you need to create a buffer for a callee to return
+   a string value into.  This value can be used in a DLL call anywhere
+   that the native function requires a pointer to an 8-bit character
+   string, or a buffer for an 8-bit character string.
+
+   <li><b>Int16Array, Uint16Array.fromString(<i>string</i>, <i>length</i>):</b>
+   Returns an array containing the characters of the given string
+   expressed as 16-bit Unicode code values.
+   The optional length lets you specify the size of the buffer.
+   You can pass this to a native function anywhere that a Unicode
+   string pointer or string buffer pointer is required.
+
+   <li><b><i>Int8ArrayValue</i>, <i>Uint8ArrayValue</i>.toString():</b>  Converts the
+   array back to a Javscript string.  If the string is null-terminated,
+   the resulting Javascript string ends at the null character.  You
+   can use this to retrieve a string returned in the array from a
+   DLL callee.
+   
+   <li><b><i>Int8ArrayValue</i>, <i>Uint8ArrayValue</i>.toStringRaw(<i>length</i>):</b>
+   Converts the array back to a Javscript string, treating the
+   8-bit integers as Unicode character values, and <i>ignoring</i>
+   any null terminator.  Every byte of the array is included in the
+   Javascript string, up to the optional length limit.
+   (If no length is specified, the whole array is converted.)
+   You can use this if the callee returns the length of the
+   string as a separate result, rather than using null termination.
+   
+   <li><b><i>Int16ArrayValue</i>, <i>Uint16ArrayValue</i>.toString(<i>length</i>):</b>  Converts the
+   array back to a Javscript string.  If the string is null-terminated,
+   the resulting Javascript string ends at the null character.
+
+   <li><b><i>Int16ArrayValue</i>, <i>Uint16ArrayValue</i>.toStringRaw(<i>length</i>):</b>
+   Converts the array back to a Javscript string, treating the 16-bit
+   integer values as Unicode characters, and <i>ignoring</i>
+   any null terminator.  Every character of the array is included in the
+   Javascript string, up to the optional length limit.
+   (If no length is specified, the whole array is converted.)
+   You can use this if the callee returns the length of the
+   string as a separate result, rather than using null termination.
+   
+</ul>
+   
+<p>
+   <b>Native string handling concepts:</b>
+   If you're not familiar with the way that C and native DLLs
+   handle strings, some of the key concepts are described below.
+   These might be helpful to understand if you run into any
+   weird situations that the summary above doesn't explain
+   properly.
+</p>
+<ul>
+   <li><b>Null-terminated strings:</b>  This is the most common way
+   to represent a string in C and in the Windows API functions.
+   A C string is just an array of characters, with the end of
+   the string marked by a "null" character, meaning a character
+   with ASCII or Unicode value 0.  (This isn't the character "0",
+   which has Unicode code value 48.  A null is a special character
+   with code value 0.  It doesn't correspond to any printed character.)
+   Native code figures out the length of the string by scanning
+   through the characters of a string until it reaches the null.
+   <p>
+      Almost all Windows API functions use this representation
+      for string arguments and string return values.  Most other
+      native DLL functions do the same thing, since it's the
+      almost universal convention for code written in the C
+      language.
+   </p>
+
+   <li><b>Strings vs character arrays:</b>  In C, there's no real
+   distinction between a string and an array of characters.  Any
+   DLL function that takes or returns a string will actually take
+   a pointer to a character array, also called a character buffer.
+   It's up to the caller and callee to agree that the array of
+   characters will be treated as a string.  The biggest thing
+   they usually have to agree about is how to determine the
+   length of the string - and in most cases, the answer is
+   null termination, as described above.
+   <p>
+      The term "string buffer" is often used instead of "character
+      array".  A buffer is just a block of memory.  In C, that's
+      all an array is, too, so "buffer" and "array" are pretty much
+      interchangeable terms when we're talking about C code or
+      DLL interfaces.
+   </p>
+   
+   <li><a name="lpstr"></a>
+   <b>LPSTR, LPCSTR...:</b>  If you're calling Windows API
+   functions, you'll find that most APIs that take or return
+   string values use a type named LPSTR, LPCSTR, or a something
+   similar.  These aren't actually "built-in" C types; they're just
+   type aliases defined in the Windows SDK headers as "pointer
+   to character".  But they <i>are</i> built in to the DLL
+   importer's type parser, so you can freely use them anywhere
+   a string is being passed or returned.
+
+   <p>The point of these aliases is to make it
+      explicit that a <b>string</b> value is expected, not just
+      any "pointer to character" value.  Even though the C language
+      doesn't have a concept of "string" vs "character pointer",
+      the Windows SDK definitions still want to make that distinction
+      for the sake of a human reading the function definition, so
+      they use these type aliases for that purpose.  The DLL
+      importer also uses them to recognize when strings are
+      being passed between Javascript and native code.
+   </p>
+   <p>
+      All of the LPSTR-related types specifically refer to
+      null-terminated strings (see above).  Callees expect that
+      a string passed in is null-terminated, and any strings
+      returned will be null-terminated.
+   </p>
+   <p>
+      The "C" types (LPCSTR, LPCTSTR, LPCWSTR) are <b>constant</b>
+      strings, meaning that the caller promises not to change any
+      of the characters in the buffer.  These are used for strings
+      that are just to pass information to the callee.  If the "C"
+      isn't there, the callee might change the contents of the buffer,
+      so the non-"C" type is used when the callee wants to return
+      information in the string buffer.  Calls where the callee
+      returns information usually also have a "buffer length"
+      argument that tells the caller the maximum number of
+      characters it can safely store in the buffer.
+   </p>
+   <p>
+      The "T" types (LPTSTR, LPCTSTR) are "Current Type" strings,
+      meaning that they could be old-fashioned single-byte strings
+      <i>or</i> Unicode strings, depending on how the current program
+      is compiled.  <b>In PinballY, the "T" types are <i>always</i>
+      Unicode strings,</b> so they're always equivalent to the W types.
+      (The point of the "T" types is to allow older code to be compiled
+      in either Unicode mode or single-byte mode.  They're
+      widely used in the Windows APIs to make it easy for developers
+      to switch modes without having to change a lot of code.  PinballY
+      is always built in Unicode mode, so T and W types are identical
+      when working with the DLL importer.)
+   </p>
+   <p>
+     Here's the full set of LPSTR-related types, and what
+     they all mean:
+   </p>
+   <table class="dataTable">
+      <tr><th>Type</th><th>Alias for</th><th>Description</th></tr>
+      <tr><td>LPSTR</td><td>CHAR *</td><td>Single-byte string, writable buffer
+      <tr><td>LPCSTR</td><td>const CHAR *</td><td>Single-byte string, read-only buffer
+      <tr><td>LPTSTR</td><td>CHAR *</td><td>Unicode string, writable buffer
+      <tr><td>LPCTSTR</td><td>CHAR *</td><td>Unicode string, read-only buffer
+      <tr><td>LPWSTR</td><td>CHAR *</td><td>Unicode string, writable buffer
+      <tr><td>LPCWSTR</td><td>CHAR *</td><td>Unicode string, read-only buffer
+   </table>
+   
+</ul>
+
+<a name="typedArrays"></a>
+<h2>Typed Arrays</h2>
+<p>
+   Javascript typed arrays can be used any time a native interface calls
+   for an array of or pointer to the corresponding native type.
+</p>
+<p>
+   A typed array argument must always exactly match the native type
+   declared for the function parameter.  The correspondences between
+   native types and Javascript typed array types are listed
+   below.
+</p>
+<p>
+   C pointers and arrays are closely related, and can be used interchangeably
+   in function arguments.  For the sake of brevity, we only list pointer types
+   in the table, using the C "*" pointer notation, but you can use the same
+   Javascript array types with C array arguments of the corresponding types.
+   For example, when we list <b>unsigned short *p</b> in the table, you can
+   also use the same typed array type with an <b>unsigned short[]</b> or
+   <b>unsigned short p[<i>size</i>]</b> function parameter.
+</p>
+<p>
+   
+
+<p>
+   <table class="dataTable">
+      <tr><th>Native type</th><th>Javascript value</th>
+      <tr>
+         <td>char*, const char*, INT8*, const INT8*</td>
+         <td>Int8Array</td>
+      </tr>
+      <tr>
+         <td>unsigned char*, const unsigned char*, UINT8*, const UINT8*</td>
+         <td>Uint8Array</td>
+      </tr>
+      <tr>
+         <td>short*, const short*, INT16*, const INT16*</td>
+         <td>Int16Array</td>
+      </tr>
+      <tr>
+         <td>unsigned short*, const unsigned short*, UINT16*, const UINT16*</td>
+         <td>Uint16Array</td>
+      </tr>
+      <tr>
+         <td>long*, const long*, INT32*, const INT32*</td>
+         <td>Int32Array</td>
+      </tr>
+      <tr>
+         <td>unsigned long*, const unsigned long*, UINT32*, const UINT32*</td>
+         <td>Uint32Array</td>
+      </tr>
+      <tr>
+         <td>float*, const float*</td>
+         <td>Float32Array</td>
+      </tr>
+      <tr>
+         <td>double*, const double*</td>
+         <td>Float64Array</td>
+      </tr>
+   </table>
+</p>
+
+
+<h2>Getting the size of a native type</h2>
+<p>
+   When calling native DLL functions, you'll sometimes need to determine
+   the size of a native type in order to pass the right parameters to the
+   function.  The dllImport object has a <b>sizeof()</b> method that helps
+   with this.
+</p>
+<p>
+   To determine the size of a type, call <b>dllImport.sizeof("<i>typename</i>")</b>,
+   where <i>typename</i> is the name of the native type whose size you want
+   to obtain.  The type name uses the same C/C++ syntax as used in
+   dllImport.define() and dllImport.bind().  It can be the name of a basic
+   primitive C type (char, short, int, long, etc), the name of one of the
+   Windows object types (HANDLE,  HWND), or the name of a struct, union,
+   or typedef previously defined with dllImport.define().
+</p>
+<p>
+   The return value is an integer giving the number of bytes the type
+   uses on the current platform.  Note that some types are different
+   sizes on 32-bit and 64-bit Windows platforms.
+<p>
+   Examples:
+</p>
+<ul>
+   <li>dllImport.sizeof("int") returns the size of the native C/C++ "int" type
+
+   <li>dllImport.sizeof("struct foo") returns the size of a struct named "foo"
+   previously defined with dllImport.define()
+</ul>
+
+<h3>Auto "cbSize" struct elements</h3>
+<p>
+   It's very common in the Windows API for
+   structs passed as arguments to include a member named <b>cbSize</b> that
+   indicates the size (in bytes) of the struct in memory.  Many Windows APIs use
+   this as a sort of sanity check that the caller is passing in a valid memory
+   pointer, and sometimes to detect which version of a struct definition the
+   caller is using.  When a cbSize element is present, the caller almost always
+   has to initialize it before using the struct in an API call; most Windows
+   API calls that involve a struct with a cbSize field will return an error if
+   cbSize isn't filled in properly.
+</p>
+<p>
+   This is such a common convention in the Windows APIs that the DLL importer
+   has special handling for it.  Whenever you call a DLL function that takes
+   a struct (or a pointer to a struct) as an argument, the DLL importer will
+   automatically fill in the struct's cbSize field with the size of the
+   containing struct, if all of the following are true:
+</p>
+<ul>
+   <li>The member name in the native "struct" definition is exactly <b>cbSize</b>
+   <li>That member in the native struct has some kind of integer type (short, int, unsigned long, size_t, etc)
+   <li>The Javascript object passed in for that argument <b>doesn't</b> have a cbSize property
+</ul>
+<p>
+   If all of those conditions are true, the DLL importer will automatically
+   fill in cbSize in the native struct with the byte size of the native struct.
+   You can easily override this automatic behavior, in case it doesn't do what
+   you want for a particular function, by either changing the name of the
+   native struct element to anything other than "cbSize", or by passing in
+   a value explicitly for the cbSize property in the Javascript object used
+   for the struct argument.
+</p>
+
+<h2>Windows HANDLE objects</h2>
+
+<p>
+   Many API calls in Windows work with HANDLE objects of one type or another:
+   window handles, bitmap handles, etc.  These are so widely used that the DLL
+   importer treats handles as a special type.  Type names for most of the
+   standard Windows handle types are pre-defined, and you can always create
+   new ones with a typedef:
+</p>
+<div class="code">
+dllImport.define("typedef HANDLE HWHATEVER");
+</div>
+<p>
+   When a HANDLE value is returned from a native function, the importer
+   gives you a special native-code Javascript object to represent the handle
+   value.  You can then pass this object back to any DLL call that takes
+   a handle value as a parameter.
+</p>
+<p>
+   The reason the importer uses the special native-code object is that
+   HANDLE types are basically native pointers, which are 64-bit values
+   on 64-bit Windows versions.  Javascript doesn't have a primitive
+   type that can represent this properly.  Its closest approximation is
+   the Number type, which actually does use 64 bits, but those bits have
+   to be formatted in a certain way (specifically, in the double-precision
+   floating point format).  The native-code HANDLE object ensures that
+   the system handle value is stored properly.
+</p>
+<p>
+   See <a href="HandleObject.html">HANDLE objects</a> for more details.
+
+      
+
+<h2>Callback functions</h2>
+<p>
+   Many Windows APIs take "callback" function parameters.  A callback
+   is simply a caller-provided function that the API calls back into (thus
+   the name) during the API operation.  This is most often used for
+   enumeration functions that call the callback once for each item in a
+   collection, such as child windows of a given window.
+</p>
+<div class="code">
+// C++ example - typical C++ code to get a list of child windows
+static BOOL CALLBACK my_callback_function(HWND hwndChild, LPARAM lParam)
+{
+    // recover 'this' from the lParam
+    MyClass *self = reinterpret_cast&lt;MyClass*&gt;(lParam);
+    
+    // do something with the child window handle...
+    self->process_child(hwndChild);
+}
+
+void MyClass::my_calling_function(HWND hwndParent)
+{
+    EnumChildWindows(hwndParent, &amp;my_callback_function, reinterpret_cast&lt;LPARAM&gt;(this));
+}
+</div>
+
+<p>
+   This concept is hardly foreign to Javascript.  In fact, it's
+   so widely used by Javascript built-ins and frameworks that some
+   people think Javascript invented it!  You see this
+   coding style used in the built-in Javascript array type,
+   for example:
+</p>
+<div class="code">
+var array1 = [1, 15, 32, 17, 18, 19, 12];
+
+function isEven(x)
+{
+    return x/2 == 0;
+}
+var evens = array1.filter(isEven);                           // named function
+var odds = array1.filter(function(x) { return x/2 != 0; });  // anonymous function
+var doubled = array1.map(x => x*2);                          // "arrow" function
+</div>
+
+<p>
+   Callbacks in Javascript are usually written with anonymous
+   functions (a/k/a closures or lambdas), as in the last two
+   examples above.  C/C++ callbacks usually use named functions,
+   as in the first example (although modern C++ also allows syntax
+   similar to Javascript closures).  All of these formats
+   are just syntactic variations, though; they all have the
+   same effect of providing a function reference to the called
+   function, which calls it back to carry out some work.
+</p>
+
+<p>
+   The DLL importer makes it easy to use callbacks when required in
+   native APIs.  You just use the standard C syntax to define the
+   API function that takes a function pointer parameter, then you
+   call it with a Javascript function for the function pointer
+   argument.  You can use named functions or closures (lambdas/anonymous
+   functions).
+</p>
+<div class="code">
+dllImport.define("typedef BOOL (CALLBACK *WNDENUMPROC)(HWND hwnd, LPARAM lParam)");
+let EnumWindows = dllImport.bind("User32.dll", "BOOL WINAPI EnumWindows(WNDENUMPROC lpEnumFunc, LPARAM lParam)");
+
+// make an array of all top-level window handles
+let windows = [];
+EnumWindows((hwnd) => windows.push(hwnd), 0);
+</div>
+
+<p>
+   The DLL importer provides the necessary plumbing that turns
+   the Javascript function reference into a native function
+   pointer that the native code in the DLL can call directly.
+   That in turn invokes your Javascript function.  As when
+   calling from Javascript into DLL native code, the DLL
+   importer automatically converts argument values when
+   calling back from the DLL into Javascript, so your
+   function works just like it would if it were being
+   called directly from Javascript code.
+</p>
+
+<p><b>LPARAM and LPVOID "context" pointers:</b>
+   Almost every Windows API that takes a callback function pointer
+   argument has an additional LPARAM or LPVOID parameter at the end.
+   The Windows headers usually give this parameter the uninformative
+   name "lParam", so you have to read the documentation to figure out that
+   its purpose is just to let you pass some extra information
+   to your own callback function.  Why would you need that?  Because
+   it lets you use the same callback function in different places
+   in the code.  The extra information in the LPARAM or LPVOID
+   parameter tells you the current context in which it's being
+   invoked.  In fact, these parameters are usually called "context"
+   arguments.
+</p>
+<p>
+   You see context arguments all the time in C callback code,
+   but you rarely see them in Javascript.  The reason is that
+   Javascript functions have their own sort of built-in context,
+   because a Javascript anonymous function can access all of the
+   local variables in its enclosing scope.  That's handled behind
+   the scenes by the Javascript engine, so it happens without any
+   special coding on your part.  
+</p>
+<p>
+   When you pass a Javascript function to a native DLL call, the
+   Javascript function has access to all of its local variable
+   context, exactly as normal.  That makes it unnecessary to
+   pass anything at all for the LPARAM or LPVOID parameter to
+   a Windows API that will call the Javascript callback.  You
+   can just pass 0 for these arguments.  But if you do need to
+   use the context argument for some reason, you can pass any
+   integer value, and it'll get passed back to your callback
+   function in the corresponding LPARAM or LPVOID parameter.
+</p>
+
+<p><b>C's wacky function pointer syntax:</b>  The C syntax for
+   defining a function pointer is pretty obtuse.  Fortunately,
+   you can just copy and paste the definitions for most of the
+   common Windows callback types from the SDK documentation, so
+   you shouldn't have to become an expert at the C syntax.  For
+   reference, though, here's the basic C function pointer declaration
+   syntax.  It's a little bizarre, but in most cases you should be
+   able to just stick to this formula:
+</p>
+<div class="indented">
+   typedef <b><i>return-type</i> ( <i>calling-convention</i> *<i>function-name</i>
+   )( <i>arguments</i> )</b>
+</div>
+<p>
+   There actually is a somewhat more readable alternative that
+   some people prefer.  The trick is to do the declaration in two
+   steps.  First, you define a typedef for the type of the function
+   itself.  This is easy because it looks almost exactly like a
+   regular function definition, the only difference being the
+   addition of the "typedef" keyword at the start.  That makes it
+   a type definition instead of an actual function declaration.
+   Then you define a second typedef that's just a pointer to that
+   first type.  That's also easy, because it uses the ordinary
+   TYPE* syntax.  Here's how we could have done that with our
+   EnumWindows() callback:
+</p>
+<div class="code">
+typedef BOOL CALLBACK WndEnumProc(HWND, LPARAM);  // step 1: define the function type
+typedef WndEnumProc* WNDENUMPROC;                 // step 2: pointer to the function type
+</div>
+
+
+<h2>COM and OLE objects</h2>
+
+<p>
+   The DLL importer has some support from COM interfaces as well.
+</p>
+<p>
+   The importer pre-defines for the following COM interfaces, so you
+   don't have to define these on your own:
+</p>
+<ul>
+   <li>IUnknown
+</ul>
+<p>
+   For any other COM interfaces you wish to use, you'll have to define them, using
+   the dllImport.define() function.  Unlike most of the definitions we've
+   seen so far, interface definitions <i>don't</i> use standard C language
+   syntax.  Instead, we use a syntax that's similar to the syntax used in
+   Microsoft's IDL (Interface Definition Language) files.  The basic
+   syntax is:
+</p>
+<div class="code">
+<b>interface</b> <i>name</i> '<i>GUID</i>' : <i>baseInterface</i>
+<b>{</b>
+    <i>// C-style function definitions</i>
+<b>};</b>
+</div>
+
+<p>
+   The GUID is specified in the standard Microsoft hex format, with hyphens
+   between digit groups; you can optionally use curly braces around the GUID
+   (inside the quote marks), but they're just for decoration and have
+   no other effect.  Every COM interface has a GUID, defined by Microsoft
+   (or whoever else defined the interface).  You can't just make these up
+   as they're permanent features of the interface. You can find the correct
+   GUID for any standard Windows interface in the IDL file in the SDK where
+   the interface is defined; look for the <b>uuid(...)</b> definition
+   preceding the <b>interface</b> statement.
+</p>
+<p>
+   The base interface is the name of a previously defined interface
+   that serves as the "base class" of the interface.  With the single
+   exception IUnknown (which is pre-defined by the DLL importer, so you
+   don't have to define it yourself), all COM interfaces are based on
+   some other interface, and IUnknown is always the ultimate base
+   interface.  An interface automatically "inherits" all of the functions
+   in its base interface.
+<p>
+   The function definitions within the interface use
+   standard C syntax.
+</p>
+<p>
+   For example, here's how you'd define the standard Windows interface IPersist:
+</p>
+<div class="code">
+dllImport.define(`
+    interface IPersist '0000010c-0000-0000-C000-000000000046' : IUnknown
+    {
+        HRESULT GetClassID(CLSID *pClassID);
+    };`);
+</div>
+
+<p>
+   The C parser also accepts the MIDL_INTERFACE syntax used in Windows
+   SDK .idl files.  This makes it fairly easy to copy and paste interface
+   definitions from the .idl files directly into your Javascript code,
+   with little or no hand-editing, which can make it a lot faster to
+   import a bunch of interfaces if you trying to get something complex
+   working.
+</p>
+<div class="code">
+dllImport.define(`
+    MIDL_INTERFACE("0000010c-0000-0000-C000-000000000046")
+    interface IPersist : public IUnknown
+    {
+    public:
+        virtual HRESULT STDMETHODCALL GetClassID(CLSID *pClassID) = 0;
+    };`);
+</div>
+<p>
+   The MIDL_INTERFACE syntax is a little more verbose, since it
+   adds the C++ keywords like "public", "virtual", and the "=0"
+   pure-virtual qualifier.  All of these extra keywords are
+   accepted, but are simply ignored, as they're all implied
+   in an interface anyway. 
+</p>
+
+<p>
+   Note that I like to use the back-quote (`) notation for COM
+   interface definitions, because they tend to be too long to pack
+   onto one line.  But of course, this isn't required; the definition
+   is just a string, and you can use any string delimiters you prefer.
+</p>
+
+<p>
+   As with any C function definition, you can specify a calling
+   convention for each function in an interface, but it <i>must</i>
+   always be STDMETHODCALLTYPE.  This is the default for all interface
+   functions, so you can safely omit it, and it's an error to specify
+   any other convention.
+</p>
+<p>
+   The order of the functions listed in an interface definition is
+   critical.  It must exactly match the definition in the IDL file
+   in the Microsoft SDK where the interface is officially defined.
+   A live COM object instance is essentially an array of function
+   pointers, so the only way that Javascript knows which function you
+   want to call is by matching its position in the interface definition
+   to the position in the pointer array.  The caller and the object
+   have to agree on the order of the functions, which all contained
+   in the IDL layout.
+</p>
+
+<p>
+   <b>Pointers to interfaces:</b>  Once you define an "interface" type,
+   it works a lot like a "struct" or "union" type in terms of referencing
+   it from other type definitions.  For example, you can create a pointer
+   to an interface using syntax like this:
+</p>
+<div class="code">
+let pUnk = dllImport.create("interface IUnknown*");
+</div>
+<p>
+   The same syntax works for typedef statements.  It's common in the Windows SDKs
+   to create the usual raft of type alias for interface pointers, which
+   you can replicate with dllImport.define() using typedefs:
+</p>
+<div class="code">
+dllImport.define("typedef interface IPersist IPersist, *LPPERSIST");
+</div>
+
+<p>
+   The DLL importer has special handling for interface OUT pointers in
+   function arguments.  COM interfaces that return an interface pointer
+   to a caller always do so via a parameter that's defined as a
+   <i>pointer to a pointer to an interface</i>, such as <b>IMoniker**</b>.
+   The double asterisks mean "pointer to pointer".  This is often just
+   <b>void**</b> (pointer to pointer to void) rather than a specific
+   interface type.  You see the void** type used in QueryInterface,
+   for example:
+</p>
+<div class="code">
+HRESULT QueryInterface(REFIID riid, void **ppvInterface);
+</div>
+<p>
+   Whenever a COM interface requires a pointer-to-pointer variable,
+   be it a particular Interface** or a generic void**, the DLL
+   importer lets you pass in a plain Interface* variable.  The
+   importer automatically passes the address of your pointer
+   variable in these cases, as required by the interface definition.
+   This makes it easier to call functions like QueryInterface
+   and CoCreateInstance, since you don't have to explicitly
+   add any "AddressOf" calls.
+</p>
+<div class="code">
+let p = dllImport.create("ITest*");
+i.QueryInterface(IID_ITest, p);
+</div>
+
+<p>
+   <b>IID_PPV_ARGS:</b>
+   In the case of QueryInterface, there's an even quicker short-hand
+   format you can use.  Whenever a function interface has a pair of
+   parameters of the form <b>REFIID, Interface**</b> or
+   <b>REFIID, void**</b>, you can pass an interface pointer
+   for the <i>pair</i> of arguments.  So we could rewrite the
+   call above like this:
+</p>
+<div class="code">
+i.QueryInterface(p);
+</div>
+
+<p>
+   We call this the IID_PPV_ARGS pattern because that's the name
+   of a macro in the Windows COM headers that does basically the
+   same thing in C++ code.  It stands for "interface ID, pointer
+   to pointer to void arguments".  Microsoft created this macro
+   because they noticed that this particular argument combination
+   occurs an awful lot in COM code; people were getting tired of
+   writing it out the long way every time.  In Javascript, this
+   works by matching the interface pointer argument to the
+   GUID argument, and then matching it again to the subsequent
+   Interface** or void** argument.  This works because a
+   <a href="COMPointer.html">COMPointer object</a> (the Javascript
+   object type that represents a native COM interface pointer)
+   knows its own interface GUID, which is what's required for
+   the REFIID argument.
+</p>
+   
+
+<h2>Namespaces</h2>
+
+<p>
+   The C type parser has a feature similar to C++ namespaces.  This is
+   primarily intended for people writing modules that they want to share
+   with other people, since it provides a way to avoid type name conflicts
+   when your shared module is used together with other shared modules
+   written by other people.  If each shared module defines its types
+   within a namespace, and each namespace is given a sufficiently
+   distinctive name, any two modules should be able to work together
+   without type naming conflicts.
+</p>
+   
+<p>
+   When you define a struct or other type via dllImport.define(),
+   it goes into a global name table.  That means that you can only
+   define one struct type for a given name, across all scripts.
+   For most Windows  SDK headers, that's fine, because the SDK takes pains
+   to give everything a unique name.  If you're mixing custom DLLs from different
+   sources, though, you might find that others authors aren't always so careful
+   about unique naming, so you might run into conflicts, where two DLLs use
+   the same struct name for different purposes.
+</p>
+<p>
+   The easy way to work around this is to just rename one of the types.  The
+   names of structs and other types aren't part of the DLL interfaces; the only
+   names that are actually part of DLL interfaces are the function names.
+   So you can use whatever name you like for a struct type.  It's easier
+   to keep things straight if you stick to the same names used in the DLL's
+   header files or documentation, of course, but there's nothing else
+   compelling you to use the original names.
+</p>
+<p>
+   A more general way to handle name conflicts is to use "namespaces".
+   A namespace is essentially a prefix that's applied to each type name
+   in a group.  You create a namespace using the <b>namespace</b> keyword,
+   followed by an open brace.  Every symbol defined up to the next closing
+   brace is part of that namespace.
+</p>
+<div class="code">
+dll.define(`
+    namespace MyDll
+    {
+        struct Color {
+            UINT8 r;
+            UINT 8 g;
+            UINT8 b;
+        };
+
+        struct Brush {
+            int width;
+            struct Color color;
+        };
+    }
+`);
+</div>
+
+<p>
+   Each name defined within the braces of a <b>namespace</b> statement is
+   implicitly prefixed with the namespace name and a "::" delimiter, so in
+   the example above, <b>struct Color</b> is actually defined as
+   <b>struct MyDll::Color</b>, and <b>struct Brush</b> is actually
+   <b>struct MyDll::Brush</b>.  When you refer to these types in your
+   Javascript code, you must use the fully qualified name, with the
+   "namespace::" prefix:
+</p>
+<div class="code">
+// create a Color struct from the MyDll namespace
+let c = dllImport.create("struct MyDll::Color");
+</div>
+<p>
+   Within a <b>namespace { }</b> section,
+   whenever you <i>reference</i> a type (as opposed to defining a new type),
+   the parser looks for an existing type that matches the name.  It starts
+   by assuming that you're talking about the current namespace, but if no
+   matching type is found there, it looks at the enclosing namespace(s).
+   So in the example above, the reference to <b>struct Color</b> within the
+   definition of <b>struct Brush</b> is matched to the previously defined
+   <b>struct MyDll::Color</b>.  If there hadn't been a struct Brush within
+   the namespace, though, the parser would have looked for a <i>global</i>
+   struct Brush, defined outside of any namespace. 
+   Let's elaborate the example to show how this works:
+</p>
+
+<div class="code">
+dll.define(`
+    struct Rect {
+       int left;
+       int top;
+       int right;
+       int bottom
+    };
+
+    namespace MyDll
+    {
+        struct Color {
+            UINT8 r;
+            UINT 8 g;
+            UINT8 b;
+        };
+
+        struct Brush {
+            int width;
+            struct Color color;
+        };
+
+        void FillRect(struct Rect *r, struct Brush *br);
+    }
+`);
+</div>
+<p>
+   In the definition of the function FillRect(),
+   <b>struct Brush</b> refers to <b>struct MyDll::Brush</b>, as in the
+   earlier example, since there's a struct Brush defined in the current
+   namespace.  <b>struct Rect</b> refers to the global struct definition,
+   though, since the MyDll namespace doesn't have its own separate
+   definition of struct Rect.
+</p>
+<p>
+   In some cases, you might want to override the implied local namespace
+   reference to refer to a global name.  Suppose, for example, that you
+   <i>also</i> had a global <b>struct Color</b>, in addition to the one
+   defined in the MyDll namespace as in the examples.  You could explicitly
+   refer to the global name by using the "::" prefix with no namespace.
+</p>
+<div class="code">
+dll.define(`
+    struct Color { ... };      // defines a global struct ::Color
+    namespace MyDll
+    {
+        struct Color { ... };  // defines struct MyDll::Color
+        void FillRect2(struct Rect *r, struct ::Color *c);  // uses the global struct
+    };
+`);
+</div>
+
+<p>
+   Namespaces apply to struct, union, interface, enum, and typedef names.
+   They don't apply to the members of any of those objects, since the members
+   are already scoped to the enclosing types.  Namespaces also don't
+   apply to function names, since those don't go into the internal name
+   table.
+</p>
+
+<h2>Predefined type names</h2>
+<p>
+   The DLL importer's C parser knows about
+   all of the standard C types (int, long, float, etc) and the standard Windows
+   SDK aliases for the basic types (INT, UINT, DWORD, etc).  It also pre-defines
+   nearly all of the Windows HANDLE subtypes (HWND, HDC, HBITMAP, etc) and the
+   common null-terminated string types (LPSTR, LPCTSTR, etc).  In normal C
+   code, the "T" string types (LPTSTR, LPCTSTR) can be either ANSI (8-bit
+   characters) or Unicode (16-bit characters), according to compiler options,
+   but in PinballY Javascript, they're always Unicode.
+</p>
+<p>
+   For a full, up-to-the-minute list of the predefined types, refer to the
+   <b>primitiveTypes</b> constant object defined in <b>Scripts\System\CParser.js</b>.
+   Any types that you need but that aren't defined there can always be added in
+   your script code via a call like this:
+</p>
+<div class="code">
+dllImport.define("typedef int *ptrToInt");
+</div>
+
+<h2>Limitations</h2>
+
+<ul>
+   <li>In x86 mode, only the __stdcall and __cdecl calling conventions
+      are supported.  The x86 __fastcall, __thiscall,
+      and __vectorcall conventions aren't supported.  (This actually
+      isn't much of a limitation in practice, because DLLs almost
+      universally use __stdcall, and in rare cases use __cdecl.
+      The other calling conventions are practically never used in
+      public APIs because they're not as standardized across compilers.
+      In 64-bit code, the different calling conventions aren't a factor,
+      because Microsoft standardized on a single calling convention
+      for x64, thank goodness.  The Microsoft C/C++ compilers still
+      accept the function declaration qualifiers for calling conventions
+      in 64-bit mode, but ignore them.)
+
+   <li>The native MMX, SSE, and SSE2 vector types aren't supported:
+      __m64, __m128, __m128i, __m128d. These types can't be used as
+      function parameters, return values, or struct elements.
+      They're mostly for performance-critical
+      graphics code and cryptocurrency mining, so it would largely
+      defeat the purpose to convert them back and forth between
+      native and Javascript types.
+      If you need to use these types in Javascript-adjacent code,
+      it's better to write native code that works with the
+      vector types directly, and write a higher level interface
+      that you expose to Javascript through a custom DLL.
+
+   <li>Because the Javascript engine is single-threaded, you
+      must not attempt to call back into Javascript from code in
+      any background threads you create in native code.
+      For example, never use a Javscript callback as the thread
+      entrypoint in a call to the Windows CreateThread() API.
+   
+</ul>
+
+
+
+<h2>Working around limitations</h2>
+
+<p>
+   The native call mechanism has limitations in what it can do
+   by way of type conversions, since Javascript was never designed to
+   interface directly to native code.  Some Windows APIs or other
+   program APIs might be impossible, or just too cumbersome,
+   to call directly through the Javascript interface.  In such cases,
+   you can still call the API functions; you'll just have to do it
+   a little less directly.  There are a couple of approaches.
+</p>
+<p>
+   <b>Approach 1:  Use ArrayBuffer.</b>  If the obstacle to calling
+   a particular API is that the API requires a data structure or
+   format that you can't represent through the DLL importer
+   type conversion mechanisms, you can manually pack or unpack
+   the data structure using Javascript's standard ArrayBuffer type.
+   ArrayBuffer is specifically designed to let you manipulate the
+   bytes in a data structure directly, so you can use it to create
+   or interpret any data format that a callee uses.  You can use
+   an ArrayBuffer as a parameter anywhere that a native function
+   expects a native pointer type; the DLL importer passes the callee
+   a direct pointer to the ArrayBuffer's underlying byte array.
+</p>
+<p>
+   <b>Approach 2: Write a custom interface DLL.</b>  The DLL
+   importer mechanism's main goal is to let you call Windows
+   APIs directly, but you can just as well use it to call your
+   own custom DLLs.  If a Windows API or other API that
+   you're trying to use doesn't mesh well with
+   the DLL importer type scheme, you can create your own
+   C++ or C# DLL that calls the underlying API you're trying
+   to use, and then call <i>your</i> DLL from Javascript.
+   Your DLL can reformat parameters to/from the Windows API
+   in a way that makes it usable through the DLL importer
+   type system.  Likewise, if there's any other work that's
+   cumbersome or impossible to do in Javascript, you can
+   offload that part of the work to your custom DLL.
+</p>
+<p>
+   This is similar to what you might have to do to write a
+   "plug-in" for other programs.  The big difference is that you
+   don't have to conform to any pre-defined plug-in protocol.
+   You just define whatever particular set of functions you
+   need to carry out the API operations you want to perform.
+   You can still do <i>most</i> of the work in Javascript;
+   the DLL is only needed to do whatever twitchy memory buffer
+   setup or interpretation you need to do that can't be
+   expressed through the DLL importer's type system.
+</p>
+
+</body>
+</html>
+

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>KeyEvent</h1>
+
+<p>
+   This Event subclass represents keyboard events.  These events
+   let you know when the user presses and releases keys on the keyboard,
+   and when keys auto-repeat when being held down.  These are
+   essentially the unfiltered keyboard events directly from Windows,
+   and they're passed to the Javascript event listeners before PinballY
+   itself processes the keystrokes, so you can use these events to
+   change the way PinballY sees and responds to key presses.
+</p>
+
+<p>
+   The basic keyboard event type comes in the following subtypes:
+</p>
+<ul>
+   <a name="keydown"></a>
+   <li><b>keydown:</b>  Fires when the user presses a key while the
+   program is running in the foreground.  Also fires each time a key
+   "auto-repeats" while the user is holding it down.
+
+   <a name="keyup"></a>
+   <li><b>keyup:</b>  Fires when the user releases a key while the
+   application is in the foreground.
+
+   <a name="keybgdown"></a>
+   <li><b>keybgdown:</b>  Fires when the user presses a key while the
+   program is running in the background, and fires again each time the
+   key auto-repeats while the user holds the key down.
+
+   <a name="keybgup"></a>
+   <li><b>keybgup:</b>  Fires when the user releases a key while the
+   application is in the background.
+</ul>
+
+<p>
+   Keyboard events are always fired on the <a href="MainWindowObject.html">mainWindow</a>
+   object.
+</p>
+
+<p>
+   Note that key events are specifically for keyboard keys.  Joystick
+   button presses generate a similar but separate set of events, since
+   joystick buttons are described by somewhat different metadata from
+   that used for keyboard keys.
+   See <a href="JoystickButtonEvent.html">JoystickButtonEvent</a> for
+   details on the joystick events.
+</p>
+
+<h2>Properties</h2>
+
+<p>
+   This event type has all of the standard event properties and methods
+   (see the <a href="Event.html">Event class</a>), plus the following:
+</p>
+
+<ul>
+   <li><b>background:</b> true if the application was in the background when
+       the event occurred, false if not.  PinballY processes key presses
+       that occur while it's in the background so that it can monitor
+       "Exit Game" and "Pause Game" command keys while a game is running.
+   <li><b>code:</b> A string representing the key pressed, using the same
+       naming as in standard Web browser keydown messages.  See, for
+       example, the Mozilla documentation for
+       <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values">KeyboardEvent code values</a>.
+       Key codes are <b>not</b> affected by any modifier key status
+       (Shift, Ctrl, CapsLock, etc), so this tells you the actual key pressed,
+       independently of what modifier keys might also be pressed.  For
+       example, pressing the "2" key (on the main keyboard) always yields
+       a <b>code</b> value of "Digit2", even when the Shift key is pressed.
+   <li><b>key:</b> A string representing the key pressed, using the same
+       format used in Web browser keydown messages.  For printable characters,
+       this is the character itself, with the modifier key state (Shift, CapsLock,
+       NumLock) applied.  For example, holding down the Shift key and pressing
+       the "2" key (on the main keyboard) produces a keydown event with <b>key</b>
+       set to "@".  For special characters (cursor keys,
+       F-keys, etc), this uses the standard browser name for the key, usually
+       the same name as in <b>code</b>.
+   <li><b>location:</b>  A keyboard location code for the key:
+   <ul>
+      <li>KEY_LOCATION_STANDARD (0), standard location used by most keys
+      <li>KEY_LOCATION_LEFT (1), the left key of a paired modifier key (Shift, Control, Alt, Meta)
+      <li>KEY_LOCATION_RIGHT (2), the right key of a pair modifier key
+      <li>KEY_LOCATION_NUMPAD (3), the numeric keypad
+   </ul>
+
+   <li><b>repeat:</b>  true if this is an auto-repeat key event from a key being held down, false if not
+
+   <li><b>repeatCount:</b>  Indicates the number of times this key
+   press has been auto-repeated so far while the user is holding the
+   key down.  This is 0 (zero) on the initial key press, 1 on
+   the first auto-repeat event, 2 on the second auto-repeat, etc.
+   Note that <b>repeatCount</b> is always 0 when <b>repeat</b> is
+   false, and non-zero when <b>repeatCount</b> is true, so in a way
+   this contains the same information as <b>repeat</b>, just with
+   the added detail of the number of repeats so far during the
+   current key press.
+
+   <li><b>vkey:</b>  A number representing the Windows "virtual key code" value for the key
+
+</ul>
+
+<p>
+   Note that the common Web browser "which", "keyCode", and "charCode" properties
+   are all missing.  That's because these were always problematic and poorly
+   defined.  I didn't want to add to that mess with yet another ad hoc
+   variation.  All modern browsers have  moved to the better-defined "code" and
+   "key" system, which provides more complete and consistent information.
+   The PinballY-specific "vkey" value is provided in case you need
+   the low-level Windows event information for some reason, such as for
+   directly calling a Windows API function.
+</p>
+
+
+
+<h2>Background key events</h2>
+<p>
+   The "bg" key events are used when the application is running
+   in the background, meaning that some other application's window
+   is activated (that is, the other application's window in the
+   foreground and has keyboard focus).  PinballY monitors the keyboard
+   while it's in the background so that it can carry out commands
+   that operate on a running game, such as "End Game" and "Pause Game".
+</p>
+<p>
+   We use separate Javascript events for foreground and background
+   key presses for two reasons.  The first is to simplify your
+   event handlers.  In most cases, you won't want to do anything
+   at all with background key events, so using separate event types
+   for the two cases lets you skip extra checks for the foreground
+   or background status.  You can simply write all of your foreground
+   key handler code in a foreground key handler function, knowing
+   that that function will only be called for foreground keys.
+   The second reason is that it reduces the performance overhead
+   for processing the background events, by entirely skipping
+   user-written event handler code
+   that only needs to run for foreground keys.  It's especially
+   important to minimize PinballY's performance impact while it's
+   in the background so that it doesn't slow down a running game.
+   (The performance impact when no event handler is present is
+   negligible: in the absence of a user-written event
+   handler, the basic processing to fire a background keyboard
+   event takes on the order of 100&mu;s.)
+</p>
+<p>
+   If you want to write a single handler that operates on both
+   foreground and background key events, the Event Target on()
+   method makes that easy: just specify both event types when
+   adding the handler:
+</p>
+<div class="code">
+mainWindow.on("keydown keybgdown", (ev) => { /* common handler */ });
+</div>
+
+<p>
+   It's not possible to use the background key event handlers
+   to change or block keystrokes that the foreground application
+   receives.  PinballY receives background keys via the Windows
+   RAW INPUT mechanism, which only <i>monitors</i> the keys.
+   It's essentially a passive wire-tap.
+   Windows sends the keystrokes to the foreground application
+   regardless of what PinballY does with the events from its
+   background handler.
+</p>
+
+</body>
+</html>

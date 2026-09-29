@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>JoystickButtonEvent</h1>
+
+<p>
+   This is the Event subclass that represents joystick button events.
+   There are four joystick button event subtypes:
+</p>
+<ul>
+   <a name="joystickbuttondown"></a>
+   <li><b>joystickbuttondown:</b>  Fires when the user presses a joystick
+   button while PinballY is in the foreground.  Also fires each time the
+   button "auto-repeats" while the user is holding it down.
+
+   <a name="joystickbuttonup"></a>
+   <li><b>joystickbuttonup:</b>  Fires when the user releases a button
+   while the program is in the foreground.
+
+   <a name="joystickbuttonbgdown"></a>
+   <li><b>joystickbuttonbgdown:</b>  Fires when the user presses a joystick
+   button while PinballY is in the background (that is, while another
+   application's window is in front and has keyboard focus).  Also fires
+   each time the button "auto-repeats" while the program is in the background.
+
+   <a name="joystickbuttonbgup"></a>
+   <li><b>joystickbuttonbgup:</b>  Fires when the user releases a button
+   while the program is in the background.
+</ul>
+
+<p>
+   Joystick button events are always fired on the <a href="MainWindowObject.html">mainWindow</a>
+   object.
+</p>
+
+<h2>Properties</h2>
+
+<p>
+   This event type has all of the standard event properties and methods
+   (see the <a href="Event.html">Event class</a>), plus the following:
+</p>
+
+<ul>
+   <li><b>background:</b> true if the application was in the background when
+   the event occurred, false if not.  PinballY processes button presses
+   that occur while it's in the background so that it can monitor
+   "Exit Game" and "Pause Game" commands while a game is running.
+
+   <li><b>button:</b> A number representing which button on the joystick
+   was pressed.  Joystick buttons are usually numbered consecutively from
+   1 to the number of buttons on the unit, although that may be more of
+   a convention than a rule.  The exact button numbering is determined
+   by the joystick's manufacturer, so it's arbitrary and peculiar to
+   each specific joystick make and model.  The easiest way to figure
+   out which physical button on a device maps to which number in
+   the software events is to use a joystick viewer
+   (such as the Windows "Set up USB game controller" control panel),
+   pressing each physical button in turn to see which button number
+   lights up in the viewer.  The button numbering is generally
+   fixed in the hardware for a given device, so the numbers that light
+   up in the control panel should match the numbers you see reported
+   in PinballY joystick events.
+
+   <li><b>repeat:</b>  true if this is an auto-repeat button event from
+   a button being held down, false if not.  (Windows joystick devices
+   don't have a concept of "auto-repeat" the way that keyboards do,
+   but PinballY provides simulated auto-repeat to make joystick buttons
+   more consistent with keyboard behavior, so that pin cab buttons work
+   the same way in PinballY whether wired through a keyboard or joystick encoder
+   device.  PinballY uses the system keyboard control panel settings to
+   simulate auto-repeat events for joysticks with the same timing as
+   for keyboard keys.)
+
+   <li><b>repeatCount:</b>  Indicates the number of times this button
+   press has been auto-repeated so far while the user is holding the
+   button down.  This is 0 (zero) on the initial button press, 1 on
+   the first auto-repeat event, 2 on the second auto-repeat, etc.
+   Note that <b>repeatCount</b> is always 0 when <b>repeat</b> is
+   false, and non-zero when <b>repeatCount</b> is true, so in a way
+   this contains the same information as <b>repeat</b>, just with
+   the added detail of the number of repeats so far during the
+   current button press.
+
+   <li><b>unit:</b> The "logical unit number" of the joystick that
+   generated the event, representing which joystick the button belongs to.
+   If multiple joysticks are attached to the system, this allows the
+   program to distinguish which one generated the event.  The logical
+   unit number isn't anything Windows knows about; it's just an internal
+   ID assigned by PinballY to tell joysticks apart.  This value can be
+   passed to <a href="MainWindowObject.html#getJoystickInfo">mainWindow.getJoystickInfo()</a>
+   to retrieve the device descriptor for the joystick.
+</ul>
+
+<h2>Background events</h2>
+
+<p>
+   As with <a href="KeyEvent.html">keyboard events</a>, the joystick
+   system uses separate event types for button presses that occur
+   when the program is in the foreground and background.  The reasons
+   to separate the events are the same as for keyboard events; refer
+   to the key event section for details.
+</p>
+
+</body>
+</html>

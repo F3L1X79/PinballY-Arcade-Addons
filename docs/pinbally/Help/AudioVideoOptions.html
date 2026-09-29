@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Audio/Video Options</h1>
+
+<p>
+   <b>Lock frame rate to monitor refresh rate:</b>  Checking this box
+   throttles the graphics rendering rate in each window to the physical
+   refresh rate for the monitor where the window appears.  By default
+   (if this box isn't checked), the program renders graphics as
+   quickly as possible.  On a machine with a fast video card, this
+   can render internal frames much more quickly than the monitor's
+   physical refresh rate, which wastes system resources by rendering
+   lots of extra frames that never make it to the physical display
+   surface.  This can place a high load on the CPU or GPU (video card),
+   which can have unpleasant effects like making your GPU fan run
+   constantly.  Throttling to the monitor refresh rate will reduce
+   the unnecessary extra work.
+</p>
+
+<p>
+   <b>Stretch playfield image/video to fit window:</b>  If this box is
+   checked, the playfield window will stretch its image or video to
+   exactly fill the window, changing its aspect ratio (the proportion of
+   its width to height) if necessary to make it fit exactly.  Otherwise,
+   the image is sized so that it fills as much of the window as possible
+   while preserving its original proportions.  The "stretch" option
+   might look nicer if you have a computer monitor that doesn't use
+   the common 16:9 aspect ratio, since it'll avoid blank spaces around the edges
+   when displaying 16:9 source material.
+</p>
+<p>
+   <b>Show "Dots" style high scores with fixed 4:1 aspect ratio in DMD video window:</b>
+   If this is checked, the "dots" style of generated high score graphics
+   will be displayed with a fixed aspect ratio of 4:1.  By default (if
+   the box isn't checked), the generated "dots" displays are stretched
+   to exactly fill the window.    This only affects the video DMD window,
+   obviously, not a physical DMD, and it only affects the automatically
+   generated high score graphics, and only in the "dots" style.  Normal
+   media (images and videos loaded from files) are still stretched to
+   fill the window as usual.
+</p>
+<p>
+   The fixed 4:1 aspect ratio option might be especially
+   useful if you're exposing the full height of the DMD monitor, rather
+   than masking it behind the more traditional WPC-era DMD cutout.  The
+   traditional DMD cutout is about 4:1, so with that, you'd normally set
+   the DMD window size to about 4:1 anyway; it usually looks nicer in
+   that case to exactly fill the window, in case it's slightly off
+   from exactly 4:1.  If you're exposing the full monitor height, though,
+   stretching the "dots" graphics to fill the whole window distorts
+   it considerably, so you might prefer to maintain the fixed 4:1 layout
+   instead.  This has the tradeoff that it'll leave some of the window
+   area empty, but that's probably preferable to distorting the geometry
+   beyond a certain point.
+</p>
+
+<p>
+   <b>Enable videos:</b>  Check this box to enable video playback in the
+   display windows (playfield, backglass, DMD, topper).  Normally, video
+   files are displayed whenever present, in preference to still graphics,
+   since videos provide a visually richer presentation.  Still graphics
+   are normally only displayed when no video file is available.  If you
+   un-check this box, any video files will be ignored and still graphics
+   will be presented instead.
+</p>
+<p>
+   You can use this option if video playback is places too much of a load
+   on your system.  Alternatively, you can simply delete video files or
+   move them out of the media folders, but this option is obviously more
+   convenient if you only want to disable videos temporarily.
+</p>
+
+<p>
+   <b>Video/table audio volume:</b>  This lets you set a relative audio
+   volume level playing back table videos and audio tracks.  This setting
+   adjusts the volume level globally, for all table videos and audio tracks.
+   You can also adjust the volume levels for individual table videos on
+   a per-game basis using the Adjust Audio Volume command in the Operator
+   Menu, to compensate for particular video tracks that are much louder
+   or softer than average.
+</p>
+   
+<p>
+   <b>Mute videos/table audio:</b>  Check this box to mute the audio
+   playback for table videos and table audio tracks.
+</p>
+
+<p>
+   <b>Mute button sound effects:</b>  Check this box to mute the sound effects for
+   button presses in the user interface. 
+</p>
+
+<p>
+   <b>When a new game is selected, update all windows simultaneously:</b>
+   If this box is checked, PinballY will load new videos and images into
+   all of the windows (playfield, backglass, etc) at the same time when
+   you switch to a new game in the wheel UI.  By default, the program
+   instead staggers the loading, so that the windows are updated one
+   at a time, rather than all at once.  The staggered loading is designed
+   to make the load process smoother, by spreading the work of loading
+   the videos out over time.  The trade-off is that you can see the
+   windows refreshing one by one.  If you don't like that appearance,
+   you can check this box to tell PinballY to dispense with the delay
+   and update all of the windows at the same time.
+</p>
+<p>
+   <b>Crossfade time:</b>  This lets you change the duration of the crossfade
+   effect that the program uses to transition between media when switching
+   to a new game.  The default is 120ms (about an eighth of a second).
+</p>
+
+</body>
+</html>

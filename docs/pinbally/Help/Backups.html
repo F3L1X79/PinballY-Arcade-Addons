@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Backing up your files</h1>
+
+<p>
+   Some people have asked for a list of all of the files you'd need to copy if
+   you wanted to manually back up your full PinballY setup, including
+   all of the media files and table information databases.  Here's
+   what you should save:
+</p>
+<ul>
+   <li><b>Settings.txt</b> in the main PinballY folder (stores
+   all of your program option settings).  The location
+   of this file can be explicitly changed by a
+   <a href="CommandLine.html">command line option</a>, /Settings,
+   when launching PinballY.
+
+   <li><b>GameStats.csv</b> in the main PinballY folder (stores
+   portions of the game metadata).  The location
+   of this file can be explicitly changed by a
+   <a href="CommandLine.html">command line option</a>, /GameStats,
+   when launching PinballY.
+
+   <li>Your entire <b>Media</b> folder tree
+
+   <li>Your entire <b>Databases</b> folder tree
+
+   <li>Registry settings: None (PinballY doesn't store any settings
+   in the registry)
+</ul>
+
+<p>
+   The <b>Media</b> and <b>Databases</b> folder locations depend on
+   your option settings.  You might want to read
+   <a href="DirectoryInfo.html">Files &amp; Folders</a>
+   for full details, but here's the quick summary:
+</p>
+<ul>
+   <li>If you're using the "Share with PinballX" option, both folders
+   will be in your PinballX install folder
+
+   <li>If you're not sharing with PinballX, both folders will be in
+   your PinballY install folder by default
+
+   <li>However, you can override the default locations in the settings -
+   if you're not sure, the <b>Folders</b> page in the options dialog
+   will show you the current settings
+</ul>
+
+<p>
+   You don't need to back up the PinballY program files
+   themselves, since you can always just do a fresh install to
+   re-create those.  But if you're not on a tight space budget for your
+   backup media, the simplest thing is to just make a copy of
+   your entire PinballY folder tree (plus your complete PinballX
+   folder tree, if you're sharing media with PinballX).
+</p>
+
+<h2>More on backing up your system in general</h2>
+
+<p>
+   For some recommendations about backing up your overall system,
+   see <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/BuildGuide.php?sid=windows#systemBackups">Windows Setup</a>
+   in my pin cab <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/">build guide</a>.
+
+
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Folder Options</h1>
+<p>
+   PinballY uses a number of external files to read and store
+   information on the pinball tables you have installed on your system,
+   and the video and graphic files displayed in the UI.  This dialog
+   lets you tell PinballY where to look for these files.
+</p>
+
+<h2>Media folder</h2>
+
+<p>
+   This is the base folder where all of the
+   graphics and video files for your games are installed.  This
+   folder contains subfolders for different media types and for
+   different systems (Visual Pinball, Future Pinball, etc).  The
+   actual media files are stored in subfolders according to the
+   type of image/video they contain.
+</p>
+<p>
+   This is the "global" base folder that contains all of the
+   other media folders, so this folder affects all game systems.
+   Each system's media folder is always a subfolder of this
+   main folder.
+</p>
+
+<ul>
+   <li><b>Use the PinballY folder:</b>  Selects the <b>Media</b>
+   folder within your main PinballY install folder (the folder where
+   you installed the PinballY program files).
+
+   <li><b>Use the PinballX folder:</b>  Selects the <b>Media</b>
+   folder within your PinballX program folder, assuming you've
+   also installed PinballX.  This option is useful if you've
+   been using PinballX and you've already set it up with videos
+   and images for your tables, because it lets PinballY share your
+   existing PinballX media files directly, without the need to copy
+   or move any files.   This option also makes it easy to switch
+   back and forth between PinballX and PinballY.
+
+   <p>
+      You shouldn't use this option if you haven't installed
+      PinballX, since there won't be an existing PinballX
+      folder to share in this case.  This will cause errors
+      when PinballY tries to read files from the non-existent
+      folder location.
+   </p>
+
+   <li><b>Use a different folder:</b>  This option lets you
+   choose a specific folder, rather than using one of the
+   default locations.  This gives you full control in case
+   you have an unusual setup that requires a special location
+   for these files.
+   <p>It's usually better to use one of the
+   defaults, since the default settings will adapt more
+   automatically if you ever move files around.  If you enter a
+   fixed folder path, you'll have to remember to update the
+   setting if you should ever move that folder to a different
+   parent folder or to a different disk drive. </p>
+
+</ul>
+
+<h2>Table database folder</h2>
+
+<p>
+   This is the base folder where your "table database" files are
+   stored.  These are XML files that contain information the installed
+   games, such as the title of each game, the manufacturer, and the
+   pinball program that it's written for.
+</p>
+<p>
+   As with the Media folder, this is the global base folder for
+   all of the individual table database folders for the different
+   game player systems (Visual Pinball, etc).  Each system has its
+   own subfolder within this main folder.
+</p>
+
+<ul>
+   <li><b>Use the PinballY folder:</b>  Selects the <b>Databases</b>
+   folder within your main PinballY install folder (the folder where
+   you installed the PinballY program files).
+
+   <li><b>Use the PinballX folder:</b>  Selects the <b>Databases</b>
+   folder within your PinballX program folder, assuming you've
+   also installed PinballX.  This option is useful if you've
+   been using PinballX and you've already set up your table
+   lists there, because it lets PinballY share your existing PinballX
+   table lists directly, without the need to copy
+   or move any files.   This option also makes it easy to switch
+   back and forth between PinballX and PinballY.
+
+   <p>
+      You shouldn't use this option if you haven't installed
+      PinballX, since there won't be an existing PinballX
+      folder to share in this case.  This will cause errors
+      when PinballY tries to read files from the non-existent
+      folder location.
+   </p>
+
+   <li><b>Use a different folder:</b>  This option lets you
+   choose a specific folder, rather than using one of the
+   default locations.  This gives you full control in case
+   you have an unusual setup that requires a special location
+   for these files.
+   
+   <p>It's usually better to use one of the
+   defaults, since the default settings will adapt more
+   automatically if you ever move files around.  If you enter a
+   fixed folder path, you'll have to remember to update the
+   setting if you should ever move that folder to a different
+   parent folder or to a different disk drive. </p>
+
+</ul>
+
+<h2>Sort the XML database files by table title</h2>
+<p>
+   If you check this box, PinballY will rearrange the &lt;game&gt; tags
+   in the XML database files into alphabetical order, by table title,
+   whenever it saves changes to the XML files.
+</p>
+<p>
+   By default (if this box is <b>not</b> checked), PinballY simply
+   preserves the original ordering of the tags in the files, to minimize
+   the changes it makes, in case you arranged the tags by hand into a
+   particular order on purpose.
+</p>
+<p>
+   If you hand-edit the files outside of PinballY, it might (or might
+   not) be more convenient to have PinballY rearrange the tags into
+   sorted order by table name.  You can use this option to select
+   which way works better for your situation.
+</p>
+<p>
+   If you don't have any need to hand-edit the XML files, you
+   probably don't care what order they're in.  In that case, it's
+   better to leave the box un-checked, since the sorting process
+   takes a little extra time each time the files must be updated.
+</p>
+<p>
+   Note that PinballY will only rearrange the files into sorted
+   order when it needs to save changes.  PinballY tries to avoid
+   re-writing the XML files unless it's actually necessary, which
+   means that you've made some sort of change to table metadata
+   that requires updating the files.  So checking this box by itself
+   won't have any immediate effect on the XML files; they'll only be
+   rearranged into sorted order the next time they need to be
+   saved due to metadata changes, such as changes made through
+   the Edit Game Details dialog.
+</p>
+   
+
+</body>
+</html>

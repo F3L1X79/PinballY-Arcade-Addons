@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Startup Audio and Video</h1>
+
+<p>
+   You can make PinballY play a custom audio and/or video file whenever the
+   program starts up.  Setting up the startup items is just a matter of
+   creating certain files in subfolders of the main Media folder, as
+   explained below.
+</p>
+
+<h2>Folder location</h2>
+<p>
+   Startup videos go in the <b>Startup Videos</b> folder within your
+   main Media folder.
+</p>
+<p>
+   The startup audio track goes in the <b>Startup Sounds</b> subfolder.
+<p>
+   See <a href="Customizing.html#mediaFolder">Media folder location</a>
+   for more on where that folder is located.
+</p>
+
+<h2>Custom startup video</h2>
+
+<p>
+   You can show custom videos in any combination of PinballY's windows
+   each time the program starts.  
+</p>
+<p>
+   These files all go in the <b>Startup Videos</b> folder within your
+   Media folder (see "Folder locations" above).
+</p>
+<p>
+   Each file's name determines which window it's displayed in:
+</p>
+
+<table class="dataTable">
+   <tr><th>Window</th><th>Filename</th></tr>
+   <tr><td>Playfield</td><td>Startup Video.<i>ext</i></td></tr>
+   <tr><td>Backglass</td><td>Startup Video (bg).<i>ext</i></td></tr>
+   <tr><td>DMD</td><td>Startup Video (dmd).<i>ext</i></td></tr>
+   <tr><td>Topper</td><td>Startup Video (topper).<i>ext</i></td></tr>
+   <tr><td>Instruction Card</td><td>Startup Video (instcard).<i>ext</i></td></tr>
+</table>
+<p>
+   For all of these files, the extension <i>.ext</i> can be any of the
+   supported video file suffixes:  .mpg, .f4v, .mkv, .wmv, .m4v, or .avi.
+</p>
+<p>
+   PinballY loads all of the startup videos and starts playback simultaneously,
+   or as close to simultaneously as possible.  This lets you coordinate effects
+   across the separate videos to some extent, since the videos should all be
+   synchronized to the same playback clock.  If you want effects in two or
+   more of the videos to occur simultaneously in playback, simply edit the
+   videos so that the events occur at the same time code in each video.
+</p>
+
+<h2>Custom startup audio</h2>
+<p>
+   Use this to play an audio clip each time PinballY starts.
+</p>
+<p>
+   This file goes in the <b>Startup Sounds</b> folder within your Media
+   folder (see "Folder locations" above).
+</p>
+<p>
+   Name the file <b>Startup Audio<i>.ext</i></b>, where <i>.ext</i> is
+   any of the recognized audio format suffixes: .mp3, .ogg, or .wav.
+</p>   
+<p>
+   If startup audio and startup video files are present, PinballY
+   will simply play them all at the same time.  If you're using a separate
+   startup audio file, you'll probably want to make sure your startup videos
+   are silent, so that the various soundtracks aren't trying to shout each
+   other down.
+</p>
+
+</body>
+</html>
+
+
+
+
+
+

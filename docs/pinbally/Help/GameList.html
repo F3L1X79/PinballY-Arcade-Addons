@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>gameList Object</h1>
+
+<p>
+   The gameList object represents the program's internal database of
+   games.  Methods on this object provide Javascript access to the
+   list of loaded games and their details.
+</p>
+
+<h2>Event target</h2>
+
+<p>
+   gameList is an event target object, so you can use the standard
+   event methods (on(), off(), addEventListener(), etc) to add and remove
+   event listeners.  See <a href="EventTarget.html">EventTarget</a>.
+</p>
+<p>
+   gameList serves as the event target for the following event types:
+</p>
+<div class="eventTargetTOC" data-eventtarget="gameList"></div>
+
+<h2>Properties and methods</h2>
+
+<p>
+    The gameList object has the following properties and methods:
+</p>
+
+<p>
+   <a name="createCategory"></a>
+   <b>gameList.createCategory(<i>name</i>):</b>  Creates a new category with
+   the given name.
+</p>
+
+<p>
+   <a name="createFilter"></a>
+   <b>gameList.createFilter(<i>desc</i>):</b>  Defines a custom filter,
+   which selects games for the wheel UI according to a selection rule
+   you define.  <i>desc</i> is an object describing the filter.
+   Returns a <a href="Commands.html">command ID</a>, automatically
+   assigned as a unique menu command for the filter.  You can use
+   the command ID to place the filter on custom menus.   See
+   <a href="FilterInfo.html#custom">Custom Filters</a> for details
+   and examples.
+</p>
+
+<p>
+   <a name="createMediaType"></a>
+   <b>gameList.createMediaType(<i>desc</i>):</b>  Defines a new custom
+   media type, which can be used with <a href="CustomWindow.html">Custom Media Windows</a>
+   or simply to access other types of media (beyond the standard types
+   that PinballY knows about, such as Backglass Images and Table Videos) through Javascript.
+   <i>desc</i> is an object describing the new media type; see
+   <a href="MediaTypes.html">Media Types</a> for full details on
+   using this method to create a new media type.
+</p>
+
+<p>
+   <a name="createMetaFilter"></a>
+   <b>gameList.createMetaFilter(<i>desc</i>):</b>  Creates and installs
+   a custom <a href="MetaFilters.html">metafilter</a>.  <i>desc</i> is
+   an object describing the new filter.  See <a href="MetaFilters.html">Metafilters</a>
+   for more details.  The return value is an opaque
+   identifier that uniquely identifies the filter, which can be used
+   to later remove the filter via <a href="#removeMetaFilter">removeMetaFilter()</a>.
+</p>
+<p>
+   The new metafilter is placed into effect immediately, and the current
+   game selection list in the wheel UI is refreshed so that the new filter
+   is taken into account.
+</p>
+<p>
+   A metafilter is a "global" filter that's always active <i>in addition to</i>
+   the current user-selected filter, allowing it to further narrow the games
+   selected by the regular filter, or even completely override the decisions
+   of the regular filter.  More than one metafilter may be active at
+   once, so creating a new one doesn't replace or remove any others
+   that are already in effect.
+</p>
+
+<p>
+   <a name="deleteCategory"></a>
+   <b>gameList.deleteCategory(<i>name</i>):</b>  Deletes the given
+   category.  The category tag is removed from any games tagged with
+   the given category, and the category is removed from the master
+   list of categories returned by gameList.getAllCategories().
+</p>
+
+<p>
+   <a name="getAllCategories"></a>
+   <b>gameList.getAllCategories():</b>  Returns an array with the names
+   of all of the categories currently defined.  Categories are arbitrary
+   tags, defined by the user, that can be assigned to games for filtering
+   purposes.  Each category implicitly defines a "category filter" that
+   the user can select through the menu system to show only games with
+   the corresponding category tag.  This lets the user select subsets of
+   games based on personal criteria beyond the built-in filter options
+   that the system provides.
+</p>
+
+<p>
+   <a name="getAllFilters"></a>
+   <b>gameList.getAllFilters():</b>  Returns all of the filters currently
+   defined, as an array of <a href="FilterInfo.html">FilterInfo</a>
+   objects.  Each object represents one filter.
+</p>
+
+<p>
+   <a name="getAllGames"></a>
+   <b>gameList.getAllGames():</b>  Returns an array consisting of a
+   <a href="GameInfo.html">GameInfo</a> object for each loaded games.  The
+   array is arranged in wheel display order, which is alphabetical by
+   the display name of each game.  If you need to iterate over all games,
+   this is more efficient than calling getGame() for each game.  In
+   addition, the returned array is a snapshot of the complete game list at
+   the time you call this function, so it isn't be affected by subsequent
+   insertions, deletions, or reorderings of the live game list, as
+   getGame() is.  This makes it suitable for making edits to the live
+   game list in the course of the iteration, since edits to the live list
+   won't affect the snapshot and thus won't affect the iteration.
+</p>
+
+<p>
+   <a name="getAllWheelGames"></a>
+   <b>gameList.getAllWheelGames():</b>  Returns an array consisting of a
+   <a href="GameInfo.html">GameInfo</a> object for each game on the wheel.
+   That is, each game selected by the currently active filter.
+   The first (0th) element of the array represents the currently selected game.
+   Each subsequent element represents the next game to the right on the wheel.
+   Since the wheel is conceptually circular, the last element is the game
+   displayed in the wheel one position left from the current game.
+</p>
+
+<p>
+   <a name="getCurFilter"></a>
+   <b>gameList.getCurFilter():</b>  Returns a <a href="FilterInfo.html">FilterInfo</a>
+   object describing the filter currently selected in the wheel UI.
+</p>
+
+<p>
+   <a name="getFilterInfo"></a>
+   <b>gameList.getFilterInfo(<i>id</i>):</b>  Returns a <a href="FilterInfo.html">FilterInfo</a>
+   object describing the filter identified by <i>id</i>.  The <i>id</i> value is a string
+   with the filter ID.  See <a href="FilterInfo.html#filterID">FilterInfo</a> for details.
+</p>
+
+<p>
+   <a name="getGameInfo"></a>
+   <b>gameList.getGameInfo(<i>id</i>):</b>  Returns a <a href="GameInfo.html">GameInfo</a>
+   object, which has properties to access most of the details of the specified game.
+   <i>id</i> can be either a <a href="GameInfo.html#configID">config ID</a> string
+   (the permanent identifier for a game, suitable for storing in an external location
+   such as a config file) or a numeric <a href="GameInfo.html#gameID">game ID</a>
+   (the internal ID that refers to the in-memory record for a loaded game).
+   If the ID is invalid or refers to a game that's no longer loaded, the function
+   returns null.
+</p>
+
+<p>
+   <a name="getGame"></a>
+   <b>gameList.getGame(<i>n</i>):</b>  Returns a <a href="GameInfo.html">GameInfo</a>
+   object representing the <i>n</i>th game in the loaded game list.  <i>n</i> is an
+   index into the list of all loaded games, ranging from 0 to the number of games
+   in the list minus 1.  Returns null if <i>n</i> is out of range.  You can get the
+   total number of games currently in the list from getGameCount().
+</p>
+
+<p>
+   <a name="getGameCount"></a>
+   <b>gameList.getGameCount():</b>  Returns the number of games in the list of
+   all loaded games.  You can retrieve individual games via getGame(<i>n</i>),
+   where <i>n</i> ranges from 0 to the game count minus 1.
+</p>
+
+<p>
+   <a name="getMediaDir"></a>
+   <b>gameList.getMediaDir():</b>  Returns a string giving the Windows file system
+   path of the media folder.  This is the root folder where game media are stored,
+   as configured in the option settings.
+</p>
+
+<p>
+   <a name="getWheelGame"></a>
+   <b>gameList.getWheelGame(<i>n</i>):</b>  Returns a <a href="GameInfo.html">GameInfo</a>
+   object representing the game at offset <i>n</i> from the selected game in the wheel.  The
+   currently selected game is at offset 0, so gameList.getWheelGame(0) refers
+   to the current game.  Offset 1 is the next game to the right of the
+   current game, 2 is the next game to the right of that, and so on; -1 is
+   the game to the left of the current game, -2 is the game to the left of
+   that, and so on.  Since the wheel is conceptually a circle, offset <i>N</i>
+   comes back to the currently selected game when <i>N</i> is the number
+   of games showing on the wheel (and by the same token, offset <i>-N</i>,
+   2<i>N</i>, <i>-2N</i>, etc all wrap back to the current game).
+</p>
+<p>
+   This method is specifically restricted to the games that are included in the
+   current game wheel, taking into account the current active filter.  This is
+   the same as the list of games that the user can currently navigate through
+   via the Next and Previous command buttons.  If the user (or your Javascript
+   code) selects a different filter, it will naturally change the list of
+   games that this method can access.  If you want to directly access <i>all</i>
+   of the games that PinballY current knows about, use the getGame() method
+   instead; that gives you access to the entire current list of games.
+</p>
+
+<p>
+   <a name="getWheelCount"></a>
+   <b>gameList.getWheelCount():</b>  Returns the number of games currently
+   shown in the "wheel" UI.  This includes all games selected by the current
+   filter.
+</p>
+
+<p>
+   <a name="refreshFilter"></a>
+   <b>gameList.refreshFilter():</b>  Refreshes the filtered game list, as
+   though switching to the current filter anew.  This can be used after
+   making any changes to game metadata or other factors that might affect
+   which games are selected by the current filter, to ensure that the
+   updated selections are immediately reflected in the wheel UI.
+</p>
+
+<p>
+   <a name="renameCategory"></a>
+   <b>gameList.renameCategory(<i>oldName</i>, <i>newName</i>):</b>  Renames
+   the given category.  An error occurs if the category referenced by <i>oldName</i>
+   doesn't exist, or if there's already an existing category with the new name.
+   The category tag is renamed globally, so any games tagged with the old category
+   name are updated to the new name.
+</p>
+
+<p>
+   <a name="removeMetaFilter"></a>
+   <b>gameList.removeMetaFilter(<i>id</i>):</b>  Removes the metafilter
+   identified by <i>id</i>, which is an identifier returned from a previous
+   call to <a href="#createMetaFilter">createMetaFilter()</a>.  This cancels
+   the specified metafilter and removes its effect on the game selection list.
+   The current wheel selection list is updated as a side effect, as though
+   you refreshed the current filter.
+</p>
+
+<p>
+   <a name="resolveMedia"></a>
+   <b>gameList.resolveMedia(<i>subfolder</i>, <i>baseFileName</i>, <i>type</i>):</b>
+   Resolves a "global" media file.  Global media are unrelated to any particular
+   game; they're used for the default background images when a game has no media of its
+   own for a given window, startup audio and video, and for the underlay.  This method
+   uses the same search algorithm that the system uses for its own global media files,
+   so it ensures that you find the same file the system would for a given case.
+   <i>subfolder</i> is a folder name within the main media folder where
+   the file is located, such as "Images" or "Videos".  <i>baseFileName</i> is
+   the root part of the file name to find, without any path or extension.  <i>type</i>
+   is an optional string specifying the media type to search for, which
+   determines which filename extensions will be matched, using the same
+   file type extensions that the system would use when searching for the
+   corresponding media type.  The possible values for <i>type</i> are:
+</p>
+<ul>
+   <li>"audio" = audio files (MP3, WAV)
+   <li>"image" = still image files (PNG, APNG, JPEG, GIF)
+   <li>"video" = video files (MP4, etc)
+   <li>"wave" = WAVE-format audio files (WAV)
+</ul>
+<p>
+   If you omit <i>type</i> (or set it to an empty string), the method simply
+   searches for the exact file name you specify, which in this case must include
+   the desired extension.  This lets you limit the search to, say, a .PNG file,
+   excluding other image file types that the system would normally accept.
+</p>
+<p>
+   If a matching file is found, the full file name (with path and extension) is
+   returned as a string.  If no match is found, <b>undefined</b> is returned.
+</p>
+
+<p>
+   <a name="setCurFilter"></a>
+   <b>gameList.setCurFilter(<i>id</i>):</b>  Changes the active filter
+   for the wheel UI.  <i>id</i> can a string with the ID of the desired
+   filter, or a number in the range command.FilterFirst to command.FilterLast
+   (see <a href="Commands.html">Commands</a>), identifying the filter by
+   its associated menu command.  The <a href="FilterSelectEvent.html"><b>filterselect</b></a>
+   event is <b>not</b> fired when you change the filter with this function.
+   However, a <a href="GameSelectEvent.html">gameselect</a> event <b>is</b>
+   fired if the current game selected in the wheel must be changed as a result
+   of the filter change.  This happens if the previously selected game isn't
+   included by the new filter, requiring the system to automatically switch
+   to a game that is included by the new filter.
+</p>
+
+<p>
+   <a name="setWheelGame"></a>
+   <b>gameList.setWheelGame(<i>n</i>, <i>options</i>):</b>  Changes to a
+   new game selection in the wheel UI.  <i>n</i> is a number giving the offset
+   from the currently selected game, in wheel slots: 1 is the next game to
+   the right, 2 is the next game after that, and so on, while -1 is the next
+   game to the left, -2 is the next game before that, etc.  Since your
+   Javascript code is initiating the game selection change, the
+   <a href="GameSelectEvent.html">gameselect</a> event is <b>not</b> fired.
+</p>
+<p>
+   The <i>options</i> argument, if provided, is an object with properties
+   that specify how the game change looks in the UI.  If this is omitted,
+   the defaults are used for all options:
+</p>
+<ul>
+   <li><b>animate:</b> boolean, default false.  If set to true, the game
+   change is animated with a visible wheel spin effect in the UI, as though
+   the user were navigating by pressing the left/right buttons.
+
+   <li><b>fast:</b> boolean, default false.  If set to true, the animation
+   effect (if used) runs faster.  The system normally uses the fast mode
+   during normal user button navigation when a button is held down long
+   enough to auto-repeat, so that the user can zip through the wheel
+   very quickly.
+</ul>
+<p>
+   Even when animation mode is used, this method doesn't trigger the sound
+   effects or DOF effects that are normally used when the user navigates
+   through the wheel with the buttons.  If you want to simulate the exact
+   effect of navigating by button presses, you can use
+   <a href="MainWindowObject.html#doButtonCommand">mainWindow.doButtonCommand()</a>
+   with the "Next" and "Prev" button codes.
+</p>
+   
+
+</body>
+</html>

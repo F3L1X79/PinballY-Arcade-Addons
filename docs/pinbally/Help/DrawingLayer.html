@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>DrawingLayer Objects</h1>
+
+<p>
+   PinballY lets you add your own custom graphics to any of its windows
+   from Javascript using "drawing layers".  A drawing layer is a virtual
+   image, stored in memory, where you can load a video or image file, or
+   draw your own complex graphics using the <a href="CustomDrawing.html">Custom
+   Drawing</a> facility.
+</p>
+<p>
+   We use the term "layer" because PinballY thinks about its graphics as
+   a set of transparencies stacked one on top of the next.  What you actually
+   see on the screen is the result of combining all of the layers making
+   up a window.  In the main window, for example, the system's standard
+   graphics include a background layer that displays a video or image of
+   the current game's playfield, a separate layer that displays the wheel
+   icons, another layer with the status text messages, and so on.  
+</p>
+
+<h2>Event target</h2>
+
+<p>
+   DrawingLayer objects are event targets for certain events, so you can use the
+   standard event methods (on(), off(), addEventListener(), etc) to add and remove
+   event listeners.  See <a href="EventTarget.html">EventTarget</a>.
+</p>
+<p>
+   DrawingTarget objects serve as the event target for the following event types:
+</p>
+<div class="eventTargetTOC" data-eventtarget="DrawingLayer"></div>
+
+<h2>How to create a drawing layer</h2>
+<p>
+   You create a custom drawing layer in a given window by calling the
+   <a href="WindowObjects.html#createDrawingLayer">createDrawingLayer()</a>
+   method on the window object.  For example, this creates a new drawing
+   layer in the DMD window:
+</p>
+<div class="code">
+let overlay = dmdWindow.createDrawingLayer(1000);
+</div>
+<p>
+   The argument specifies the desired Z index for the layer.  See below
+   for more on what the Z index means.
+</p>
+<p>
+   The return value from the method is a DrawingLayer object, which you
+   can use to load image files or video files into the layer, or to draw
+   more complex graphics using the <a href="CustomDrawing.html">Custom Drawing</a>
+   facility.  The DrawingLayer object returned provides methods and properties,
+   listed below, that let you control what it displays.
+</p>
+
+<h2>Removing a layer</h2>
+<p>
+   When you're done with a layer, you can remove it by calling the
+   <a href="WindowObjects.html#createDrawingLayer">removeDrawingLayer()</a>
+   method on the same window object that you used to create the layer.
+</p>
+<div class="code">
+dmdWindow.removeDrawingLayer(overlay);
+</div>
+<p>
+   Removing a layer removes its on-screen graphics and makes the Javascript
+   object representing the layer invalid.  Any attempts to load media into
+   the layer or draw graphics into it will simply be ignored.
+</p>
+
+<h2>Temporarily hiding a layer</h2>
+<p>
+   In some cases, you might want to create a layer that comes and goes,
+   according to what's going on in the user interface.  One way to
+   do this is to create and remove the layer as needed.  However, if
+   the layer will be re-activated frequently, it's more efficient to
+   keep the layer object around and simply remove its on-screen graphics.
+   An easy and efficient way to do this is to set the layer to display
+   an image that's completely transparent, which you can do with
+   the <b>clear()</b> method:
+</p>
+<div class="code">
+overlay.clear(0x00000000);
+</div>
+<p>
+   This simply fills the whole layer with a fixed color with a zero
+   "alpha" value.  Zero alpha means complete transparency, so the
+   layer will be invisible on-screen.
+</p>
+  
+<h2>Z index</h2>
+<p>
+   The order of the layers is important, because it determines which
+   graphics are drawn in front of (and therefore block or occlude) other
+   graphics.  The order is deterministic, and entirely under your
+   control, because it's determined by the "Z index" of each layer.
+   You specify the desired Z index when you create a layer.  The Z
+   index is just an arbitrary integer value that's up to you to define,
+   but the important thing about it is that layers with higher Z
+   index values are drawn in front of layers with lower Z index
+   values.
+</p>
+<p>
+   For most of the windows, there's only one "system" drawing
+   layer, which is the main background layer where the background
+   image or video or that window is drawn.  This is the layer
+   where the backglass image or video is drawn in the backglass
+   window, for example.  This standard system drawing layer has
+   a Z index of 0 (zero).  Any custom drawing layer you create
+   with a positive Z index is drawn in front of this main
+   background layer, and any layer you create with a negative
+   Z index is drawn behind it.  There's usually no point in
+   using a negative Z index, since the default layer is usually
+   opaque, and fills the entire window.  However, it might
+   be useful to create a negative Z layer for a custom window,
+   since you could conceivably want to load transparent or
+   partially transparent media, such as PNG files, into the
+   main layer.
+</p>
+<p>
+   The main window is a little different from the others in
+   that it has a whole stack of drawing layers of its own,
+   which it uses to overlay the numerous elements of the
+   main user interface.
+   In the main window, you can insert your custom layers between
+   system layers, by choosing Z index values between the
+   Z indices of the standard layers.
+  For example, you could place a custom
+   layer immediately in front of or immediately behind the status
+   line text.  The order of layers for the main window
+   is listed in <a href="MainWindowObject.html#drawingLayers">Drawing
+   layer ordering</a> in the <a href="MainWindowObject.html">mainWindow
+   object</a> section.
+</p>
+   
+<h2>Sizing and scaling</h2>
+
+<p>
+   By default, the graphics in a custom drawing layer are stretched
+   to exactly fill the entire window, in both width and height.
+   If the user resizes the window, the system stretches the
+   graphics to match the new window size.  This is just the
+   default, though; you can change it so that the image only
+   occupies a portion of the window, and you can also make the
+   image preserve a fixed aspect ratio, rather than distorting
+   the geometry to fit the window size.
+</p>
+
+<p>
+   If you're familiar with basic Windows graphics programming, you
+   probably think of the size of an image or text display in terms
+   of pixels.  PinballY takes a different, more abstract approach,
+   based on scaling everything relative to the window size.  This
+   will be a little strange if you're used to working in terms of raw
+   pixels, but it simplifies things by letting the system take care
+   of resizing everything to maintain a constant scale when the
+   window layout changes.
+</p>
+<p>
+   There are two key concepts to PinballY's approach to sizing.
+   The first is the "aspect ratio" of the original graphics loaded
+   into a layer.  This is simply the ratio of the width to the
+   height of the original image or video loaded into the layer.
+   The second is the "span" of the layer, which is the fraction
+   of the window's width or height that the layer occupies.
+   A span of 1.0 means that the layer is stretched to exactly
+   fill the window's width or height; a span of 0.5 means that
+   it's scaled to 1/2 of the window's size.
+</p>
+<p>
+   The original aspect ratio is determined in terms of traditional
+   pixel sizes.  When you load an image or video from a file, the
+   aspect ratio is determined based on the native size of the image
+   stored in the file.  For example, if you load a PNG file with a
+   pixel size of 640 pixels wide by 480 pixels tall, it has an
+   aspect ratio of 640/480 or 1.333.  
+</p>
+<p>
+   The "span" is something you can control for each layer, using the
+   the <a href="#setScale">setScale()</a> method on the layer.
+   You pass this method an object with properties that specify
+   the constraints on how the layer is sized.
+   There are several ways to set the span, with different results
+   when the window is resized:
+</p>
+<ul>
+   <li><span class="code">layer.setScale({xSpan: 1.0, ySpan: 1.0}):</span>
+   This sets <i>both</i> the X and Y spans.  This stretches the layer's
+   image/video in both the width and height dimensions to exactly fill
+   the specified fraction of the window.  The original aspect ratio
+   of the contents is ignored, since you're telling the system that
+   you want the width and height pegged to the window's size.  In
+   this case, the graphics will be stretched to exactly fill the
+   entire window in both dimensions.  You could make it fill a portion
+   of the window by using a number between 0 and 1; for example, 0.5
+   would make it fill exactly half the width and half the height.
+
+   <li><span class="code">layer.setScale({xSpan: 1.0}):</span>  This
+   sets <i>only</i> the X span, leaving the Y span as a "free" dimension.
+   When X is constrained like this and Y is free, it means that the image
+   will be sized to satisfy the X (width) constraint, and the Y (height)
+   will be adjusted so that it maintains the original aspect ratio of
+   the contents, regardless of whether that makes the image too tall
+   or too short for the window.  This ensures that the image will be
+   displayed without geometric distortion, since its original width-to-height
+   proportions are maintained.  As always, 1.0 means that the span exactly
+   fills the window - in this case, the image will be stretched to a
+   width that exactly fills the window's width.
+
+   <li><span class="code">layer.setScale({ySpan: 1.0}):</span>  This
+   sets <i>only</i> the Y span.  This is just like setting the X span
+   only, but in this case it pegs the layer's height to the window's
+   height, setting the width so that the original image's aspect ratio
+   is maintained.
+
+   <li><span class="code">layer.setScale({span: 1.0}):</span>  This
+   sets the "combined" span.  This means that <i>either</i> the width
+   <i>or</i> height will be sized to fill the specified fraction of
+   the window.  But which one?  The one that makes the image fit the
+   window without making the <i>other</i> dimension too wide or tall
+   to fit the window.  This is the most flexible option, since it
+   makes sure that the full contents of the layer fit the window,
+   while maintaining the aspect ratio, even if the window is unusually
+   tall or wide.
+</ul>
+
+<h3>How scaling interacts with custom drawing</h3>
+
+<p>
+   Things get weird when we start talking about custom drawing, because
+   now we have to start thinking in terms of pixels in addition to
+   the constraint-based scaling.  The custom drawing system is based
+   on plain old pixels, like PNG files or conventional Windows
+   graphics programming.  How do we reconcile the pixel-based drawing
+   with the span-based scaling?
+</p>
+<p>
+   It's actually not that difficult if you think about the right way.
+   Think about the custom drawing system as working on a "canvas" -
+   basically a virtual PNG file that you're creating on the fly in
+   memory.  Like a PNG file, the canvas has a width and height in
+   pixels.  You can plop text onto the canvas at any pixel position,
+   and you can draw graphics primitives and copy other images into
+   pixel areas on the canvas.
+</p>
+<p>
+   Whatever you do with the canvas, when you're done, you have a
+   rectangular image that's X pixels by Y pixels in size.  This is just
+   like a PNG file that's X pixels by Y pixels in size, except that
+   it only exists in memory, not as a disk file.  We now load
+   this X-by-Y-pixel image into a drawing layer.  It's only at
+   this point that the more abstract window-based scaling kicks in.  PinballY
+   now takes that X-by-Y-pixel image and stretches it to fill
+   the desired fraction of the window's width and height, according
+   to the "span" values in your drawing layer's scale settings.  Whenever
+   the window size or layout changes, PinballY rescales the image,
+   going back to the same X-by-Y-pixel original, and stretching it
+   to match the new window layout.
+</p>
+<p>
+   This dual sizing scheme - pixel sizing for the underlying image, window
+   percentages for the final display - gives you a lot of flexibility.
+   A really nice feature is that it lets you create custom drawings at a fixed pixel size, without
+   having to worry about how large or small the image will be when actually
+   displayed.  That lets you arrange the drawing with the exact proportions
+   you want, based on pre-determined sizes for the elements within the
+   drawing, such as text and external images you draw onto the canvas.
+   The finished image will then be displayed at whatever size is needed
+   in the UI, thanks to the window-based scaling.
+</p>
+   
+
+<h2>Methods and properties</h2>
+
+<a name="alpha"></a>
+<p>
+   <b><i>layer</i>.alpha:</b>  Gets or sets the layer's alpha transparency
+   value.  This must be a value from 0 (fully transparent) to 1 (fully
+   opaque).  Values between 0 and 1 represent partial transparency; 0.25
+   represents 25% opacity, for example.  This controls the transparency of
+   the whole layer; it's combined
+   with the transparency of each individual pixel.  You can use this to
+   perform effects such as fading the layer in or out.
+</p>
+
+<a name="clear"></a>
+<p>
+   <b><i>layer</i>.clear(<i>argb</i>):</b>  Clears any video or graphics
+   displayed in the layer, and fills the entire layer with the given background
+   color.  This is specified as a hex value in the format 0xAARRGGBB, where
+   AA is the alpha value, RR is the red component, GG is the green component,
+   and BB is the blue component.  Each component ranges from 00 to FF.
+   An alpha value of 00 means fully transparent, and FF means fully opaque.
+   Here are some examples of how you can use this:
+</p>
+<ul>
+   <li>#FF404040 creates a dark gray, completely opaque background that
+   completely hides anything in a lower layer
+
+   <li>#00000000 creates a completely transparent layer, making the layer
+   effectively invisible (hiding it while it's not being used, for example)
+
+   <li>#40FF0000 creates a red layer that's 25% opaque, adding a red tint
+   to the layers behind it
+</ul>
+<p>
+   You can alternatively specify the color as a string in HTML "#RGB"
+   or "#RRGGBB" format.  With these string formats, the alpha is implicitly
+   FF for fully opaque.  You can also simply specify the name of a
+   configuration variable in the settings file, in which case it'll
+   be parsed as an HTML color value, and the result used as the color.
+</p>
+
+<a name="draw"></a>
+<p>
+   <b><i>layer</i>.draw(<i>func</i>, <i>width</i>, <i>height</i>):</b>
+   Clears any prior video or graphics displayed in the launch overlay, and calls
+   the provided function to perform custom drawing.  The function is called with
+   a "drawing context" object as its parameter.  See
+   <a href="CustomDrawing.html">Custom Drawing</a> for details on how this works.
+</p>
+<p>
+   Your custom graphics are drawn into an in-memory image with the
+   given width and height in pixels.  If you don't specify these arguments,
+   the window's current size in pixels is used by default.  Remember that
+   the pixel size doesn't determine the actual <b>display</b> size of the graphics.
+   The actual display size is determined by the scaling settings made via
+   <a href="#setScale">setScale()</a>.  The pixel sizing is important, however,
+   because it specifies the size of the "canvas" that you're working with
+   when laying out text and other graphics in your custom drawing function.
+   All of those low-level drawing operations work in terms of pixels.
+   The finished result will be automatically scaled up or down to match the
+   current window size, according to the scaling settings you specify
+   in setScale().
+</p>
+
+<a name="drawDMDText"></a>
+<p>
+   <b><i>layer</i>.drawDMDText(<i>text</i>, <i>options</i>):</b>
+   Draws a DMD-style text screen.  This generates a still image that looks
+   like a score-area text display, and then loads the image into the drawing
+   layer.  (Even though this uses the DMD display style, you can use it in
+   any window to create a DMD-like text effect in that window.)
+   This is effectively an image-loader function, so like the other
+   media loader functions (loadImage(), loadVideo(), etc), it replaces any
+   previous image that the layer was displaying.
+</p>
+<p>
+   <i>text</i> is the text to display.  This can contain multiple lines, by
+   using "\n" (newline) characters to separate the lines.  <i>options</i> is
+   an object with more information on exactly how to generate the simulated
+   DMD image.  If you omit the object entirely, or provide the object but
+   omit any of the individual properties listed below, the system chooses
+   suitable defaults based on the currently selected game.  The option
+   properties are:
+</p>
+<ul>
+   <li><b>bgColor:</b> The background color, for the DMD and alphanumeric
+   styles.  This is the color used to fill the empty space between the
+   DMD dots or alphanumeric display segments.  This can
+   be specified as a hex number, in 0xAARRGGBB format (AA is the alpha
+   transparency component), or as an HTML "#RRGGBB" or "#AARRGGBB" string.
+   Setting the alpha to something less than FF will make the background
+   partially transparent, so that the generated image can be superimposed
+   over another background drawing layer. Setting the alpha to 00 will make
+   the generated image's background entirely transparent, so that only
+   the dots or alphanumeric segments occlude background material.  This
+   is ignored for the "tt" style, which uses a background image instead.
+
+   <li><b>color:</b> This is the color of the dots making up the dot matrix
+   for the "dmd" style, or the colors of the segments for the 16-segment
+   display in the "alpha" style.  It's ignored for the "tt" style.
+   The color can be specified as a hex number, in 0xRRGGBB format, or as an
+   HTML "#RRGGBB" string.  This color is always fully opaque; any alpha
+   component you specify is ignored.
+   <p>
+      If the color isn't specified, and the game has a VPinMAME ROM
+      associated with it, the color is taken from the VPinMAME settings
+      for the game.  (A particular game's VPinMAME settings can be
+      accessed when you're running the game with Visual Pinball, or by
+      running VPinMAME directly and loading the game.)  If the game has
+      a VPinMAME ROM, but you've never selected custom colors for the
+      game through VPinMAME, the default VPinMAME DMD color settings
+      are used.  If the game doesn't have a VPinMAME ROM at all, a
+      default amber color scheme is used, approximating the color of the
+      monochrome plasma displays originally used in most 1990s
+      pinball machines.
+   </p>
+
+   <li><b>font:</b> The font to use for the text.  The interpretation of
+   the font name depends on the drawing style.
+   <ul>
+      <li>For the "dmd" style, the drawing system uses special built-in
+      fonts designed specifically for the dot matrix layout.  These are
+      named according to the pixel height of the character cell:
+      <ul class="compact">
+         <li>"dmd-20px"
+         <li>"dmd-15px"
+         <li>"dmd-12px"
+         <li>"dmd-9px"
+         <li>"dmd-7px"
+         <li>"dmd-5px"
+      </ul>
+      <p>
+         If you don't specify one of these dmd-NNpx fonts, the system
+         will automatically choose the largest one that will make your
+         text message fit the display.  If you're displaying a series
+         of messages in succession, you might want to specify one font
+         across the whole sequence to make the messages look more
+         consistent.  The fonts use proportional spacing (different
+         widths per character), so there's no exact formula for how
+         much text will fit on the 128x32-dot display, but roughly
+         speaking, the "12px" font will fit two lines of text of about
+         10-12 characters per line, and "9px" will fit three lines
+         of about 16 characters per line.
+      </p>
+
+      <li>For the "alpha" drawing style, the drawing system uses special
+      built-in fonts designed specifically for the segmented display.
+      The following fonts are available:
+      <ul class="compact">
+         <li>"alphanum-thin" (thinner segments; this is the default)
+         <li>"alphanum-bold" (wider segments)
+      </ul>
+
+      <li>For the "tt" drawing style, the text is displayed using normal
+      Windows TrueType fonts, so you can specify any TrueType font here.
+      The default is Courier New, which has a typewritten appearance,
+      to create the impression of an ad hoc note attached to the machine.
+   </ul>
+   <p>
+      You can specify more than one font by separating the font names with
+      commas.  For example, "Lucida Sans, Courier New, dmd-12px".  The
+      drawing system will try to match each font in the order provided,
+      considering only the font names valid for the selected style and
+      available on the system, until it finds a match.  (Any additional
+      fonts listed after the first match are ignored.)  This has two uses:
+   </p>
+   <ul>
+      <li>The first is to provide fallback fonts for
+      the "tt" style, in case your first choice of fonts isn't installed
+      on the system.  For example, you could specify something
+      like "Letter Gothic, Lucia Typewriter, Courier New".
+      
+      <li>The second use is to provide font selections for each possible
+      drawing style when you're letting the system choose by setting
+      <b>style</b> to "auto" (or simply omitting it).  You might still
+      want to control the font in this case, but since you don't know
+      which style you'll get, you can't know whether "dmd-12px",
+      "alphanum-bold", or "Lucida Typewriter" applies.  The solution is
+      to specify them all, or at least to specify the ones that you
+      want to override.  If the system chooses the DMD style, it
+      will ignore any fonts that aren't in the special "dmd-Npx" set,
+      so it's safe to include "Lucida Typewriter" and "alphanum-bold"
+      in the list.  By the same token, if the system uses the alphanumeric
+      style, it'll ignore any fonts other than the "alphanum-xxx" fonts.
+      And if the "tt" style is used, the system will naturally ignore
+      the "dmd-Npx" and "alphanum-xxx" fonts, since those aren't the
+      names of any TrueType Windows fonts.  (Technically, they <i>could</i>
+      be the names of TrueType fonts, but in practice they probably won't
+      be.  To reduce the chances of accidentally picking a TrueType
+      font with such an odd name, you might want to list the "tt"
+      font options first, so that a proper TrueType font will be
+      selected for the "tt" style before the drawing system even
+      considers the others.)
+   </ul>
+      
+   <li><b>style:</b>  A string specifying the display style; one of "auto",
+   "dmd", "alpha", or "tt".  This is the same style selection you can make
+   for a game's high score display in the normal UI, via the
+   <a href="EditGameDetails.html">Edit Game Details</a> dialog.  If you
+   omit this or specify "auto", the high-score display style for the
+   current game will be used, as set in the game's metadata or as
+   inferred from the game's table type and era.  For example, games
+   from the early 1980s use the "alpha" style by default, and games
+   from the 1990s use the "dmd" style.
+</ul>
+
+<a name="loadImage"></a>
+<p>
+   <b><i>layer</i>.loadImage(<i>filename</i>):</b>  Loads the given image file and displays
+   it in the launch overlay layer.  The filename must be a fully qualified Windows
+   path, with drive, directory, and extension.  The normal collection of image
+   file formats can be used (JPEG, PNG).  The image is stretched to fill
+   the window.  You can use the <b>draw()</b> method if you need more control
+   over the image layout, or if you want to use multiple images or mix images
+   with text or other graphics.  The new image replaces any prior video that
+   was playing, any prior image, or any custom graphics displayed via <b>draw()</b>.
+</p>
+
+<a name="loadVideo"></a>
+<p>
+   <b><i>layer</i>.loadVideo(<i>filename</i>, <i>options</i>):</b>
+   Loads and plays the given video in the
+   launch overlay layer.  The filename must be a fully qualified path, with drive,
+   directory, and extension.  The usual video formats are supported (MP4, MPG, etc).
+   The video is stretched to fill the window.  If any prior video was playing or
+   any prior graphics were displayed, this removes the existing video or graphics.
+</p>
+<p>
+   <i>options</i> is an object specifying playback options.  If this is omitted,
+   defaults are used for all options; if the object is specified, the defaults
+   are used for any missing properties.  The properties are:
+</p>
+<ul class="compact">
+   <li><b>loop:</b> boolean, default true, specifying whether the video plays
+   once or plays continuously in a loop
+   <li><b>mute:</b> boolean, default false, specifying if the video is played
+   back with sound muted
+   <li><b>play:</b> boolean, default true, specifying if the video should start
+   playing immediately after loading; if false, the video will be paused at its
+   first frame
+   <li><b>volume:</b> integer from 0 to 100, default 100, specifying the audio
+   volume (ignored if the video is muted)
+</ul>
+<p>
+   Animated GIF files are a special case for this method, because PinballY
+   technically treats them as images rather than videos (which it has to
+   do because libvlc, the codec layer that we use for other videos, doesn't
+   work properly with GIF animation).  Because PinballY treats all GIFs as images,
+   even animated ones, you can load an animated GIF through the <b>loadImage()</b>
+   method.  But you can also use this method, since it has special handling
+   to detect GIFs and load them as images.  So GIFs will load properly with
+   either method.  But there is one situation where you might want to use this
+   method explicitly:  if you want to specify the <b>play</b> or <b>loop</b>
+   options, you can do that with this method, but not with loadImage().
+   (The volume and mute options are ignored, though, since GIFs inherently
+   can't have audio tracks.)
+</p>
+
+<a name="mute"></a>
+<p>
+   <b>mute:</b>  This is a read/write boolean property that gets or sets the
+   current muting status for video playback in the layer.  True means that the
+   video's audio track is muted.  If no video is loaded, this always reads as
+   false, and setting it to a new value has no effect.  Animated GIFs don't
+   have audio tracks, so they have the same behavior as if no video is loaded.
+</p>
+
+<a name="pause"></a>
+<p>
+   <b><i>layer</i>.pause():</b>  If a video or animated GIF is playing, pauses
+   playback at the current frame.  This has no effect for a still image (including
+   custom-drawn graphics and background color fill).
+</p>
+
+<a name="play"></a>
+<p>
+   <b><i>layer</i>.play():</b>  If a video or animated GIF is loaded, and
+   playback is paused, this resumes playback.  This has no effect for a still image.
+</p>
+
+<a name="setPos"></a>
+<p>
+   <b><i>layer</i>.setPos(<i>x</i>, <i>y</i>, <i>align</i>):</b>  Sets the layer's position
+   in the window.  <i>align</i> determines the alignment reference point.  This
+   is a string containing a combination of "top", "middle", or "bottom" and
+   "left", "center", or "right".  For example, "top right" sets the alignment
+   point to the top right of the window.  If the whole string is omitted, or
+   either the top/middle/bottom or left/center/right parts are missing, center
+   alignment is the default.
+</p>
+<p>
+   In all cases, the alignment specifies the <i>starting point</i> for the
+   image.  Once the image has been set to that starting point, it's then
+   moved by the <i>x</i> and <i>y</i> distances from that point.
+<ul class="compact">
+   <li><b>top</b> aligns the top of the image with the top of the window
+   <li><b>middle</b> vertically centers the image
+   <li><b>bottom</b> aligns the bottom of the image with the bottom of the window
+   <li><b>left</b> aligns the left side of the image with the left edge of the window
+   <li><b>center</b> horizontally centers the image
+   <li><b>right</b> aligns the right side of the image with the right edge of the window
+</ul>
+<p>
+   Once the initial position is determined from the alignment, the image is
+   then moved from that point by the <i>x</i> and <i>y</i> values.  These
+   are both on scales from -0.5 to +0.5, representing the edges of the window
+   in that dimension, with 0.0 representing the center of the window.
+</p>
+<p>
+   This coordinate system is probably a bit different from what you're used
+   to if you've done any pixel-oriented programming.  One big difference
+   is that the "zero" point on both axes is the <i>center</i> of the window,
+   not the upper left corner.  Another is that the vertical axis is
+   positive in the <i>upwards</i> direction.  Most graphics programming
+   has the Y axis upside-down, so that row 0 is at the top and increasing
+   Y values represent positions further down on the screen.  The way to
+   keep this new coordinate system straight is to think about it like a
+   mathematical graph layout - picture doing a plot of a parabola in an
+   algebra class, say.
+</p>
+<p>
+   As with the sizing and scaling system, the coordinates for the position
+   system are relative to the window size.  This might seem confusing at
+   first, but like the scaling system, this makes the layout pretty much
+   automatic once you get the hang of it.  For example, X position 0.25
+   is always halfway between the center of the window and the right edge,
+   no matter what size the window is.  That makes it fairly easy to keep
+   an image aligned with a reference point, regardless of the current
+   window size.
+</p>
+
+<a name="setScale"></a>
+<p>
+   <b><i>layer</i>.setScale(<i>options</i>):</b>  Sets the scaling rules for
+   the layer, which determine how the layer's graphics are sized relative to
+   the window.  Whenever the window is resized, the layer is resized according
+   to the scale rules, so that the graphics are always sized proportionally to
+   the window.  <i>options</i> is an object with any combination of
+   the following properties:
+</p>
+<ul>
+   <li><b>span:</b>  Sets the combined width and height span for the layer.
+   This is only used if both xSpan and ySpan are omitted.  The system sizes
+   the layer so that it maintains the original aspect ratio of the loaded
+   image, video, or custom drawing, and so that it fills the specified
+   fraction in <i>either</i> the width or height, such that the other
+   dimension also fits within the window.  If <b>span</b> is 1.0, it
+   means that the layer will be sized to exactly fill the full width of
+   the window <i>or</i> the full height of the window, choosing the one
+   so that the other dimension also fits the window when the original
+   aspect ratio is maintained.  0.75 means that one of the dimensions
+   will fill 75% of the width or height.
+
+   <li><b>xSpan:</b>  Sets the width span, so that the layer's width
+   exactly fills the given fraction of the window's width.  1.0 means
+   that the layer will exactly fill the window width.
+
+   <li><b>ySpan:</b>  Sets the height span, so that the layer's height
+   exactly fills the given fraction of the window's height.  1.0 means
+   that the layer exactly fills the window height.
+</ul>
+<p>
+   There are several possibilities for how to combine these constraints,
+   described in "Sizing and scaling" above.
+</p>
+<p>
+   The scale can be set before or after loading media or drawing custom
+   graphics.  When loading media or drawing, the scale settings currently
+   in effect are applied, but you can change to different scaling rules later
+   while keeping the current contents.
+</p>
+
+<a name="volume"></a>
+<p>
+   <b>volume:</b>  This is a read/write integer property that gets or sets the
+   current volume level for video playback in the layer, from 0 (silent) to 100
+   (full volume).  If no video is loaded, this always reads as 100, and setting
+   it to a new value has no effect.  Animated GIFs don't have audio tracks,
+   so they have the same behavior as if no video is loaded.
+</p>
+
+</body>
+</html>

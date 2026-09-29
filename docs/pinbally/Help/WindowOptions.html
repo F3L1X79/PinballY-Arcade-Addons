@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Window Options</h1>
+
+<p>
+   <b>Keep the DMD window in front of the backglass window:</b>
+   If this box is checked, PinballY will make sure that its DMD window
+   is always displayed in front of the backglass window.  Even if
+   you click the mouse on the backglass window, the DMD window
+   will still stay in front of it.  By default (if the box isn't
+   checked), the DMD window follows the normal Windows UI rules
+   where you can bring other windows in front of it by clicking
+   on them, and you can bring the DMD window back in front by
+   clicking on it.
+</p>
+<p>
+   This option might be handy if you're using a single-monitor
+   or two-monitor setup and you're positioning both the backglass
+   and DMD on the same monitor.  (In the more typical pin cab setup,
+   where you have three separate monitors - playfield, backglass,
+   and DMD - the respective layering of these windows is kind of
+   irrelevant since the windows are all on separate monitors anyway.)
+</p>
+<p>
+   Note that this option only affects the <b>PinballY</b> DMD
+   window and backglass window.  It doesn't have any effect on
+   DMD windows displayed by other programs, such as the "virtual DMD"
+   window in Freezy's dmd-extensions system, or the VPinMAME DMD
+   window that appears while you're playing a Visual Pinball game,
+   or the B2S Backglass Server DMD window that might also appear
+   while a VP game is running.  It also doesn't affect the layering
+   of backglass windows from other programs, such as the B2S
+   Backglass Server window.
+</p>
+
+<p>
+   <b>Keep the playfield window in front of other applications during launch:</b>
+   If this box is checked, PinballY will make its windows "Topmost"
+   during the process of launching a game - that is, between the time
+   you select the "Play" command and the time the game displays its
+   main window.  "Topmost" is a special status in Windows that
+   keeps a window in front of other non-topmost windows - even in
+   front of an active window.  This more or less guarantees that
+   other windows won't be visible until the game has started.
+</p>
+<p>
+   This option is intended to make for smoother visual transitions
+   during game launch if you experience any problems
+   with windows belonging to other applications (besides PinballY
+   and the game itself) popping into the foreground during launch.
+   Ideally, we want the PinballY window to be the only thing visible
+   until the game is ready.  But other applications don't always
+   cooperate with this plan, thus this option.  I've seen
+   problems on Windows 7 in particular where random other
+   windows can come to the foreground during the launch process.
+</p>
+<p>
+   This option is a rather heavy-handed workaround, and
+   I'd only enable it if you actually experience problems
+   with other windows appearing in front of PinballY during launch.  The sort
+   of forced layering that this option uses can cause problems of
+   its own.  The PinballY windows
+   really should stay in front during launch naturally, without this
+   option enabled.  But if they don't, this might be worth a try.
+</p>
+
+</body>
+</html>

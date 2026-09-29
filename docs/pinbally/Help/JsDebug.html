@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Javascript Debugging</h1>
+
+<p>
+   The first and simplest step in debugging your Javascript
+   code is to check for error messages in the log file.  Make
+   sure that Javascript-related messages are enabled in the
+   <a href="LogFileOptions.html">Log File</a> page in the
+   settings dialog.  As long as that's enabled, basic problems
+   in your scripts, like syntax errors and run-time errors,
+   will be reported in the log file.  If your scripts don't
+   do what you expect during the session, quit out of
+   PinballY and check the log file for error messages.
+   Javascript-related errors will not, for the most part,
+   be reported interactively (they won't show up as pop-up
+   messages or dialogs), since they're of such a technical
+   nature and because there's not generally anything you
+   can do about them at the UI level anyway.  But they are
+   recorded in the log file.  Most logged Javascript errors
+   include details on the script file location where the
+   problem occurred, to help you pinpoint and fix the
+   underlying problem.
+</p>
+<p>
+   Error messages in a log file are helpful for fixing simple
+   problems like syntax errors, but if you've done any
+   programming before - even simple scripting work - you
+   know that a log file isn't enough for diagnosing more
+   complex problems with a program's logic.  For that,
+   you need an interactive debugger.  A
+   debugger is a tool that lets you get inside your program
+   and watch it as it runs, step by step, observing the
+   values of variables and which branches are taken.
+</p>
+<p>
+   PinballY doesn't have its own built-in debugger
+   window, but it has something better: it lets you connect an
+   external debugger.  That's better because it lets you use
+   a full-fledged Javascript debugger that a professional
+   team designed, not just some half-hearted afterthought
+   that I came up with and bolted onto PinballY.
+</p>
+<p>
+   PinballY currently works with the following third-party debuggers:
+</p>
+<ul>
+   <li>Visual Studio Code, Microsoft's free, open-source code
+   editor and Javascript IDE
+
+   <li>Chrome DevTools, the debugger console built in to the
+   Chrome browser
+</ul>
+
+<p>
+   Debugging is handled through the Chrome DevTools protocol.
+   This is a standard protocol that's implemented by most Windows
+   Javascript debuggers and IDEs, so in principle, you should
+   be able to use any debugger that implements the protocol.
+   However, be warned that the protocol implementation in ChakraCore
+   is extremely immature and incomplete.  Microsoft is building
+   the debugger interface as a separate project from the main
+   ChakraCore engine, and so far they're really only at the
+   prototype stage.  They're also only thinking in terms of
+   VS Code support, so support for other debuggers (like
+   Chrome) is an afterthought at best.  Fortunately,
+   they've made it open-source (like Chakra Core itself), so I've
+   been able to flesh it out enough to make it fairly usable
+   with VS Code and the Chrome debugger.  You <i>might</i> be
+   able to get it working with other Javascript debuggers, if
+   there's something else you prefer, but it might be a bit
+   shaky. 
+</p>
+<p>
+   If you run into any problems with debugging, feel free to
+   report them as issues, but be aware that it might not be
+   practical for me to add any substantial missing features
+   until Microsoft makes more progress on this.  Hopefully
+   they'll continue developing it and it'll become more
+   complete over time. 
+</p>
+
+<h2>Simple instrumentation</h2>
+<p>
+   For very simple debugging tasks, you can sometimes get enough
+   information by instrumenting your code with debugging messages.
+   One way to do that is to display messages through the user
+   interface, such as via the <a href="SystemFunctions.html#message">message()</a>
+   and <a href="SystemFunctions.html#alert">alert()</a>
+   functions.  Another way that's less intrusive in the UI is to
+   use <a href="LogfileObject.html#log">logfile.log()</a>, which
+   writes messages to the log file for review after the session
+   ends.
+</p>
+
+<h2>Pausing in the debugger</h2>
+
+<p>
+   One of the main functions of any debugger is the ability to
+   pause execution at any arbitrary point in the program, so that
+   you can inspect the current values of all variables and step
+   through sections of code one line at a time.  The exact command
+   to pause execution varies by debugger, but the VS Code and the
+   Chrome debugger have similar UI features, with buttons to pause
+   execution of the running program, step one line at a time, and
+   set breakpoints at source locations.
+</p>
+<p>
+   At program startup, the debugger will normally pause execution
+   at the first line of your main.js script.  You can override
+   the initial stop location using the <a href="#jsdebug">/jsdebug:break=<i>xxx</i></a>
+   command-line option when starting PinballY.
+</p>
+<p>
+   VS Code and Chrome both have "pause" buttons, which cause the
+   debugger to interrupt the Javascript program at the next opportunity
+   while it's running.
+   The debugger can only break into Javascript code, so
+   pressing the button won't have any effect until the next
+   Javascript script executes, which will happen the next time one
+   of your event handlers fires.  The pause button thus might not
+   do anything immediately, since it won't interrupt execution
+   until something is happening in Javascript.
+</p>
+<p>
+   Whenever execution is paused in the debugger, be aware that
+   PinballY's windows won't respond to mouse clicks or keyboard
+   input.  That's because your Javascript scripting code is effectively
+   part of the PinballY's user interface code.  Freezing Javascript
+   execution therefore also freezes the PinballY user interface.
+   When you resume execution from the debugger, the PinballY
+   windows will return to normal.
+</p>
+
+<h2>Visual Studio Code setup</h2>
+
+<p>
+   VS Code is Microsoft's free and open-source code editor,
+   which can also serve as a fairly full-featured IDE for
+   Javascript.  If you don't already have a good code
+   editor, you might try VS Code as a combined editor
+   and debugging environment.
+</p>
+<p>
+   Full documentation for VS Code is available on
+   the <a href="https://code.visualstudio.com/docs">VS Code docs site</a>.
+</p>
+<p>
+   Note that you <b>don't</b> have to install the traditional Visual
+   Studio (Microsoft's large-scale IDE for system programming languages
+   like C++ and C#) to use VS Code.  VS Code is a
+   completely independent, standalone program that doesn't depend upon
+   Visual Studio in any way, despite the similar name.
+</p>
+<p>
+  Here's the
+   full setup procedure, starting from scratch.  If you already have VS
+   Code installed, just skip the download-and-install step.
+</p>
+
+<ul>
+   <li><a href="https://code.visualstudio.com/">Download Visual Studio Code</a>
+      from Microsoft and run the installer
+
+      <ul>
+         <li><b>What if I already have Visual Studio installed?</b>  That
+         makes no difference.  It's a completely unrelated program.  You
+         still have to install VS Code separately.
+      </ul>
+
+   <li>Launch Visual Studio Code
+
+   <li>On the menu, select File &gt; Open Folder
+
+   <li>That'll bring up a folder selection dialog; navigate to your PinballY &gt; Scripts folder and click Select Folder
+
+   <li>On the main menu again, select Debug &gt; Add Configuration, then select Node.js from
+   the popup menu.  That should open a file called <b>launch.json</b> that looks
+   something like this:
+
+   <div class="code">
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            "program": "${file}"
+        }
+    ]
+}
+   </div>
+
+   <li>Replace all of that with the text below:
+
+   <div class="code">
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "PinballY",
+            "runtimeExecutable": "${workspaceFolder}/../PinballY.exe",
+            "runtimeArgs": ["/jsdebug:port=9228"],
+            "port": 9228,
+            "protocol": "inspector",
+            "stopOnEntry": true
+        }
+    ]
+}
+   </div>
+
+   <li>If you want to use a different TCP port number (see <a href="#portnum">Choosing a port number</a>),
+   substitute it for the default <b>9228</b> shown above (note that it appears <b>twice</b>,
+   once in the "runtimeArgs" line and once in the "port" line; both must always agree)
+
+   <li>Save changes
+
+</ul>
+
+<p>
+   VS Code will now be set up to connect to PinballY.  You can return to
+   this configuration in future sessions by using File &gt; Select Folder to
+   return to the same PinballY Scripts folder, since VS Code keeps its
+   configuration data with the folder.
+</p>
+<p>
+   You can go back and manually edit that launch.json file at any time,
+   or create it manually yourself.  You'll find it in the <b>.vscode</b>
+   folder within your PinballY Scripts folder (or whichever folder
+   you selected in the "navigate to your Scripts folder" step above).
+</p>
+
+<h3>Starting a debug session with VS Code</h3>
+
+<p>
+   This procedure launches PinballY as a child process of the VS Code
+   debugger, so you should close any running instance of PinballY first.
+</p>
+   
+<ul>
+   <li>Open VS Code
+
+   <li>If your PinballY project folder isn't already open, use File &gt; Open Folder
+   to navigate back to your PinballY Scripts folder
+   
+   <li>Select View &gt; Debug
+
+   <li>At the top of the left panel, make sure the Debug drop list is
+   set to <b>PinballY</b>.  If it's not, select that from the drop list.
+
+   <li>Click the big green arrow next to PinballY, or press F5 ("Go"), or
+   select Debug &gt; Start Debugging
+
+</ul>
+
+<p>
+   PinballY will now launch, and the debugger will take control as soon
+   as the first Javascript code starts running.  You can now set breakpoints
+   for any code you want to step through, or do any other initial setup for
+   the debugging session.  Press F5 to continue execution.
+</p>
+
+<h3>Launching PinballY and VS Code separately</h3>
+
+<p>
+   You'll probably find it most convenient to launch PinballY directly
+   from VS Code as described above, but there's another way to do it.
+   You can alternatively launch PinballY yourself, and then "attach"
+   VS Code later.
+</p>
+<ul>
+   <li>In your launch.json file, change the line that says
+   <b>"request":"launch"</b> to read <b>"request":"attach"</b>
+   instead.  That setting in VS Code makes the debugger connect to an
+   existing process rather than trying to launch a child process.
+
+   <li>Launch PinballY, manually entering the desired /jsdebug command line
+   options.  You can do that by creating a Windows desktop shortcut that
+   includes the options, or by typing the whole command line into the
+   Windows desktop "Run" box (press Windows+R).
+
+   <li>After PinballY has started, go back to VS Code, go to View &gt; Debug,
+   and select the modified "attach" configuration in the drop list at
+   the top of the debugger panel
+
+   <li>Click the big green arrow or press F5 to start debugging
+
+   <li>VS Code will attach to your already-running PinballY session,
+   so you can proceed with debugging activities as normal
+</ul>
+
+<h2>Chrome DevTools setup</h2>
+
+<p>
+   The Chrome DevTools are built in to the Google Chrome browser, so
+   if you have Chrome installed, you already have a nice Javascript
+   debugger installed.  The Chrome debugger is more
+   of a standalone debugger than a full IDE like VS Code, so you
+   might prefer VS Code if you want a more integrated user interface.
+   Also note that VS Code support is Microsoft's first
+   (and really only) priority, so Chrome support might lag in some ways.
+</p>
+<p>
+   The launching procedure with the Chrome debugger is a little
+   different from VS Code.  Chrome won't launch PinballY for you
+   the way that VS Code does.  Instead, you have to launch each
+   program (Chrome and PinballY) separately, and then tell Chrome
+   to connect to the running PinballY instance.  PinballY accommodates this by
+   pausing in a "Waiting for debugger" dialog until a debugger
+   connects, giving you a chance to intercept the startup scripts
+   without any super-human feats of timing.
+</p>
+<p>
+   Here's the setup procedure:
+</p>
+
+<ul>
+   <li>If you don't already have Google Chrome installed,
+      <a href="https://www.google.com/chrome/">download it</a> and install it.
+      You just need the ordinary Chrome browser - the debugger is 
+      built in to every copy of Chrome.
+
+   <li>Open the Chrome browser
+
+   <li>In the address bar, type <b>chrome://inspect</b> and press return
+
+   <li>Click the <b>Devices</b> tab in the list on the left (usually
+   unnecessary, as this tab should come up by default)
+
+   <li>Make sure the "Discover network targets" checkbox is ticked (it should
+   be by default)
+
+   <li>Click the "Configure..." button next to "Discover network targets"
+
+   <li>Add <b>localhost:9228</b> to the port list (or substitute the
+   port number of your choice: see <a href="#portnum">Choosing a port number</a>)
+
+   <li>Click Done
+
+   <li>Start PinballY, using the <b>/jsdebug</b> option as described
+   in <a href="#jsdebug">/jsdebug option</a>.
+
+   <li>Once PinballY starts up, the Chrome window will show
+   a new <b>PinballY</b> entry under the Remote Target list.
+   Click its <b>inspect</b> link.
+
+   <li>This will open a new window showing the DevTools debugger
+   interface.  You can now set breakpoints, step through code, and
+   perform other debugging tasks.
+</ul>
+
+
+<a name="generic"></a>
+<h2>Generic setup for other tools</h2>
+
+<p>
+   <b>Warning:</b>  As mentioned earlier, ChakraCore's debugger
+   interface is only designed to work with VS Code.  It might work in
+   a limited way with other debuggers that implement the Chrome
+   DevTools protocol, but many functions are likely to be broken.  Even
+   so, I'm documenting the basic setup procedure here for reference,
+   in the hope that support for other tools improves in the future.
+</p>
+<p>
+   If you want to try an alternative debugger, here's the generic setup
+   procedure.  You'll have to adapt the steps to your debugger's particular
+   settings dialogs or configuration file setup, of course.
+</p>
+<ul>
+   <li>Start PinballY with Javascript debugging enabled,
+   using the <a href="#jsdebug"><b>/jsdebug</b></a> command-line option
+
+   <li>Run the debugger or IDE as a separate process
+
+   <li>The debugger connects to PinballY via a numbered TCP port
+   (local network port)
+
+   <li>The port number is up to you (see <a href="#portnum">Choosing a port</a>)
+
+   <li>You have to configure <i>both</i> PinballY and your debugger/IDE
+   to use the port number you chose
+
+   <li>You initiate the debugging session by telling your debugger/IDE
+   to connect to the selected port, after PinballY has started
+</ul>
+
+<p>
+   <b>Startup procedure:</b>  By default, when you use <b>/jsdebug</b>
+   to start PinballY in Javascript debugging mode, PinballY waits for
+   a debugger to connect before doing anything else.  As soon as the
+   debugger connects, PinballY loads its own built-in Javascript code,
+   then stops in the debugger just before the first line of your
+   <b>main.js</b> script is executed.  This gives you a chance to
+   step through your script code from the beginning if you want to.
+   You can simply use your debugger's "Go" or "Continue" command if
+   you don't need to step through your startup code.
+</p>
+
+
+<a name="portnum"></a>
+<h3>Choosing a port number</h3>
+
+<p>
+   The "port number" we've referred to a number of times is a local TCP port
+   number.  This is a type of network port, but in this case it doesn't actually
+   access your LAN or Internet connection; it's just for local connections between
+   programs running on your computer.  The port number simply identifies the
+   port so that the applications can connect to each other.
+</p>
+<p>
+   Any port from 1024 to 49151 is
+   valid, as long as the port isn't already in use by some other program.
+   The default port is 9228, which isn't used by any common software
+   that I know of.  PinballY will show an error at startup if you choose
+   a port that's already in use; if you see such an error, simply choose
+   a different number in the valid range.
+</p>
+<p>
+   The range of valid ports is so large that it's usually easy to find
+   a free port by just choosing one randomly.  However, if you want to
+   see a list of exactly which ports are in use on your computer, type
+   <b>netstat /an</b> into a CMD prompt window.  Look for entries in the
+   "Local address" column with address 127.0.0.1: the number after the
+   ":" is the port number.
+</p>
+
+<p>
+   <b>How to tell PinballY which port to use:</b>  On the PinballY
+   command line, enter the port number like this (substituting the port
+   number of your choice for the default 9228):
+</p>
+<div class="indented">
+PinballY.exe /jsdebug:port=9228
+</div>
+
+<p>
+   <b>How to tell your debugger which port to use:</b>  That's different
+   for each debugger.  For VS Code, you enter it in the launch.json file
+   under the "port" setting.  For Chrome, you add it to the "network
+   targets" list as <b>localhost:<i>port</i></b>.
+</p>
+
+<a name="jsdebug"></a>
+<h2>/jsdebug option syntax</h2>
+
+<p>
+   The <b>/jsdebug</b> command-line option tells PinballY to enable
+   Javascript debugging.  Debugging is disabled by default, since it
+   adds a little bit of performance overhead.
+</p>
+
+<p>
+   /jsdebug by itself enables debugging and selects a number
+   of default settings.  You can change the defaults by adding some
+   extra sub-options to the /jsdebug parameter.  Append sub-options
+   to /jsdebug after a colon (":").  To use more than one sub-option,
+   separate them with commas:
+</p>
+<div class="indented">
+PinballY.exe  /jsdebug:port=9228,break=system
+</div>
+<p>
+   The sub-options are:
+</p>
+
+<ul>
+   <li><b>port=<i>portNumber</i>:</b> Sets the TCP port number for the
+   connection between the VS Code debugger and PinballY's Javascript
+   engine.  The default is port 9228, but any assignable TCP port
+   (1024 to 49151) can be used.  You can change  this to a different port if you have
+   some other software on your system that's already using this port.
+   This is a TCP port, so it's network-related, but it's not <i>really</i>
+   a network port; it's on "localhost", which means that it's only
+   for connections within the same machine, and doesn't connect to
+   anything outside via your LAN or Internet.
+   
+   <li><b>break=<i>where</i>:</b>  Sets the initial "break" position
+   where the debugger takes control and pauses the Javascript
+   program.  This can be one of the following:
+   <ul>
+      <li><b>break=user:</b> This is the default.  The debugger will
+      initially stop at the first line or your main.js script,
+      skipping the boilerplate system setup code that PinballY
+      executes before loading your script.
+      
+      <li><b>break=system:</b>  The debugger will pause initially at the
+      first line of the boilerplate system code that PinballY
+      executes on startup.  You can use this if you want to look at
+      what the system code is doing out of curiosity or because
+      you want to debug something going wrong there.
+      
+      <li><b>break=none:</b>  The debugger won't initially pause at all.
+      You can use this if you don't need to debug any of your
+      startup code and want to control things manually via
+      breakpoints or the "pause" button in the debugger UI.
+      <p>
+         Tip: Visual Studio Code might be confused by break=none,
+         because it normally expects the target engine to stop in the
+         debugger at startup.  After starting up with this option, VS
+         Code might <i>think</i> it's paused in the debugger,
+         even though the Javascript engine isn't actually paused.
+         You can usually get things back in sync by clicking the "Go"
+         button in VS Code.  The more reliable fix is to change the
+         "stopOnEntry:" setting in launch.json to <b>false</b>, to
+         tell Code not to expect the initial break in the first place.
+         If you do that, remember that you'll have to set it back to
+         <b>true</b> if you change the /jsdebug options back to
+         break=user or break=system.
+      </p>
+   </ul>
+
+   <li><b>wait=<i>yesOrNo</i></b>:  Tells PinballY whether or not it should
+   wait for the debugger to establish its connection before proceeding
+   to execute any Javascript code.  The default is <b>wait=yes</b>.
+   Waiting for the connection ensures that the debugger has a chance
+   to restore saved breakpoints, and lets you step through your startup
+   code if desired.  <b>wait=no</b> tells the program to set up the
+   debugger interface, but doesn't wait for a debugger to connect.
+   Startup Javascript code is executed without trying to pause in
+   the debugger.  This gives you the option to connect a debugger later,
+   but allows the program to run freely without a debugger until you
+   connect one.
+
+</ul>

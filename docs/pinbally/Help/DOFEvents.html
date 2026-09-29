@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>DOF Events</h1>
+
+<p>
+   If DOF is installed on your system, PinballY generates
+   DOF events to trigger effects from your feedback devices (such as
+   solenoids and flasher lights).  This will fire flashers and other
+   devices on certain events, such as when you switch between
+   tables in the table list.
+</p>
+<p>
+   DOF integration is automatic.
+   To take advantage of it, just make sure that DOF is installed
+   and that your .ini files from the
+   <a href="http://configtool.vpuniverse.com/" target="_blank">DOF Config Tool</a>
+   are up to date.  The PinballY definitions were added to the
+   Config Tool database in late July 2018, so you'll need to generate
+   and download fresh copies if your current .ini files are older
+   than that.
+</p>
+<p>
+   You can disable PinballY's DOF usage entirely via the
+   <a href="DOFOptions.html">DOF Options</a> page in the Settings
+   dialog.
+</p>
+
+<h2>DOF setup</h2>
+<p>
+   If you use a "cabinet config" file with DOF, it's important to create
+   a DOF global config file for PinballY.  DOF requires a separate global
+   config file for each program.  The DOF global config file for PinballY
+   is called <b>GlobalConfig_PinballY.xml</b>.
+</p>
+<p>
+   <b>This is only needed if you're <i>already</i> using a global config
+   file for other programs.</b>  That file must be set up manually, so if
+   you never went through that manual process for other programs, you don't
+   have to do it now.  The global config is generally only required if you
+   have certain hardware devices that DOF can't detect automatically, such
+   as addressable LED light strips.
+</p>
+<p>
+   The easiest way to create the PinballY global config file is to copy your
+   existing global config for B2SServer (that's the one that Visual Pinball
+   uses, so most people who need the file at all have the B2SServer file):
+</p>
+<ul>
+   <li>Open your main DOF install folder
+   <li>Open the <b>Config</b> subfolder
+   <li>Make a copy of <b>GlobalConfig_B2SServer.xml</b>
+   <li>Rename the copy <b>GlobalConfig_PinballY.xml</b>
+</ul>
+<p>
+   In the future, if you make any changes to any of your global config files,
+   remember to make the same changes to your GlobalConfig_PinballY.xml file while
+   you're at it.  (It's not ideal that we have to make duplicate changes like
+   that, but unfortunately that's just the way DOF is designed.)
+</p>
+<p>
+   If you don't create a GlobalConfig_PinballY.xml file, DOF uses its
+   default option settings for PinballY.  That's fine in most cases; the
+   main exception is when you have certain types of hardware devices in
+   your DOF setup that DOF can't discover on its own, particularly
+   "smart" LED strips (the "addressable" kind, where each LED can be set
+   to a separate color).  In those cases, DOF needs a <b>cabinet config</b>
+   file to find the special devices, and the way it finds the cabinet
+   config file is through the global config file.  So, if DOF is partially
+   working on your system, but isn't using your smart LED strips (or
+   other individual devices), you probably just need to create the PinballY
+   copy of the global config file, as described above.
+</p>
+   
+
+<h2>Where to find DOF documentation</h2>
+
+<ul>
+   <li>A full reference to the DOF Config Tool syntax:
+   <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/">Pinscape Build Guide</a> &gt;
+   <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/BuildGuide.php?sid=dofEventCodes">DOF Event Codes</a>
+
+   <li>General DOF background and setup:
+   <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/">Pinscape Build Guide</a> &gt;
+   <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/BuildGuide.php?sid=DOF">DOF</a>
+
+   <li>DOF's own documentation, newest version, but abandoned before officially finished:
+   <a target="_blank" href="http://pinball.weilenmann.net/docu/DirectOutputWIP/index.html">pinball.weilenmann.net/docu/DirectOutputWIP/index.html</a>
+
+   <li>DOF's own documentation, older version, somewhat out of date, but the last one officially "finished":
+   <a target="_blank" href="http://directoutput.github.io/DirectOutput/">directoutput.github.io/DirectOutput/</a>
+</ul>
+
+<h2>How PinballY communicates with DOF</h2>
+<p>
+   PinballY and DOF communicate using "named events".  A named
+   event is an abstract label that PinballY defines to represent
+   some particular action in the program.  All of PinballY's
+   named events are listed in the sections below.  They all
+   start with the prefix <b>PBY</b> to help clarify that they're
+   PinballY custom events.
+</p>
+<p>
+   PinballY's custom events represent abstract program actions,
+   <i>not</i> particular physical effects in DOF.  So, for
+   example, you won't find a PBY event for "turn on the shaker motor".
+   The PinballY events all relate to things that happen in the
+   PinballY UI, such as "user pressed the left flipper button"
+   (PBYFlipperLeft) or "a new game was selected" (PBYGameSelect).
+</p>
+<p>
+   So how does DOF turn these abstract PinballY UI events into physical
+   device effects?  How does DOF
+   know that we want to fire the left flipper solenoid when you
+   press the left flipper button, for example, or flash a pattern
+   of lights when you navigate to a new game?   Those associations
+   come from the DOF Config Tool.  In fact, this is really the whole
+   point of the DOF Config Tool: it lets you specify the associations
+   between abstract program events and physical device effects.
+</p>
+<p>
+   The full details of setting up these associations in the Config Tool are beyond
+   the scope of what we can cover here, so you should follow the
+   DOF documentation links above if you want to learn more.  The link you'll
+   probably want to look at first is the Pinscape Build Guide's 
+   <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/BuildGuide.php?sid=dofEventCodes">DOF Event Codes</a>
+   chapter, since that's all about exactly this subject.  (It's
+   also the only comprehensive reference to the Config Tool syntax
+   that I'm aware of.)
+</p>
+<p>
+   The DOF Config Tool's database already includes a set of pre-defined
+   rules for the PinballY custom events, so you should see DOF effects
+   fire automatically when you use PinballY, as long as your config
+   files are all up-to-date.  You can also fully customize the DOF
+   effects by editing the rules defined for the pseudo-table called
+   <b>PinballY</b> in the Config Tool.  (The DOF rules are defined on a
+   game-by-game basis, since DOF thinks in terms of pinball simulation.
+   So programs like PinballY that aren't really pinball simulators
+   at all, but which still want to use DOF effects, have to pretend
+   to be pinball games.)
+</p>
+   
+
+<h2>Customizing DOF effects</h2>
+<p>
+   You can customize all of PinballY's DOF effects via the
+   <a href="http://configtool.vpuniverse.com/" target="_blank">DOF Config Tool</a>.
+</p>
+<p>
+   The Config Tool's database  includes a predefined set of
+   effects for PinballY, so you don't have to do anything to use
+   the standard effects other than making sure your .ini files are
+   up-to-date.  If you want to customize anything, though, the
+   Config Tool lets you override any of the default effects with
+   your own custom settings.
+</p>
+
+<p>
+   Here's how you can access the PinballY settings in the DOF Config Tool:
+</p>
+<ul>
+   <li>In your Web browser, open the <a href="http://configtool.vpuniverse.com/" target="_blank">DOF Config Tool</a>
+   <li>Log in
+   <li>Click <b>Table Configs</b> in the top navigation bar
+   <li>Select <b>PinballY</b> from the Table Names drop list
+</ul>
+
+<p>
+   All of the PinballY DOF effects are defined under this
+   "PinballY" pseudo-table.  As far as DOF is concerned, PinballY is
+   just another pinball table.  The lists below show all of
+   PinballY's custom named events - they all start with <b>PBY</b>
+   as short-hand to clarify that they're PinballY-specific.
+</p>
+<p>
+   When looking at the DOF Config Tool rules for the PinballY
+   pseudo-table, there are a couple of special syntax elements
+   you should be aware of:
+</p>
+<ul>
+   <li>First, the Config Tool uses a <b>$</b> prefix to signify named effects,
+   so you have to add the <b>$</b> prefix to the names in the lists below.
+   For example, you'd write <b>$PBYWheelNext</b> in the Config Tool
+   field if you want something to trigger on a "wheel next" event.
+
+   <li>Second, the special syntax <b>@allrgb@</b> in a rule lets you
+   use the RGB coloring for the device where the rule appears that's
+   associated with the game currently selected in the PinballY wheel.
+   For example, putting <b>@allrgb@</b> in the "RGB Flippers" field
+   makes the flipper buttons light up in the colors for whichever
+   table is currently selected in the PinballY wheel display.  This
+   special syntax can only be used in RGB device rules.
+</ul>
+<p>
+   For more information on the Config Tool rule syntax, refer to the DOF documentation links above, particularly
+   <a target="_blank" href="http://mjrnet.org/pinscape/BuildGuideV2/BuildGuide.php?sid=dofEventCodes">DOF Event Codes</a>
+   in the Pinscape Build Guide.
+</p>
+
+
+<h3>Events</h3>
+<p>
+   Each time something DOF-worthy happens in the PinballY user
+   interface, PinballY fires a named DOF event.  For example, when
+   you press the Next button (usually the right flipper button) to
+   switch to the next game, PinballY fires a <b>PBYWheelNext</b> event.
+</p>
+<p>
+   "Fires an event" means that PinballY briefly pulses the event ON
+   and then OFF.  More technically, ON means that the event's
+   "brightness" value is set to 255, and OFF means that it's set to 0.
+   We put "brightness" in quotes because these events don't truly
+   represent anything with a brightness or intensity; they're just
+   arbitrary labels for discrete UI actions.  In any case, you
+   don't normally have to worry about the numeric brightness in
+   the Config Tool syntax anyway, since what usually matters when
+   you're writing the rules is just that
+   an event was switched between OFF (0) and ON (any non-zero value).
+<p>
+   Here's a list of the events that PinballY fires:
+</p>
+<ul>
+   <li><b>PBYAttractA1</b> through <b>PBYAttractA5:</b> When attract mode is
+      running, these events are fired in order (1 through 5) at 1-second
+      intervals.  After reaching 5, the counter loops back to 1.  This can
+      be used to create a series of events that runs on a 5-second loop.
+
+   <li><b>PBYAttractB1</b> through <b>PBYAttractB60:</b> When attract
+      mode is running, these events fire in order (1 through 60) at 1-second
+      intervals, looping back to 1 after reaching the last event.  This can
+      be used to create a series of events that runs on a 60-second loop.
+
+   <li><b>PBYAttractR1</b> through <b>PBYAttractR5:</b> When attract mode
+      is running, these events fire in random sequence and at random intervals.
+      These can be used for effects that you want to fire randomly when
+      attract mode is active.
+
+   <li><b>PBYAttractWheelNext:</b> Attract mode is running and automatically
+      switched to a new game
+
+   <li><b>PBYEndGame:</b> The current running game has ended
+
+   <li><b>PBYFlipperLeft:</b> The left flipper button (or whichever key
+      is assigned as the Previous button) was pressed
+
+   <li><b>PBYFlipperRight:</b> The right flipper button (or whichever
+      key is assigned as the Next button) was pressed
+
+   <li><b>PBYFlyer:</b> The Flyer command was selected, to display the
+      current game's flyer as a popup window
+
+   <li><b>PBYGameInfo:</b> The Information command was selected, to display
+      the pop-up information box for the current game
+
+   <li><b>PBYGameSelect:</b> A new game was selected
+
+   <li><b>PBYHighScores:</b> The High Scores command was selected, to display
+      the pop-up high score box for the current game
+
+   <li><b>PBYInstructions:</b> The Instructions command was selected, to
+       display the current game's instruction card as a popup window
+
+   <li><b>PBYLaunchGame:</b> A game is being launched.  This fires at the
+   start of the launch process, just after the user selects the launch
+   command, before the new game program has been loaded.  Note that any
+   device effects associated with this event might be cut off after a
+   short time, because PinballY has to disconnect from DOF before the
+   new game starts, to allow the game to take over the feedback devices.
+   DOF turns off all devices when the program disconnects.
+
+   <li><b>PBYMagnaRight:</b> The right MagnaSave button (or whichever key
+       is assigned as the Next Page button) was pressed
+
+   <li><b>PBYMagnaLeft:</b> The left MagnaSave button (or whichever key
+       is assigned as the Previous Page button) was pressed
+
+   <li><b>PBYMenuDown:</b> The user navigated to the next item in a menu
+
+   <li><b>PBYMenuOpen:</b> A new menu was opened
+
+   <li><b>PBYMenuSelect:</b> A command was selected in a menu (this usually
+      means that the "Start" button, or whichever key is assigned as the
+      Enter/Select command key, was pressed)
+
+   <li><b>PBYMenuUp:</b> The user navigated to the previous item in a menu
+
+   <li><b>PBYMenuQuit:</b> A menu was closed
+
+   <li><b>PBYProgramStartup:</b> The program just started up
+
+   <li><b>PBYScreenSaverStart:</b> Attract mode (the "screen saver" mode)
+      is starting
+
+   <li><b>PBYScreenSaverQuit:</b> Attract mode is exiting
+
+   <li><b>PBYWheelNext:</b> The user navigated to the next game in the wheel
+
+   <li><b>PBYWheelNextPage:</b> The user navigated to the next "page" (the next
+      alphabetical letter group) in the wheel
+
+   <li><b>PBYWheelPrev:</b> The user navigated to the previous game in the wheel
+
+   <li><b>PBYWheelPrevPage:</b> The user navigated to the previous "page" (the
+      previous alphabetical letter group) in the wheel
+
+</ul>
+
+<h3>States</h3>
+<p>
+   In addition to events, PinballY has "states".  These differ from
+   events only in that states are long-lasting.  An event fires
+   briefly, usually triggering a quick event in DOF, such as flashing
+   the flashers or firing a flipper solenoid.  A state turns on and
+   stays on for an extended period.  States tell DOF the current
+   context in the UI:  showing a game in the wheel interface, showing
+   a menu, running the "attract mode" screen saver, and so on.
+</p>
+<ul>
+   <li><b>PBYMenu:</b> A menu is being displayed
+
+   <li><b>PBYScreenSaver:</b> Attract mode is active
+
+   <li><b>PBYStartupVideo:</b> The startup video is playing
+
+   <li><b>PBYWheel:</b> This is the default state, where the "wheel"
+   interface is displayed with no menus or popups active
+
+</ul>
+
+<h3>Current ROM name</h3>
+<p>
+   In addition to the PBYxxx states, PinballY also
+   turns on a named event with the same name as the ROM for the table
+   currently selected in the wheel display.  For example,
+   PinballY turns on the named effect <b>MM</b> when Medieval
+   Madness is currently selected in the wheel.  This lets you trigger
+   effects that depend on which table is selected.  The <b>@allrgb@</b>
+   syntax described above uses this to select device colors according
+   to the selected table, but you can also use it explicitly
+   for individual effects.  The ROM names match the names in the
+   Config Tool, which you can see listed on the Table Config page 
+   (look for "Rom: XXX" near the top of the page).
+</p>
+
+
+<h3>Triggering DOF effects from Javascript</h3>
+<p>
+   PinballY lets you trigger DOF effects from Javascript using the
+   <a href="MainWindowObject.html">mainWindow</a> methods
+   <a href="MainWindowObject.html#DOFPulse">DOFPulse()</a> and
+   <a href="MainWindowObject.html#DOFSet">DOFSet()</a>.
+</p>
+<p>
+   Those methods work in terms of DOF "named events", just like
+   PinballY's own built-in DOF events.  With these methods, you
+   can use any of the PinballY events listed above, but you can
+   also define your own custom events using whatever names you
+   choose.  DOF doesn't attach any significance of its own to
+   event names; they're just arbitrary, user-defined labels that
+   DOF uses to connect events fired by a program to rules defined
+   in the DOF Config Tool.  So you're free to add your own new
+   names alongside PinballY's custom events listed above.
+</p>
+<p>
+   I'd recommend primarily using your own custom events with these
+   methods.  You <i>can</i> use any of the pre-defined PinballY
+   events, but remember that PinballY itself also fires those events
+   when the associated UI actions occur, so there could be cases
+   where you're working at cross purposes with the PinballY events.
+   That won't make anything terrible happen, but it could make the
+   final visible effects somewhat unpredictable.  For example, 
+   PinballY might just happen to deactivate an event at the same
+   moment that you activate it, preventing the effect you expected
+   from appearing.
+</p>
+<p>
+   Remember that the DOF Config Tool syntax for referring to a named
+   event uses the <b>$</b> prefix.  So if you write something like
+   <tt>mainWindow.DOFPulse("MyEvent")</tt> in Javascript, you'd
+   refer to the event as <tt>$MyEvent</tt> in the Config Tool rules.
+</p>
+
+
+<h3>Why isn't there a "program exit" event?</h3>
+<p>
+   You might wonder why there's no event that fires when PinballY
+   terminates, to match the <b>PBYProgramStartup</b> event that
+   fires when the program first starts running.    The reason is
+   that such an event would be useless, because DOF always resets
+   everything when the host program exits.  Any effects that a
+   "program exit" event triggered would be halted as soon as the
+   DOF reset occurs, so there's no reason to bother programming
+   such events - they'd just be lost anyway. 
+</p>
+<p>
+   If you want to create program exit effects, a little Javascript
+   scripting would be needed.  The key would be to intercept the
+   "Quit" command, via an event handler like this, and then carry
+   out some special handling to show the desired DOF light show.
+</p>
+<div class="code">
+mainWindow.on("command", ev => {
+    if (ev.id == command.Quit) {
+        // place your special handling here
+    }
+});
+</div>
+<p>
+   I can think of two approaches that would work, depending on the
+   type of effect you wanted to create.  There are undoubtedly
+   other approaches, too, but here are my ideas:
+</p>
+<ul>
+   <li>Keep PinballY running while the DOF effect plays out, perhaps
+   showing a custom "exiting" video in the main window while it's
+   going on.  See <a href="ExitVideoExample.html">Play an exit video</a>
+   for a full example of how to do this.
+
+   <li>Let PinballY exit as normal, but before it does, fire up
+   a separate program that plays back your custom DOF effect.  For example, you
+   could use LEDBlinky (a third-party program, available separately,
+   that plays back LedWiz effects scripts).  The command.Quit handler
+   wouldn't have to block the normal program exit; it would only
+   have to launch the desired separate program.  See
+   <a href="RunProgramExample.html">Running an External Program</a> for
+   an example of how to launch a program from Javascript.
+</ul>
+
+</body>
+</html>
+

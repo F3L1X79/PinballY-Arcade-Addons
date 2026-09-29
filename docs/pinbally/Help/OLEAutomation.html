@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>OLE Automation Objects</h1>
+
+<p>
+   OLE Automation is a Windows feature that lets scripting languages
+   access system functions and features in other applications.  This is also known
+   as "Scripting Objects", but that's a vague term that can mean other
+   things as well.  Automation was created originally for the Visual Basic
+   language, and is most often used in VB.   Windows Power Users will be
+   familiar with this from working with Visual Basic scripts in programs
+   like Excel, Word, or WScript.  If you've done any work creating Visual
+   Pinball tables, you might have used automation objects in VP's Visual Basic
+   scripts.
+</p>
+<p>
+   In Javascript, you create an OLE scripting object like this:
+</p>
+<div class="code">
+let fs = createAutomationObject("Scripting.FileSystemObject");
+</div>
+<p>
+   If you're a Visual Basic user, it might be helpful if we mention
+   that this is the equivalent of VB's CreateObject() function.
+</p>
+
+<p>
+   The object name in quotes is the "class name" of the object you wish
+   to create.  This isn't defined by Javascript; it's defined by whatever
+   application or system facility provides the automation object.  Windows
+   provides a set of pre-installed "Scripting" objects, including
+   "Scripting.FileSystemObject", which provides functions to access files
+   and folders on the local hard disks.  Many other objects come from
+   separate applications, such as Excel or Word. 
+</p>
+<p>
+   If the named class is installed on your system, createAutomationObject()
+   returns a Javascript object that provides the set of methods and properties
+   defined by the system object.  You can now simply call methods on the
+   returned object to access the system features provided by the object.
+</p>
+<div class="code">
+// list the files in the Windows folder
+for (let file of fs.GetSpecialFolder(0).Files)
+    console.log(file.Name);
+</div>
+
+<p>
+   One common Windows OLE object that you <i>shouldn't</i> use is
+   MSXML.XMLHTTP (or any of its several versions).  You should use PinballY's
+   <a href="HttpRequest.html">HttpRequest</a> instead, as it has provisions
+   for asynchronous event handling that can't be easily reproduced with
+   the generic Automation facility.
+</p>
+
+<h2>"Variant" arguments</h2>
+
+<p>
+   Many Automation objects work in terms of "Variant" variables, which
+   is a special object formatted the same way that Visual Basic represents
+   its variable values.  (Microsoft originally designed Automation around
+   Visual Basic's needs, so the whole system is very VB-centric.)  When
+   you call a method on an automation object, any Javascript arguments
+   you pass to slots expecting Variant values have to be converted to
+   Variant before being passed to the external object.
+</p>
+<p>
+   Javascript will perform the conversion to Variant automatically if you
+   use regular Javascript values as arguments, so in most cases you can just
+   call methods on these objects without worrying about special data types.
+</p>
+<p>
+   There's a snag, though.  The automatic conversion can't always figure out
+   which type the callee expects, so it always uses a standard conversion
+   from each Javascript type to a suitable corresponding Variant type.  For
+   example, if you  pass a Javascript number value as an argument, it will
+   always be converted to a Variant "double", which is the VB equivalent of
+   a Javascript number.  The snag is that some automation methods are picky
+   about the exact types they receive as arguments, and will return an
+   error if you pass the "default" type used in the standard conversion
+   from Javascript.
+</p>
+<p>
+   In such cases, you can solve the mismatch by explicitly creating your
+   own Variant variable, and setting it to the expected type.  You can do
+   this as follows:
+</p>
+<div class="code">
+// create a Variant variable and set its "short int" value
+let v = new Variant();
+v.iVal = 7;
+
+// now pass "short int" 7 to an automation method
+let x = createAutomationObject("Example.Object");
+x.RequiresShortInt(v);
+</div>
+
+
+<p>
+   See <a href="Variant.html">Variants</a> for details on the special
+   Variant type.
+</p>
+
+<h2>Properties</h2>
+
+<p>
+   Some OLE Automation objects have "properties".  These work a lot
+   like Javascript properties: they're named slots in the object where
+   you can read and/or write values.  The syntax in Javascript for
+   operating on Automation object properties <i>usually</i> looks exactly
+   like the normal syntax for accessing properties of Javascript objects.
+   For example, the standard Windows scripting object <tt>Scripting.Dictionary</tt>
+   has a property called <tt>CompareMode</tt> that lets you specify
+   how values are compared:
+</p>
+<div class="code">
+let dict = createAutomationObject("Scripting.Dictionary");
+dict.CompareMode = 1;
+</div>
+<p>
+   Okay, that's straightforward enough, but why did we say you "usually"
+   use the normal Javascript syntax?  That's because there are cases
+   where you can't use the normal syntax.  Specifically, you can't use
+   the normal assignment syntax for <i>properties with arguments</i>.
+</p>
+<p>
+   What's a "property with arguments"?  It's a property that doesn't
+   represent just a single value, but represents multiple values, indexed
+   by one or more additional arguments.  Conceptually, it's like an array
+   variable.  For example, the <tt>Scripting.Dictionary</tt> object has a property
+   called <tt>Item</tt> that acts like an array of values that can be
+   indexed by numbers, strings, dates, or anything else.  In keeping
+   with the conceptual similarity to arrays, Visual Basic lets you
+   access these properties with syntax exactly like array variables:
+</p>
+<div class="code">
+' NOTE!  This is a VISUAL BASIC example, NOT Javascript!
+' "Item" is a property of the Scripting.Dictionary object
+' that can take arguments, so we access it like an array.
+dict.Item("red") = 72
+MsgBox "The 'red' value is " + dict.Item("red")
+</div>
+<p>
+   Now, given that these sorts of properties are meant to resemble arrays
+   conceptually, and given that you access them in Visual Basic exactly
+   as though they were arrays, it might seem like the logical translation
+   to Javascript would be treat them as arrays there as well, by changing
+   the Visual Basic parentheses to Javascript square brackets.  Unfortunately,
+   that won't work:
+</p>
+<div class="code">
+// Javascript equivalent of the above?  NO!  This won't work!!!
+dict.Item["red"] = 72;   // WRONG!!!
+alert("The 'red' value is " + dict.Item["red"]);  // WRONG!!!
+</div>
+<p>
+   The problem is that these properties aren't actually arrays.  What's
+   <i>really</i> going on under the covers is that the language engine
+   (Visual Basic or Javascript) has to make method calls to the OLE
+   Automation object to read or write the properties.  Visual Basic
+   hides that, by making it <i>look</i> like ordinary
+   array access, but it isn't really; it's really a method call to the
+   object.
+</p>
+<p>
+   So how do we translate this to Javascript?  The <i>reading</i> part
+   is easy: you just write it exactly like in Visual Basic:
+</p>
+<div class="code">
+alert("The 'red' value is " + dict.Item("red"));
+</div>
+<p>
+   The <i>writing</i> part is a little trickier.  Javascript doesn't
+   let us use anything resembling the Visual Basic assignment syntax.
+   Instead, we look to the C++ world, where Microsoft developed a
+   naming convention to deal with the same mismatch.  Microsoft's
+   convention for C++ is to create a method with the prefix <tt>put_</tt>
+   followed by the property name.  This means "put a value in this
+   property".  We do the same thing in Javascript.  Here's how you call it:
+</p>
+<div class="code">
+dict.put_Item("red", 72);  // equivalent to VB's dict.Item("red") = 72
+</div>
+<p>
+   The Javascript engine <i>automatically</i> creates a <tt>put_</tt> method
+   for each Automation object property that requires parameters, so there's
+   nothing extra you have to do to create these.  They're automatically present
+   when necessary.  All you have to do is remember to call the method with the
+   <tt>put_</tt> prefix when you want to assign to a property that takes
+   arguments.
+</p>
+<p>
+   To keep the syntax simple for the more common case of ordinary properties,
+   a <tt>put_</tt> method is only created when a property takes extra arguments.
+   Ordinary properties with no parameters can be both read and written using
+   the original property name, as in the <tt>CompareMode</tt> property example
+   at the start of this section.
+</p>
+
+
+<h2>OUT parameters</h2>
+
+<p>
+   Some automation object methods take "Out" parameters, which are
+   arguments that the callee uses to return data to the caller.
+</p>
+<p>
+   Javascript has no direct equivalent of "Out" parameters.
+   The data transfer in Javascript is always one-way, from caller to callee.
+   When calling an automation method that returns information through an "Out"
+   parameter, therefore, we have to do something a little unusual.
+</p>
+<p>
+   Specifically, we use <a href="Variant.html">Variant</a> objects.  If
+   an automation method passes information back through an Out parameter,
+   simply pass a Variant to the method for that parameter.  On return, the
+   Variant will be modified to contain the returned information.
+</p>
+<div class="code">
+let v = new Variant();
+autoObj.FuncThatChangesArgument(v);
+
+// v now contains the updated value
+</div>
+
+<p>
+   The Javascript engine doesn't require Variants for OUT arguments; you
+   can use any other value type instead.  But passing a Variant is the only
+   way to retrieve the updated value if the callee changes the OUT
+   parameter.  If you don't use a Variant, any update to the value will simply
+   be discarded.
+</p>
+   
+   
+
+<h2>Limitations</h2>
+
+<p>
+   <b>Unsupported types:</b>
+   The Automation system doesn't currently support calling methods taking
+   the parameter types listed below.  The parameter types are
+   specified in the IDispatch COM interface provided by the automation
+   object's native code, so this isn't a question of the argument values
+   you pass from Javascript code; it's a fixed feature of each automation
+   object's method interfaces.  Functions that require unsupported argument
+   types will throw a Javascript error to that effect if you attempt to
+   call them.
+</p>
+<ul>
+   <li>Arrays
+</ul>
+
+<p>
+   <b>Event handling:</b>
+   There's no built-in provision for the COM "event sink" system, which
+   is used in some of the more complex automation objects to send asynchronous
+   events back to the host program.  Objects with event callbacks
+   therefore can't easily be used, or at least can't easily be used with
+   their full event systems.
+</p>
+
+</body>
+</html>

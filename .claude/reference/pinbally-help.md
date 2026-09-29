@@ -1,6 +1,6 @@
 # PinballY scripting reference (from the local Help)
 
-Source: `C:\vPinball\PinballY\Help\*.html` (PinballY 1.1.0 Beta 10, build 10086). Every section cites the help page. Where the help is wrong or silent, the note says so and names what was checked instead: `Scripts/System/SystemClasses.js` (shipped with PinballY, read-only) or `PinballY.exe`.
+Source: `docs/pinbally/Help/*.html` (copy of `C:\vPinball\PinballY\Help\`) (PinballY 1.1.0 Beta 10, build 10086). Every section cites the help page. Where the help is wrong or silent, the note says so and names what was checked instead: `Scripts/System/SystemClasses.js` (shipped with PinballY, read-only) or `PinballY.exe`.
 
 ---
 

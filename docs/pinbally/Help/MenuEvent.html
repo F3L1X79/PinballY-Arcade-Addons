@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>MenuEvent</h1>
+
+<p>
+   This event class is fired when a system menu is displayed or any
+   menu is closed.  There are two subtypes:
+</p>
+<ul>
+   <li><b>menuopen:</b> Fires when a system menu is about to be displayed.
+   No event is fired when a user menu is opened via
+   <a href="MainWindowObject.html#showMenu">mainWindow.showMenu()</a>.
+   <p>
+      The menu display can be stopped entirely by calling
+      <a href="Event.html#preventDefault">preventDefault()</a> on the
+      event object (passed as a parameter to your event handler).
+   </p>
+   <p>
+      Alternatively, you can modify the menu that's about to be displayed
+      by event object's property <b>menuUpdated</b> to <b>true</b>,
+      and changing the <b>id</b>, <b>items</b>, and <b>options</b> properties
+      to reflect the menu you want to display instead of the standard system
+      menu.  See <a href="#overrideSysMenu">Overriding a system menu</a> below
+      for more details.
+   </p>
+
+   <li><b>menuclose:</b>  Fires when any menu (including both system menus
+   and user menus) has just been closed.  This event is fired after the
+   fact, so it's not possible to prevent the menu from being closed.
+</ul>
+
+<p>
+   The <a href="EventTarget.html">event target</a> for this event type is the
+   <a href="MainWindowObject.html">mainWindow</a> object.
+</p>
+
+
+<a name="overrideSysMenu"></a>
+<h2>Overriding a system menu</h2>
+
+<p>
+   You can use the <b>menuopen</b> event to prevent any system menu from
+   displaying, to add or remove items from the default system menu, or to
+   display your own entirely custom menu in place of a system menu.  In
+   all cases, you do this by canceling the default system handling of the
+   <b>menuopen</b> event, which would otherwise proceed by showing the
+   standard system menu, and then optionally displaying your own menu
+   via <a href="MainWindowObject.html#showMenu">mainWindow.showMenu()</a>.
+</p>
+<p>
+   <b>To suppress a system menu:</b>  simply cancel the <b>menuopen</b> event
+   when that menu is about to be opened.  For example, this will
+   prevent the Exit menu from ever showing:
+</p>
+<div class="code">
+mainWindow.on("menuopen", ev => {
+    if (ev.id == "exit")
+        ev.preventDefault();
+});
+</div>
+
+<p>
+   <b>To add new items to a system menu:</b>  The most common sort of change
+   that you'll probably want to make to a system menu is to add a
+   new custom item or items.  You can do this by directly manipulating
+   the array in the <b>items</b> property of the event object, but the
+   MenuEvent object provides a convenience method that makes this
+   a little bit easier: <a href="#addMenuItem"><i>event</i>.addMenuItem()</a>.
+   You can read the full details on that below.  Here's how you could
+   add a "Quit PinballY" command to the main menu, just before the
+   Cancel item at the bottom of the normal menu.
+</p>
+<div class="code">
+mainWindow.on("menuopen", ev => {
+    if (ev.id == "main")
+        ev.addMenuItem(command.MenuReturn, { title: "Quit", cmd: command.Quit });
+});
+</div>
+
+<p>
+   <b>To delete an item in a system menu:</b> There's also a convenience
+   method to delete items from a menu, <a href="#deleteMenuItem"><i>event</i>.deleteMenuItem()</a>.
+   For example, here's how you could delete the Play command from the main
+   menu (not that you'd ever really want to do that!):
+</p>
+<div class="code">
+mainWindow.on("menuopen", ev => {
+    if (ev.id == "main") {
+        ev.deleteMenuItem(command.PlayGame);
+        ev.tidyMenu();
+    }
+});
+</div>
+<p>
+   Note that it's a good idea to call  <a href="#tidyMenu"><i>event</i>.tidyMenu()</a>
+   after deleting items, since a deletion could potentially leave an empty "group"
+   in the menu, where two separator bars are shown with no commands in between.
+   There's no real harm in that, but it looks awkward, so it's nice to clean
+   those up, which is what tidyMenu() does.
+</p>
+
+<p>
+   <b>To modify items in a system menu:</b>  You can modify any system menu,
+   by taking advantage of the <b>items</b> property of the <b>menuopen</b>
+   event object, which gives you the complete contents of the menu
+   that the system is about to display.  The <b>items</b> array uses
+   exactly the same format that
+   <a href="MainWindowObject.html#showMenu">mainWindow.showMenu()</a>
+   uses to describe a custom menu, so it has all of the information
+   you'd need to build an identical custom menu of your own.  You
+   can use the <b>items</b> array as a starting point to do things like
+   inserting custom menu items, removing items that the system menu would
+   normally show, or changing the displayed names on the system's menu
+   items.
+</p>
+<p>
+   You can also change the <b>id</b> and <b>options</b> properties
+   in the event object to reflect any changes you want to make to
+   those.
+</p>
+<p>
+   After making any changes to the menu items, ID, or options, you must set
+   the <b>menuUpdated</b> property of the event object to <b>true</b>.
+   This property is undefined by default.
+   When the event processing is complete, the system checks this
+   property of the event object, and if it hasn't been changed,
+   the system assumes that you haven't made any changes to the menu
+   setup and goes ahead with the standard menu layout.  So if you
+   want to apply changes, you must set <b>menuUpdated</b> to <b>true</b>.
+</p>
+   
+<p>
+   For example, if you want to change the name of the "Play" command
+   on the main menu to "Run Game", you could do something like this:
+</p>
+<div class="code">
+mainWindow.on("menuopen", (ev) =&gt; {
+    if (ev.id = "main") {
+        // edit the menu items
+        ev.items.forEach(i => {
+            if (i.cmd == command.PlayGame)
+                i.title = "Run Game";
+        });
+
+        // tell the system to apply our updates
+        ev.menuUpdated = true;
+    }
+});
+</div>
+
+<p>
+   This approach is designed so that multiple event handlers can make
+   their own edits to the same system menus, without having to know about
+   one another.  This is useful for combining your own scripts with
+   add-in modules written by other people.  Remember that the event
+   system allows you to create any number of listeners for each event,
+   and calls each listener in sequence when the event occurs.  So if
+   you have multiple <b>menuopen</b> listeners, each one gets a chance
+   to inspect and edit the <b>items</b> array before the final menu
+   is displayed.
+</p>
+
+<p>
+   <b>To replace a system menu with an entirely custom menu:</b>  This is 
+   just like editing a system menu, as in the example above, except that you'd
+   ignore the original items list in the event and build your own from scratch, with
+   your desired list of custom menu items.
+</p>
+   
+
+
+<h2>Timing of open/close events</h2>
+
+<p>
+   The sequencing of the <b>menuopen</b> and <b>menuclose</b> events can
+   be a little confusing when switching straight from one menu to another,
+   such as when navigating into a submenu.  The thing that's confusing is
+   that the <b>menuopen</b> for the new menu will fire <i>before</i> the
+   <b>menuclose</b> for the old menu fires.
+</p>
+<p>
+   To understand why, we have to look at the timing of the open/close events
+   individually.
+   The <b>menuopen</b> event is sent <i>before</i> the new menu is displayed.
+   This is important because it gives you a chance to intervene, by canceling
+   the new menu display entirely or by altering its contents.
+   The <b>menuclose</b> event is sent <i>after</i> the old menu is removed.
+   This event represents a fait accompli; it's not possible to prevent the
+   menu from being closed, since it's already gone by the time the event
+   occurs.
+</p>
+<p>
+   Now, putting those two bits of timing together, we can see what happens
+   when the user does something that switches directly from one menu to another.
+   The <b>menuopen</b> event for the new menu occurs first, <i>before</i>
+   the <b>menuclose</b> event for the old menu is fired.  That's a necessary
+   consequence of the <b>menuopen</b> handler's ability to intervene in the
+   new menu setup, because the display of the new menu is what actually triggers
+   the removal of the old menu.  If your <b>menuopen</b> handler cancels the
+   new menu before it's been opened, any old menu will remain displayed, so a
+   <b>menuclose</b> event for the old menu before the <b>menopen</b> event
+   for the new menu would have been premature.
+</p>
+<p>
+   The reason we point this out is that it might seem reasonable to think
+   that a <b>menuclose</b> event means that a menu is no longer
+   being displayed.  It doesn't actually mean that, though, because the
+   outgoing menu could have been replaced with a new menu by the time
+   the close event fired. 
+</p>
+
+<h2>Properties</h2>
+
+<p>
+   This event type has all of the standard event properties and methods
+   (see the <a href="Event.html">Event class</a>), plus the following
+   additional items:
+</p>
+
+<ul>
+   <li><b>id:</b>  a string with the menu ID of the menu that's about
+   to be opened or that just closed.  See <a href="Menus.html#systemMenus">system menus</a>
+   for list of IDs strings for the standard menus.
+
+   <li><b>items:</b>  for the <b>menuopen</b> event, an array of objects
+   describing the items in the menu that's about to be opened.  The list
+   is in the same format as the <i>items</i> argument in
+   <a href="MainWindowObject.html#showMenu">mainWindow.showMenu()</a>,
+   so you can pass this as an argument to that function to show a menu
+   with the same contents.  Modifying the list has no effect on the
+   menu displayed if you allow the <b>menuopen</b> to proceed to the
+   system handling, but you can cancel the event to prevent this menu
+   from showing, and call showMenu() with your own item list instead.
+   This property isn't present for <b>menuclose</b> events.
+
+   <li><b>menuUpdated:</b> undefined by default; set this to
+   <b>true</b> to signal that you've changed the <b>id</b>, <b>items</b>,
+   and/or <b>options</b> properties to reflect a modified version of
+   the menu that want to display instead of the original.  See
+   <a href="#overrideSysMenu">Overriding a system menu</a> above
+   for more details.
+
+   <li><b>options:</b>  for the <b>menuopen</b> event, an object with
+   properties describing the menu options, in the same format as the
+   <i>options</i> argument to 
+   <a href="MainWindowObject.html#showMenu">mainWindow.showMenu()</a>.
+   Modifying the object has no effect on the menu displayed if you
+   allow the <b>menuopen</b> event to proceed to the system handling,
+   but you can cancel the event to prevent this menu from showing,
+   and call showMenu() with your own options instead.
+   This property isn't present for <b>menuclose</b> events.
+
+</ul>
+
+<h3>Methods</h3>
+
+<ul>
+   <a name="addMenuItem"></a>
+   <li><b>addMenuItem(<i>where</i>, <i>newItem</i>, <i>items</i>):</b>
+   Adds a new item or items to a menu.  This is a convenience function
+   that makes it a little easier to add items to a menu array.
+   <i>where</i> says where the new item(s) should be inserted; this
+   can be one of the following:
+   <ul>
+      <li>A command ID, in which case the new item(s) are inserted
+      before the first existing item with that ID.
+
+      <li>A string, in which case the new item(s) are inserted before
+      the first existing item with that title.  The string must
+      match exactly, including upper/lower case.
+
+      <li>A regular expression, in which case the new item(s) are
+      inserted before the first existing item whose title matches
+      the regular expression pattern (using the test() method)
+
+      <li>A function taking a menu item object as a parameter, and
+      returning true or false.  This is called for each item on the
+      existing menu, and the new item(s) are inserted before the
+      first existing item for which the function returns true.  This
+      can be used for more complex conditions than just searching
+      for a command ID or title.
+
+      <li><b>undefined</b>, in which case the new items are inserted
+      at the default position.  This usually means the top of the
+      menu, before the first existing item.  If you use an object
+      with an "after" property, though, this is the very end of the
+      menu, after the last existing item.
+
+      <li>An object containing a "before" or "after" property (only
+      one or the other: they're mutually exclusive), whose value is
+      one of the above types.  This works just like the types above,
+      except that it lets you say explicitly whether the new item will
+      be inserted before or after the first matching item.  Since
+      the default is to insert before the match, an object with a
+      "before" property is the same as just passing the property
+      value directly, but this lets you be a little more explicit
+      about your intentions, if you like your code to be a little
+      clearer.  
+   </ul>
+   <p>
+      <i>newItem</i> can be a single menu item descriptor
+      object, of the same sort that you can use with
+      <a href="MainWindowObject.html#showMenu">mainWindow.showMenu()</a>,
+      or it can be an array of such objects if you wish to insert
+      several items in one go.  The new item or items are inserted
+      at the location specified by the <i>where</i>.  If no match
+      is found for the <i>where</i> argument, the new items are
+      inserted at the default location, meaning at the very top
+      of the menu (before the first existing item) for a "before"
+      condition, or the very end of the menu (after the last existing
+      item) for an "after" condition.
+   </p>
+   <p>
+      If you pass an <i>items</i> array as an argument, the method
+      edits that array and returns it as the result.  If you don't
+      pass an argument, the method edits the <b>items</b> property
+      of the event object itself, and also sets the <b>menuUpdated</b>
+      of the event property to <b>true</b> to reflect the change.
+   </p>
+   
+   <a name="deleteMenuItem"></a>
+   <li><b>deleteMenuItem(<i>which</i>, <i>items</i>):</b>
+   Deletes one or more items from a menu.  <i>which</i> specifies
+   the item or items to delete; it can be one of the following:
+   <ul>
+      <li>A command ID, in which case the menu item(s) matching
+      that command ID will be removed.
+
+      <li>A string, in which case the item(s) with that title
+      are removed.  The title must match the string exactly,
+      including upper/lower case.
+
+      <li>A regular expression, in which case the item(s) whose
+      title(s) match the pattern (using the RegExp test() method)
+      are removed.
+
+      <li>A function, taking a menu item descriptor object as its
+      argument and returning true or false.  The function is
+      called for each item in the menu, and each item for which
+      the function returns true is removed.  This lets you remove
+      items according to more complex conditions than you can
+      express as a command ID or title.
+   </ul>
+
+   <p>
+      If you pass an <i>items</i> array as an argument, the method
+      edits that array and returns it as the result.  If you don't
+      pass an argument, the method edits the <b>items</b> property
+      of the event object itself, and also sets the <b>menuUpdated</b>
+      of the event property to <b>true</b> to reflect the change.
+   </p>
+
+   <a name="tidyMenu"></a>
+   <li><b>tidyMenu(<i>items</i>)</b>:  Cleans up the given menu item
+   array, by removing any redundant separator bars.  If your event
+   listener removes one or more items from a system menu, there's a
+   chance that you might have removed all of the items between a
+   pair of separator bars that the system placed in the original menu to
+   visually group a set of related items.  If you removed all of the items
+   in such a group, you'll leave behind the pair of separator bars,
+   with nothing in between them.  That looks a little sloppy.  This method
+   looks for empty groups like that and removes them, replacing each
+   bunch of consecutive separator bars with a single separator bar, so that
+   the menu looks properly formatted again.
+   <p>
+      If you pass an <i>items</i> array
+      as an argument, the method tidies up that array and returns the
+      result.  If you don't pass an argument at all, the method tidies
+      up the array in the <b>items</b> property of the event object
+      itself, and also sets the <b>menuUpdated</b> property of the
+      event to <b>true</b> to reflect the change.
+   </p>
+</ul>
+
+</body>
+</html>

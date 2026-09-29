@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>GameInfo</h1>
+
+<p>
+   A GameInfo object contains a Javascript reference to the system's
+   internal information records on a game.  This type of object is
+   returned from <a href="GameList.html#getGameInfo">gameList.getGameInfo()</a>,
+   it's used to indicate which game is selected in
+   <a href="GameSelectEvent.html">gameselect</a> events, and
+   is used in most other contexts where the system refers to a
+   particular game in its database.
+</p>
+<p>
+   The properties of a GameInfo object are actually "getters" that
+   access the program's live database of loaded games.  Javascript
+   doesn't allow assigning new values to getter properties, so
+   you can't change a game's properties by direct assignment.
+   Instead, you use the <a href="#update"><b>update()</b></a> method,
+   which takes a descriptor object with the properties to modify.
+   The update() method lets you change multiple properties in a
+   single operation, which is good because changes to a game's
+   metadata can trigger time-consuming side effects, such as updating
+   the XML file containing the game and redrawing the wheel UI.
+   You'll usually want to change several properties at the same
+   time when updating a game, so it would be extremely inefficient
+   to do repeat of the extra side-effect work for each individual
+   property change.  update() lets you group changes into a
+   batch, so that the side effects (XML updates, wheel refresh)
+   are only done once for the batch.
+</p>
+
+
+<h2>Creation</h2>
+<p>
+   You don't create GameInfo objects directly.  You get them from
+   the system, such as from the <b>game</b> property of the
+   <a href="GameSelectEvent.html">gameselect</a> event, or by
+   calling <a href="GameList.html#getGameInfo">gameList.getGameInfo()</a>.
+</p>
+
+<h2>Lifetime</h2>
+<p>
+   A GameInfo object is a Javascript object, so it has the usual
+   rules for Javascript object lifetime, which is to say that it
+   stays valid as long as you have a reference to it somewhere in
+   your program.
+</p>
+<p>
+   The system's internal game record for a given game, however,
+   can be deleted if the game database is reloaded and that game
+   isn't included in the reloaded game set.  The game
+   database is reloaded any time the user changes settings (for
+   example, via the interactive Settings dialog), since changes
+   to the settings can affect which folders are scanned for games
+   and XML game list files.
+</p>
+<p>
+   If the system's internal game record for a game is deleted due
+   to a settings change, and you're still holding on to a GameInfo
+   object that references that now-deleted game, the GameInfo object
+   itself is perfectly valid, per the normal Javascript rules.
+   However, the methods that it uses to access the live game
+   database will all throw errors if you try to use them, because
+   they'll see that the underlying system game record no longer
+   exists.
+</p>
+<p>
+   In most cases, the easiest way to avoid any hassles with
+   deleted game records is to avoid caching or storing GameInfo
+   references in global variables or object properties.  Rely
+   instead on system calls or events that give you up-to-date
+   information on whatever game you're interested in.  For
+   example, if you want to access information on the current
+   game shown in the wheel UI, call gameList.getWheelGame(0)
+   to get the actual current game, rather than keeping a
+   separate global variable with the GameInfo object from
+   some past event.
+</p>
+<p>
+   If for some reason you do need to hang on to GameInfo objects
+   for longer than it takes to process the current event, you
+   can use <a href="SettingsChangeEvent.html"><b>settingschange</b></a>
+   events to clear out old references.  That event tells you whenever
+   the system has reloaded the settings, which implies reloading
+   the game list.
+</p>
+
+
+<a name="gameID"></a>
+<h2>Game IDs</h2>
+<p>
+   The <b>id</b> property of the GameInfo object is a special
+   internal identifier that the system uses to find the
+   in-memory data structure for the game.  This has a unique
+   value for each loaded game, and it remains the same for
+   each game as long as it's included in the loaded game list.
+</p>
+<p>
+   One important use for the <b>id</b> value is to compare two
+   GameInfo objects to see if they refer to the same game.  If they
+   do, their <b>id</b> properties will be equal.
+</p>
+<div class="code">
+let a = gameList.getWheelGame(0);  // current game on wheel
+let b = gameList.getWheelGame(1);  // next game on wheel
+
+// DON'T do this!:  if (a == b)
+// That doesn't work, because a and b could be different GameInfo
+// objects that both refer to the same internal game record.
+//
+// Instead, to this:
+if (a.id == b.id) { /* a and b refer to the same game */ }
+</div>
+   
+<p>
+   A game ID value isn't permanent; it's only valid as long as the
+   in-memory object for the game exists.  The in-memory object for a
+   game is initially created when PinballY starts up and scans for game
+   files and database entries, and only exists until (a) the end of
+   the current program session, or (b) the game is removed from the
+   loaded game list due to a settings change, whichever comes first.
+   Don't store these IDs in external files that might persist across
+   sessions, as they'd be meaningless in a future session.
+</p>
+<p>
+   You also have to be careful about saving these IDs in global
+   variables, since they can become invalid any time the
+   game list is re-loaded.  The program has to re-load the game lists
+   any time the user updates anything in the Settings dialog, since
+   settings changes can affect what's included in the game lists.
+   If a game is deleted from memory after a re-load, because that
+   game is no longer included in the new settings, the ID value that
+   referred to the game becomes invalid.
+</p>
+<p>
+   If you're storing ID values in global variables, you can listen for
+   the <a href="SettingsChangeEvent.html"><b>settingschange</b></a> event,
+   and use it to clear out old ID values.
+</p>
+   
+
+<a name="configID"></a>
+<h2>Config IDs</h2>
+<p>
+   The program has a second identifier for each game, known as the
+   "config ID", that's more stable across sessions.  It's called the
+   config ID because PinballY uses it to store game references in
+   its own configuration files.  You can use it for similar purposes.
+</p>
+<p>
+   The config ID is based on the game's title, manufacturer, year, and system name.
+   This makes it stable across sessions, but it's not necessarily
+   permanent for a given in-memory record.  Since it's based on the game's
+   metadata and system assignment, the config ID for an in-memory record changes
+   whenever you change the game's title, manufacturer, or year, or assign it to a
+   different system, or change the display name of the player system. 
+</p>
+<p>
+   The way to think about the config ID is as a permanent identifier for
+   a game in the abstract, as opposed to a concrete file that
+   implements that abstract game: "Medieval Madness for Visual Pinball 9"
+   is the abstraction, and "C:\VisualPinball\Tables\mm_1234.vpt" might
+   be one concrete file that implements it.
+</p>
+
+<h2>Properties and methods</h2>
+
+<p>
+   <b><i>gameInfo</i>.audioVolume:</b>  An integer from 0 to 100 giving the game's
+   media audio volume level.  This controls the relative audio playback level
+   for the game's background videos and table audio track when displayed in
+   the wheel UI.  The user can control this setting via the Game Setup menu.
+   0 means the audio is completely muted, 100 means that the audio is played
+   back at its actual recorded level, and values in between reduce the
+   perceptual loudness linearly: e.g., 50 sounds half as loud as the
+   recorded level.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.categories:</b>  An array containing the game's category tags, as
+   strings.  The user can tag a game with any number of categories through
+   the Game Setup menu in the wheel UI.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.configID:</b>  A string giving the configuration ID of the game.
+   See <a href="#configID">Config IDs</a> above.
+   PinballY uses this string to identify the game when it's referenced
+   in saved settings files (e.g., to record the last game selected on
+   the wheel so that it can be restored the next time the program starts).
+</p>
+
+<p>
+   <b><i>gameInfo</i>.dbFile:</b>  The full name (including folder path) of the XML database
+   file containing this game's entry.  If the game isn't configured, this
+   is undefined.  Every configured game has an entry in exactly one XML file.
+   The XML file is always associated with the game's designated player system,
+   but any given system can have multiple XML files, because HyperPin and
+   PinballX used the file location as a simple category system.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.dateAdded:</b>  A Date value representing the time and date when the
+   database entry for the game was added to PinballY.  Undefined if the game hasn't
+   been configured.
+</p>
+<p>
+   Javascript represents dates internally in a time zone-independent
+   fashion, and PinballY does the same thing in its databases.  This
+   generally makes operations on date values straightforward, since you
+   don't have to worry about time zone trivia like daylight time changes;
+   Javascript handles those sorts of things automatically.  You can use
+   all of the normal Javascript Date functions with this value.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.displayName:</b>  The display name for the game.  This is the name that the
+   program displays on-screen for the game, such as in the wheel UI and the game information
+   popup box.  The standard format for this is "Title (Manufacturer Year)", when all of
+   those items are available.  If no title has been manually entered, the playable game
+   file (if any) is used in its place.  The manufacturer and/or year are omitted if
+   they're not set in the game's XML database entry or if it has no entry.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.erase():</b>  Erases the XML game list entry for the game.
+   The game record remains in memory, because that's tied to the game file, and the
+   statistics related to the playable game file (such as total play time and count)
+   are kept.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.filename:</b>  The filename of the game <i>as it appears in the XML
+   database file</i>.  This might or might not include a path and/or extension;
+   the format can vary because these XML files can come from different sources
+   (HyperPin tools, PinballX tools, or manual data entry from users).  PinballY
+   accepts these variations when reading the files, but it always uses a
+   uniform format when making updates, storing the filename only, with no
+   path or extension.  If your database files were created with PinballY,
+   you'll always see that format.  If you manually edited the files or
+   migrated data from another system, though, the path and/or extension
+   might be present.
+</p>
+<p>
+   Note that the filename here is the manually entered filename from the
+   database, so it might or might not refer to an actual, existing file.
+   It also doesn't typically include any path information, since files are
+   usually assumed to be in the table file folder for the associated system.
+   You can get the actual file system information on the file, including its
+   full path, extension, and whether or not the file exists, via 
+   <a href="#resolveGameFile">resolveGameFile()</a>.
+</p>
+
+<p>
+   <a name="getHighScores"></a>
+   <b><i>gameInfo</i>.getHighScores():</b>  Get the high scores for this game.
+   This function operates asynchronously, since high scores are retrieved
+   by a separate program.  Instead of directly returning the score information,
+   the function returns a Javascript Promise object, which is resolved when
+   the high score information is retrieved successfully.  The promise can also
+   be rejected, which can happen if the game has no high score information
+   or the PinEMHi launch attempt fails.  On success, the "resolve" callback
+   is invoked with an array of strings, containing the high score text
+   returned from PinEMHi, one line of text per array element.  See
+   <a href="#highScores">Retrieving high scores</a> below for a usage example.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.gridPos:</b>  An object with properties .row and .column, both integers,
+   giving the "grid position" of the game as stored in the game database.  This is
+   mostly provided as a special case for Farsight's <i>The Pinball Arcade</i>, which
+   doesn't provide any sort of command-line option to let an external program launch a specific game, but
+   instead always presents its own game selection UI at startup.  The grid position
+   is a (poor) attempt to work around that by enabling PinballY to send a series
+   of simulated keystrokes to TPA to navigate the selection UI automatically.
+   The selection UI arranges all of the games into a rectangular grid, so in
+   principle you can send a series of keystrokes to launch a particular game
+   if you know its position in the grid.  In practice this has proven to be
+   unreliable, since TPA's startup UI is too unpredictable: it frequently pops
+   up extra startup alert messages that throw the key macros out of sync, for example,
+   and of course the grid layout changes every time they add a game.  Plus they
+   change the overall UI from time to time.  Even so, PinballY provides this
+   information for users who want to try to make it work.
+</p>
+
+<p>
+
+<p>
+   <b><i>gameInfo</i>.highScoreStyle:</b>  A string with the high score style for the game,
+   for the purposes of generating the automatic high score display in the video DMD
+   window.  This should be one of "Auto", "DMD", "Alpha", "TT", or "None".  It can
+   also be undefined if no high score style has been set (in which case the system
+   uses the "Auto" default).
+</p>
+
+<p>
+   <b><i>gameInfo</i>.id:</b>  An integer giving the internal <a href="#gameID">Game ID</a>,
+   which the system uses to locate its in-memory record for the game.  This
+   value is unique per game, so this can be used to determine if two GameInfo
+   objects refer to the same game.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.ipdbId:</b>  A string giving the <a href="https://www.ipdb.org">IPDB</a>
+   ID of the game.  This is the database key that IPDB uses to identify the game; all of
+   the existing entries are in the form of a decimal number, but we use a string to
+   store the ID just in case IPDB ever expands the format to allow non-digit characters.  The ID for
+   a given game should be permanent, and it should be unique across all of the pinball
+   machines known to IPDB.  The ID can used to address the game's IPDB page via a URL of
+   the form <tt>https://www.ipdb.org/machine.cgi?id=<i>ipdbId</i></tt>.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.isConfigured:</b>  A boolean value indicating if the game has been
+   configured.  A configured game has an XML database entry; an unconfigured game
+   represents a playable game file that PinballY found in a system's table folder,
+   but which doesn't have a corresponding XML database entry.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.isFavorite:</b>  A boolean indicating if the game is marked as a favorite.
+   The user can designate a game as a favorite through the main menu in the wheel UI.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.isHidden:</b>  A boolean value indicating if the game has been hidden.
+   The user can hide a game via the Game Setup menu in the wheel UI.  A hidden
+   game isn't shown in the wheel UI <i>except</i> when the "Hidden Games"
+   filter is selected.  The system still keeps track of hidden games
+   internally, though, specifically so that it can remember not to display
+   them in the normal wheel UI when it discovers their game files during the
+   table folder scan at startup.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.isMarkedForCapture:</b>  A boolean value indicating if the game has
+   been marked for capture.  The user can mark games for capture through the
+   Game Setup menu in the wheel UI.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.lastPlayed:</b>  A Date value representing the time and date when the
+   game was last launched from PinballY.  Undefined if the game has never been played.
+   As with dateAdded, you can use all of the normal Javascript Date functions with this
+   value.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.manufacturer:</b>  A string with the name of the manufacturer, if set.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.mediaName:</b>  The "media name" for the game.  This is the root filename
+   (without path or extension) used for all of the game's media files.  To form
+   the full file system name of a particular media file (e.g., the playfield video),
+   the system combines the directory path for the file type, the media name, and a
+   filename extension for the type.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.path:</b>  The full file system path of the directory containing the
+   file, if known.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.playCount:</b>  An integer giving the number of times the game has
+   been launched from PinballY.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.playTime:</b>  An integer giving the total amount of time the game has
+   been played when started from PinballY, in seconds.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.rating:</b>  A number giving the user's "star" rating entry for the
+   game (0 to 5, in increments of 0.5: 2.5 represents 2&frac12; stars).  The
+   special value -1 means the game has no rating.  Note that 0 stars is a
+   valid rating, <i>not</i> the absence of a rating.
+</p>
+
+<p>
+   <a name="renameMediaFiles"></a>
+   <b><i>gameInfo</i>.renameMediaFiles(<i>array</i>):</b>  Rename the media files
+   as specified in <i>array</i>.  See <a href="#renamingMedia">Renaming media files</a>
+   below for details.
+</p>
+
+<p>
+   <a name="resolveGameFile"></a>
+   <b><i>gameInfo</i>.resolveGameFile():</b>  Resolves the playable game file for this game.
+   This finds the folder location and filename of the game file, by combining
+   information from the game database entry and the system configuration,
+   using the same algorithm that PinballY uses internally to find the
+   file when launching the game.  The return value is an object with
+   the following properties:
+</p>
+<ul>
+   <li><b>exists:</b> true if the file exists, false if not.
+   
+   <li><b>filename:</b> the base filename, with no folder path.  This
+   includes the filename extension for the player system, if any (e.g.,
+   ".vpx" for Visual Pinball 10 files).  Note that this might not
+   match the .filename property in the object returned from getGameInfo(),
+   The getGameInfo() filename is exactly what's specified in the XML
+   database entry for the game, which usually omits the extension.
+   The resolveGameFile() filename, in contrast, does include the extension,
+   <i>if</i> it's necessary to add the extension to find an existing file.
+   No extension is added to the name from the XML file when that name
+   by itself (with no added extension) refers to an extant file.
+   
+   <li><b>folder:</b> the full path of the folder containing the file,
+   which is usually the same as the table folder for the player system.
+   
+   <li><b>path:</b> the full path of the final file, which combines the
+   .folder and .filename values to form the absolute path.  This is in
+   a format suitable to be used with file system operations on the file,
+   since it's the full name of the file and doesn't depend on any
+   assumptions about working folders or default extensions.
+</ul>
+
+<p>
+   <a name="resolveMedia"></a>
+   <b><i>gameInfo</i>.resolveMedia(<i>type</i>, <i>mustExist</i>):</b>  Resolves the
+   game's media file(s) of the given type.  <i>type</i> is a media type
+   name, which must exactly match the ID of an existing media type.  The system
+   has a number of pre-defined media types built in, and you can also define your
+   own custom media types via <a href="GameList.html#createMediaType">gameList.createMediaType</a>.
+   See <a href="MediaTypes.html">Media Types</a> for a list of the built-in types.
+</p>
+
+<p>
+   <i>mustExist</i> is a boolean indicating whether the function
+   should return only files that actually exist, or the names of all
+   possible files of the type, even if they don't exist.
+</p>
+<p>
+   The return value is an array of strings giving the names of the
+   matched files.  Each filename includes its full absolute directory
+   path.  An array is returned even if no files are matched; in
+   this case the array is simply empty.
+</p>
+<p>
+   There are two reasons that the function can return multiple files
+   for a single media type.  The first is that most media types support
+   multiple formats, and some of the formats might have multiple
+   extensions; for example, most of the image types will match .png, .jpg,
+   and .jpeg files.  When <i>mustExist</i> is false, the function returns
+   all of the <i>possible</i> matching files, with all of the supported
+   formats for the type and all recognized extensions for each format.
+   The order of the names returned in this case reflects PinballY's
+   order of preference for choosing files when more than one matching
+   file exists: the program picks pick the first item in the list that
+   corresponds to an existing file.  If you want to determine which file
+   that PinballY will actually display for this type when the game is
+   selected in the wheel UI, call the function with <i>mustExist</i>
+   set to true, and then simply use the first array element.  
+</p>
+<p>
+   The second reason that the function can return multiple files is
+   that some of the media types can actually have multiple associated
+   items.  In particular, flyer images can use multiple files to
+   represent the separate pages of a multi-page flyer, or the
+   front and back sides of a single page; instruction cards can
+   contain collections of cards with different rule variations
+   or different language versions.  For these types, the program
+   lets the user cycle through the multiple items when displayed
+   by using the Next/Previous buttons.  
+</p>
+
+<p>
+   <a name="resolveROM"></a>
+   <b><i>gameInfo</i>.resolveROM():</b>  Resolves the ROM file for this game.  This
+   tries to determine which ROM file for the game is installed for use
+   with VPinMAME, if any, and which ROM name is associated with the
+   game in the current DOF configuration.  The return value is an
+   object with the following properties:
+</p>
+<ul>
+   <li><b>dofRom:</b>  The name of the game's ROM for DOF configuration
+   purposes, if any.  DOF determines which effects to use when a game is
+   running under Visual Pinball and other systems by matching the game's
+   ROM name (as VP sees it) to the ROM names listed in the DOF .ini files.
+   PinballY uses this scheme to trigger game-specific DOF effects
+   for the game currently selected in the wheel UI, so PinballY needs to
+   be able to determine the ROM associated with each game.  The .dofRom
+   property reflects PinballY's determination of the DOF ROM name, which
+   comes from either an explicit "rom" node in the game's XML database
+   entry, or a search of the DOF ROM list by table title.  The .dofRom
+   property is undefined if DOF isn't being used during this PinballY
+   session (e.g., if DOF isn't installed, or DOF is disabled in the
+   PinballY settings), or if PinballY can't find a matching DOF ROM name.
+   
+   <li><b>vpmRom:</b>  The name of the ROM that VPinMAME uses
+   for this game.  If the game has a ROM setting in the XML database
+   file, that value is used.  Otherwise, the system tries to match the
+   game by title to an internal database of title-to-ROM associations,
+   and then tries to determine which version is in use by checking
+   VPinMAME's registry data (since VPM stores information in the
+   Windows registry about each ROM it's loaded in the past).
+   This is undefined if the VPM ROM can't be determined.
+   
+   <li><b>vpmRomFile:</b>  The full filename, including path and
+   extension, of the VPM ROM file for the game, if available.  This
+   is the file path for the ROM contained in the .vpmRom property.
+   This is undefined if the VPM ROM can't be determined, or if no
+   file exists for the ROM in the .vpmRom property.
+   
+   <li><b>nvramPath:</b>  The full filename, including path and
+   extension, of the non-volatile RAM file for the game, if available.
+   The format of the file varies by player system, but if present, it's
+   the file that the player system uses to store high scores and menu
+   settings for the game.  VPinMAME uses the file to emulate the
+   non-volatile RAM hardware in the original games, for example.
+   PinballY uses this file to read high scores through PinEMHi.
+   This property is undefined if no NVRAM file can be found.
+</ul>
+
+<p>
+   The DOF and VPinMAME ROM names often differ in the version number
+   suffix.  Most machines that use ROM software have several versions
+   of the ROM available; for example, for <i>Medieval Madness</i>,
+   you'll find ROM versions mm_05, mm_10, mm_109, mm_109b, and mm_109c.
+   DOF typically drops the version suffix so that its .ini file entry
+   can match any version of the same game, so the DOF .ini entry for
+   <i>Med Mad</i> is just "mm".  That's what you'll see in the
+   .dofRom result.  VPM, on the other hand, uses an exact version,
+   so the .vpmRom result will include the version suffix.
+</p>
+<p>
+   Note that ROM associations may be found even for games written for
+   systems that don't use VPinMAME, such as Future Pinball, so you
+   shouldn't assume that a valid VPM ROM in the result means that the
+   game actually uses the ROM.  The ROM lookup includes a search by title,
+   so if there's a ROM for any version of a title, it will likely be found
+   even for non-VPM versions of the same game.  For example, if you ask
+   for the ROM for a Future Pinball version of <i>Medieval Madness</i>,
+   the system will find the <i>MM</i> ROM even though Future Pinball
+   doesn't use it.  This is actually useful for PinballY
+   internally, since the program's main use for the ROM association is
+   to select the DOF effects for the same game.  But it might be
+   confusing if you're trying to do something specifically tied to
+   VPM's use of the ROM.  It's difficult to determine in general if
+   a particular game implementation uses a particular ROM version,
+   since that depends on both the player system and internal details
+   of the game implementation that aren't exposed in a usable way.
+</p>
+
+   <b><i>gameInfo</i>.rom:</b>  The name of the ROM for the game, if a ROM has been entered
+   manually in the database.  The ROM name can usually be inferred from the title,
+   so this is usually undefined.  You can use <a href="#resolveROM">resolveROM()</a>
+   to get more information about PinballY's determination of the game's ROM.
+   That function gives you access to the machinery inside PinballY that does the
+   title lookups, and it returns details about the ROM for different uses.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.system:</b>  A <a href="GameSysInfo.html">GameSysInfo</a> object
+   indicating which player system this game uses.  That object's properties
+   provide information on the configuration settings for the system.
+</p>
+
+<p>
+   <b><i>gameInfo</i>.tableType:</b>  A string giving the game type code, <a href="https://www.ipdb.org/showhelp.pl?item=type">per IPDB</a>.
+   This is undefined if the game isn't configured or no type code has been entered.
+   The valid values are:
+</p>
+<ul>
+   <li>"SS" = Solid State: the game is controlled by a microprocessor or other
+   solid-state electronics, and uses an LED, plasma, or video display for scoring
+
+   <li>"EM" = Electro-mechanical: the game's scoring and rules are controlled by
+   Steam Age computing machinery made up of relays, motors, and cams, and scoring
+   is displayed using score wheels or scoring indicator lights
+
+   <li>"ME" = Pure mechanical: these are the very first pinball-like games, from
+   the 1930s and before, that have no electrical features at all apart from
+   simple static elements such as ambient lighting
+</ul>
+
+<p>
+   <b><i>gameInfo</i>.title:</b>  The title of the game.  If the game has been configured, this
+   is the title manually entered by the user; it's generally the title that the game
+   is officially known by, such as "The Addams Family" or "Funhouse".  If the game
+   hasn't been configured, this is simply the filename.
+</p>
+
+<p>
+   <a name="setHighScores"</a>
+   <b><i>gameInfo</i>.setHighScores(<i>scores</i>):</b>  Sets the game's high score
+   data.  <i>scores</i> is an array of string value giving the new high score text.
+   See <a href="#customHighScores">Custom high scores</a> below for information
+   on how this should be formatted.
+</p>
+<p>
+   If <i>scores</i> is null or undefined, any previously retrieved high scores for
+   the game are forgotten.  This causes PinballY to retrieve the high scores again
+   the next time the game is selected in the wheel UI.  This is useful when you
+   know that the actual stored scores have changed or might have changed.  PinballY
+   itself automatically clears its internal high scores for a given game each time
+   the game is launched for play, since a new high score could be added on any run.
+</p>
+<p>
+   Note that setHighScores() doesn't affect any externally stored high score
+   information.  This can't be used, for example, to update an NVRAM file with
+   new high scores.  setHighScores() only affects PinballY's in-memory copy of
+   the high score information that it uses to generate high score displays on
+   the DMD and info box popups.
+</p>
+
+<p>
+   <a name="update"></a>
+   <b><i>gameInfo</i>.update(<i>desc</i>, <i>options</i>):</b>  Update the game's properties.  This updates the
+   in-memory record for the game and saves the changes to the XML database file
+   where the game is listed.  It also updates the UI as needed to reflect the
+   changes.  See <a href="#updatingGames">Updating metadata</a> below for more
+   details.
+</p>
+<p>
+   <b><i>gameInfo</i>.year:</b>  An integer giving the game's original release year (e.g., 1995),
+   if set in the game database.
+</p>
+
+<a name="updatingGames"></a>
+<h2>Updating game metadata</h2>
+
+<p>
+   You can't change game metadata by assigning new values to GameInfo
+   properties.  The properties are read-only "getter" methods, so they
+   can't be changed by direct assignment.  Instead, you can use the
+   update() method:
+</p>
+<div class="indented">
+   <i>gameInfoObject</i>.update(<i>desc</i>, <i>options</i>);
+</div>
+<p>
+<p>
+   <i>desc</i> is an object containing the properties to be updated in the game
+   metadata.  Only the properties actually set in the object are updated; properties
+   not set are left unchanged.  This lets you selectively update whatever subset
+   of properties you wish to change without affecting the others.  The properties
+   to be updated have the same names as in the GameInfo object, and accept the
+   same sorts of values.
+</p>
+<p>
+   <i>options</i> is an object specifying options via its properties.  You can
+   omit this if you want to use default options.  The option properties are:
+</p>
+<ul>
+   <li><b>renameMedia:</b> a boolean specifying whether or not any media files
+   currently associated with the game should be renamed to match the new media
+   name.  This only matters if the <b>mediaName</b> property is set in the
+   <i>desc</i> object, since otherwise the media name won't be affected by
+   the update.
+   <p>
+   The default option is <b>true</b>, which means that the function performs any
+   necessary renaming.  If it's <b>false</b>, the function doesn't rename any files,
+   so media files that were previously displayed for the game will no longer be
+   displayed when the game is selected, as they'll no longer match the game's media
+   name.  You can carry out the renaming operations yourself via
+   <i>gameInfo</i>.renameMedia() if desired, using the file renaming list returned
+   in the results object.
+</ul>
+
+<p>
+   The return value from update() is an object value that contains information
+   about the operation.  This contains the following properties:
+</p>
+<ul>
+   <li><b>renamedMediaFiles:</b> If the media name is changed by the update,
+   and the game has any existing media files associated with the old media name,
+   this property will be set to an array containing the list of files that
+   need to be renamed to maintain the association with the game.  The property
+   will be undefined if no files need to be renamed (either because the media
+   name didn't change, or because there were no existing files with the old
+   media name).  This will be set to the list of affected files whether or not
+   update() carries out the renaming itself, which depends on the <b>renameMedia</b>
+   property in the options object argument.  If you pass <b>false</b> for the
+   <b>renameMedia</b> option, and you wish to rename the files yourself, you
+   can do so by passing the <b>renamedMediaFiles</b> array to the
+   <a href="#renameMediaFiles">renameMediaFiles()</a> method of the GameInfo
+   object.
+   <p>
+      The elements of the <b>renamedMediaFiles</b> array are objects, with
+      properties {<b>oldName:</b> <i>string</i>, <b>newName:</b> <i>string</i>}, giving the
+      old and new filenames of the affected files.  The filenames include
+      the full directory path and extensions, so these can be used in
+      file system APIs to refer to the exact files.  Note, however, that
+      it might not be possible write to, rename, or delete these files at
+      the operating system API level if the game is selected in the UI,
+      because the files might be locked for video and/or audio playback.
+      The renameMediaFiles() method takes this into account and can be
+      called even if the game is currently selected.
+   </p>
+
+   <li><b>mediaRenameErrors:</b>  If the function attempts to rename any
+   media files, and any errors occur trying to rename the files, this property
+   is set to an array containing details on the errors.  Each element of the
+   array is an object with properties {<b>message:</b> <i>string</i>, <b>details:</b> <i>string</i>},
+   with a "friendly" error message to display to users in <b>message</b>,
+   and possibly a lower-level technical error message (typically a Windows
+   API-level error message with error code) in <b>details</b>, if more
+   technical details are available.  <b>mediaRenameErrors</b> will be
+   undefined if the function doesn't even attempt to rename files (which
+   will be the case if the media name wasn't affected by the update,
+   there were no existing media files associated with the game under
+   the old name, or the <b>renameMedia</b> option is false), or if
+   all files were renamed successfully.
+</ul>
+
+<p>
+   The metadata properties that can be updated, and thus the valid properties
+   for the <i>desc</i> object, are:
+</p>
+<ul class="compact">
+   <li>audioVolume (integer)
+   <li>categories (array of strings)
+   <li>dateAdded (Date)
+   <li>gridPos (object, {row: <i>integer</i>, column: <i>integer</i>})
+   <li>highScoreStyle (string: "Auto", "Alpha", "DMD", "TT", "None")
+   <li>ipdbId (string)
+   <li>isFavorite (boolean)
+   <li>isHidden (boolean)
+   <li>isMarkedForCapture (boolean)
+   <li>lastPlayed (Date)
+   <li>manufacturer (string)
+   <li>mediaName (string)
+   <li>playCount (integer)
+   <li>playTime (integer, total play time in seconds)
+   <li>rating (number, 0 to 5 in increments of 0.5 for half stars; -1 for "unrated")
+   <li>rom (string)
+   <li>system (<a href="GameSysInfo.html">GameSysInfo</a> object)
+   <li>tableType (string: "SS", "EM", "ME")
+   <li>title (string)
+   <li>year (integer)
+</ul>
+
+<p>
+   For example, here's how you'd change the title, year, and manufacturer
+   for a game record:
+</p>
+<div class="code">
+let game = gameList.getWheelGame(0);
+game.update({
+    title: "Theatre of Magic",
+    manufacturer: "Bally",
+    year: 1995
+});
+</div>
+
+<p>
+   Note that the list of valid <i>desc</i> properties doesn't include all of the GameInfo
+   properties.  Some of the GameInfo properties reflect derived values (that is, values
+   computed from other properties), which can't be updated by themselves.  Derived values
+   will automatically be updated to reflect changes to the properties they're computed
+   from, though; for example, you can't set the <b>displayName</b> property
+   directly, but changing the year or manufacturer will affect the computed
+   value of <b>displayName</b>.  Any properties in the <i>desc</i> object other
+   than ones listed above are ignored.
+</p>
+<p>
+   If you set the <b>mediaName</b> property to an empty string (""), it has
+   the special effect of changing the game's media name to the default pattern,
+   "Title (Manufacturer Year)".  This is different from omitting the
+   <b>mediaName</b> property entirely, or setting it to <b>undefined</b>,
+   since either of those will simply leave the media name unchanged from
+   its previous value.  If you set it to any non-empty string, the media
+   name will be changed to match that string.  Since the media name is used
+   to form filenames for the game's media files, it's an error to use any
+   characters in this string that are invalid in a Windows filename.  You
+   also can't use any path separator characters ("\", "/", or ":"), since
+   the folder path is determined by the player system's media path setting.
+</p>
+
+<p>
+   The <b>system</b> property is restricted.  If the game record is associated
+   with an existing game file, the system can only be changed to another system
+   that keeps its table files in the same folder.  A game record that's tied to
+   a file is permanently associated with that file, and each system's games can
+   only be loaded from one folder, so changing to a system that uses a different
+   table folder would make the game record unusable.  If the game isn't associated
+   with an existing file, its system can't be changed at all, because that could
+   create a conflict with an existing file in the new system's table folder.
+</p>
+
+<a name="renamingMedia"></a>
+<h2>Renaming media files</h2>
+
+<p>
+   You can change the game's media name via the <b>mediaName</b> property in
+   the <i>desc</i> object.  As described above, setting this to an empty
+   string ("") has the special effect of applying the default media name
+   pattern, "Title (Manufacturer Year)".  Any other string value simply
+   sets the media name to that string.  Omitting the <b>mediaName</b>
+   property from the <i>desc</i> object, or setting it to <b>undefined</b>,
+   leaves the game's existing media name as it is.
+</p>
+<p>
+   If you change the media name, you might also want to rename any existing
+   files using the old media name, so that they continue to be associated
+   with the game and continue to be displayed when the game is selected
+   in the UI.  The update() method can do this for you automatically, but
+   you can also tell it not to.
+</p>
+<p>
+   By default, update() automatically renames any existing media files
+   that match the old media name so that they use the the new media name
+   instead.  You don't have to do anything if you want to let
+   the function rename affected files automatically.
+</p>
+<p>
+   If you prefer, though, you can tell update() <i>not</i> to rename affected
+   media files automatically, by setting <b>renameMedia</b> to false
+   in the <i>options</i> object argument to update().  This might be
+   desirable if you're intentionally manipulating a game's metadata
+   separately from its file associations, or if you want to leave it up
+   to the user to decide on the renaming.  PinballY's own UI takes
+   the latter approach:  when a metadata change made through the "Edit Game
+   Details" dialog affects the game's media name template, the dialog
+   tells the user about it and asks the user to decide whether to rename
+   the files to match the new media name or leave them as they are.
+</p>
+<p>
+   If you do want to base the renaming decision on some outside factor, either
+   the user's input or something else that you need to compute on the
+   fly, you can use the following procedure:
+</p>
+<ul>
+   <li>Call update(), with <b>renameMedia</b> set to <b>false</b> in the options.
+
+   <li>Check the result object returned from update().  If it has
+   the property <b>renamedMediaFiles</b>, that contains an array of the
+   affected files, with their old and new names.  Nothing has been renamed
+   yet, since you set the <b>renameMedia</b> option to false, so this is
+   the list of proposed changes needed to maintain the current file
+   associations.  If you hadn't set <b>renameMedia</b> to false,
+   the <b>renamedMediaFiles</b> array would have exactly the same contents,
+   but it would reflect name changes that had already been applied,
+   since update() would have attempted to rename everything itself
+   if you hadn't specifically told it not to.
+
+   <li>Now that you know that some renaming is necessary, figure out what
+   you want to do about it.  For example, if
+   you want to prompt the user interactively, you could display a menu
+   explaining the situation and asking whether or not to rename the files.
+
+   <li>If you decide to rename the files after all, call
+   <a href="#renameMediaFiles"><i>gameInfo.</i>renameMediaFiles()</a>,
+   passing in the <b>renamedMediaFiles</b> array from update() as the argument.
+   Check the return value for errors if you wish to display or log
+   any problems.
+
+   <li>If you decide <i>not</i> to rename the files, there's nothing
+   more to do.  Simply forget the rename list and go on with other work.
+</ul>
+<p>
+   By the way, you might wonder why we go to all of this trouble to
+   separate the update and rename steps, when we could have just asked
+   the user up front about the renaming, before even attempting the
+   update.  The reason to separate the steps is that it's hard to know
+   in advance if any renaming will be necessary, and you'd probably
+   rather not bother the user with the question until you know whether it
+   requires an answer in the first place.  If you're performing updates as
+   part of an automated process that updates many games en masse, you'll
+   probably want to decide up front about renaming, so in that case you
+   can skip the two-step process and do everything in update().  The
+   two-step process is only needed when you want to defer the decision
+   about renaming until you know that renaming is actually needed.
+</p>
+
+<p>
+   <b>How to use renameMediaFiles():</b>
+   renameMediaFiles(<i>array</i>) takes an array of objects listing the
+   files to be renamed.   The array elements are objects with
+   properties {<b>oldName:</b> <i>string</i>, <b>newName:</b> <i>string</i>},
+   listing the existing name and new name for each file to rename.  The
+   filenames are all given with full absolute paths.  Each
+   array element corresponds to one file to be renamed.  This is the exact
+   same array format returned from <a href="#update">update()</a> in the
+   <b>renamedMediaFiles</b> property of the results object returned from
+   that method, so you can pass the <b>renamedMediaFiles</b> array from
+   update() directly to renameMediaFiles() to carry out the renaming
+   that update() would have done itself if given permission.
+</p>
+<p>
+   The renameMediaFiles() method carries out all of the listed rename
+   operations.  This method temporarily stops any playing video or
+   audio in the current game to ensure that the UI doesn't have playback
+   locks on the files that would prevent the renaming, so you might see
+   the playing videos in the UI restart when you call this method.
+   All of the renames are attempted, even if some of them fail.  An
+   accounting of any errors is returned in the results object.
+</p>
+<p>
+   The return value from renameMediaFiles() is an object with the following
+   properties:
+</p>
+<ul>
+   <li><b>mediaRenameErrors:</b>  If any errors occurred renaming files,
+   this returns an array of objects.  Each object represents one attempted
+   file rename operation, and contains properties {<b>message:</b> <i>string</i>,
+   <b>details:</b> <i>string</i>}.  The <b>message</b> string is a "friendly"
+   message for display to the user; <b>details</b>, if present at all, has
+   the low-level error message from the operating system, which can be
+   logged in case a programmer has to look at the problem, but might not be
+   very helpful to non-technical users.
+</ul>
+
+<p>
+   <b>Using renameMediaFiles() without update():</b>  You're free to
+   call renameMediaFiles() as a standalone method without changing any
+   game metadata via update().  Just prepare the array of rename objects
+   in the same format returned from update().  It's better to use
+   renameMediaFiles() than to go directly through Windows file system
+   APIs, since renameMediaFiles() accounts for the possibility that
+   the files are locked for video or audio playback in the UI; trying
+   to rename files directly through Windows APIs can fail due to
+   lock conflicts if any of the files are currently being displayed.
+   On the other hand, it's better not to use renameMediaFiles() for
+   anything other than actual game media files, since the routine
+   will interrupt playback in the UI, exactly because it tries to
+   make sure that the files aren't locked for playback.  So it's
+   not recommended to use this routine as a generic way to
+   rename random files.
+</p>
+
+
+<a name="highScores"></a>
+<h2>Retrieving high scores</h2>
+
+<p>
+   The game information object method <a href="#getHighScores">getHighScores()</a>
+   lets you get the high score information for a game, if it's available.  This function
+   works asynchronously: it doesn't directly return the high score information, but rather
+   returns a Javascript "Promise" object, which invokes a callback you provide when
+   the background operation completes.  (Promises are relatively new to Javascript,
+   added in the ES6 version of the language standard, so you might not have run into
+   them before even if you know Javascript.  You can find lots of documentation
+   on the Web if you need to get up to speed on them.  The basic idea is that
+   they let you kick off a task that runs in the background without your code
+   having to wait for it, and then the system calls a completion function that
+   you provide when the task is done.)
+</p>
+<p>
+   The reason that we have to use the asynchronous Promise scheme is that high
+   scores are obtained via a separate program, PinEMHi.  We launch that as
+   a child process, which can take
+   a couple of seconds, so we don't want to hold up the UI waiting for it to finish.
+   Instead, we launch the program in the background, and let it run separately
+   while we carry on with our regular UI activity.  When PinEMHi finishes, we 
+   go back to processing the results.  The Javascript Promise was designed for
+   exactly this type of scenario, and it makes the asynchronous handling easy
+   to code.
+</p>
+<p>
+   Here's the process for retrieving high scores:
+</p>
+<ul>
+   <li>Retrieve the game information object for the desired game via
+   gameList.getGameInfo(<i>id</i>), passing the ID of the game of interest
+   
+   <li>Call <i>info</i>.getHighScores(), where <i>info</i> is the object
+   you got back from getGameInfo()
+
+   <li>The return value from getHighScores() is a Promise object, so you call
+   .then(<i>completionFunction</i>) on the result of getHighScores() to set up
+   the completion function
+
+   <li>In the completion function, you write your script code to handle the
+   results
+
+   <li>If you want to include special handling for errors, you can include
+   a .catch(<i>errorFunction</i>) 
+</ul>
+
+<p>
+   The completion function that you provide to .then() takes a single argument,
+   which is an array of strings containing the results from PinEMHi.  This
+   is simply the PinEMHi text output, broken up into one string per line of
+   text.
+</p>
+<p>
+   The array of strings has an extra property, <b>source</b>, which has
+   a string value identifying the source of the score data.  This uses the same values
+   as the <b>source</b> property in a <a href="HighScoresEvent#source"><b>highscoresready</b></a>
+   event.
+</p>
+<p>
+   Here's an example that gets the high scores for each new game that's
+   selected in the wheel UI, and displays the results on the debugger
+   console.
+</p>
+<div class="code">
+gameList.on("gameselect", ev =&gt; {
+    // if a game is selected, request its high scores
+    if (ev.game)
+    {
+        ev.game.getHighScores().then(scores =&gt;
+            console.log(ev.game.title + " - High Scores:\n  " + scores.join("\n  ")
+                        + "\nSource: " + scores.source);
+    }
+});
+</div>
+
+<p>
+   There's no error handler in this example, so any errors
+   will simply be ignored.   If you wanted to add a message in case
+   of error, you'd just add a second function that gets called on
+   error to the .then() call:
+</p>
+<div class="code">
+info.getHighScores(ev.id).then(
+    scores =&gt; { /* success handler, 'scores' is an array of strings from PinEMHi */ },
+    error =&gt; { /* error handler, 'error' is a Javascript Error object */ });
+</div>
+<p>
+   This is all standard Javascript Promise coding, so if you need
+   more help with Promises in general, you can find lots of tutorial
+   material on the Web.
+</p>
+
+<a name="customHighScores"></a>
+<h3>Setting custom high scores</h3>
+
+<p>
+   PinballY uses a separate program called <a target="_blank" href="http://www.pinemhi.com/">PinEMHi</a>
+   to retrieve high scores for most games.  PinEMHi works with most Visual Pinball
+   games that use emulated ROMs from original arcade games, and with all
+   Future Pinball games.  It doesn't work with Visual Pinball games that
+   aren't based on emulated ROMs, which means it can't retrieve high
+   scores for most electromechanical (EM) games written in VP.  It also
+   doesn't work with any other systems, including any of the commercial
+   pinball games.
+</p>
+<p>
+   You can use Javascript to extend high score coverage to other games
+   beyond what PinEMHi supports.  PinEMHi is limited to the FP and VP ROM
+   games because there are no other "standard" ways of storing high
+   scores, but that doesn't prevent you from adopting your own ad hoc
+   methods for other types of games.  For example, you could use Visual
+   Pinball's scripting capabilities to add your own custom high score
+   storage to EM tables.
+</p>
+<p>
+   The best way to extend high score coverage to your own custom storage
+   locations is to listen for the <a href="HighScoresEvent.html">High
+   Scores Event</a> types, and intervene for games where you know how to
+   provide custom data.  A particularly good approach is to intercept
+   that <b>highscoresready</b> event, and check the <i>event</i>.success
+   property to identify games that PinEMHi doesn't cover:
+</p>
+<div class="code">
+gameList.on("highscoresready", ev => {
+    if (!ev.success) {
+       // PinEMHi couldn't get this game's scores.  Provide our own!
+       
+       // First, do something here to retrieve your custom high scores.
+       // ev.game contains the game object whose scores we're retrieving.
+       // The scores should be prepared as an array of strings, one element
+       // per display line.
+       let scores = ["Custom Score Line 1", "Custom Score Line 2"];
+
+       // now set your custom scores in the game object
+       ev.game.setHighScores(scores);
+    }
+});
+</div>
+
+<p>
+   This approach is nice because it lets PinEMHi handle everything it
+   knows about, and only tries to provide custom data for games that
+   PinEMHi doesn't cover.  You don't have to figure out on your own
+   whether or not a game will be covered by PinEMHi, since your code
+   is only invoked for games that aren't covered.
+</p>
+<p>
+   If for some reason you wanted to <i>replace</i> the PinEMHi data
+   across the board, you could do that as well: you'd listen for the
+   <b>highscoresrequest</b> event, which is fired <i>before</i> PinEMHi
+   is invoked, plug in your own high scores just like we did above,
+   and then cancel the <b>highscoresrequest</b> event to prevent
+   PinEMHi from running at all.
+</p>
+<div class="code">
+gameList.on("highscoresrequest", ev => {
+    // plug in our custom high score data
+    let scores = ["Override Line 1", "Override Line 2"];
+    ev.game.setHighScores(scores);
+
+    // cancel the event so that PinballY doesn't bother invoking PinEMHi
+    ev.preventDefault();
+});
+</div>
+
+<p>
+   We leave to you the details of how to actually retrieve the scores for
+   particular games.  As mentioned earlier, there are no standards
+   or conventions for how or where to store high scores other than the
+   ones that PinEMHi already handles.
+   So there's no one-size-fits-all approach that we can suggest for
+   handling games not covered by PinEMHi.  We
+   can offer a general tip, though:  whatever you do will probably
+   involve reading disk files, and if you need to do that, an easy
+   way is to use the Windows Scripting file system object:
+</p>
+<div class="code">
+let fs = createAutomationObject("Scripting.FileSystemObject");
+</div>
+<p>
+   If you've used Visual Basic or PowerShell,
+   you're probably already familiar with that.  It works the
+   same way in Javascript as in other languages.  If you haven't
+   seen this object before, there's lots of online help for it on the Web,
+   since it's widely used in Windows scripting of all sorts.
+</p>
+
+<h3>How to format high score data</h3>
+
+<p>
+   If you're providing your own custom high score text, you should
+   be aware of how PinballY formats the text on the display.  This will
+   help you control the appearance when it's displayed.
+</p>
+<p>
+   PinballY automatically displays the high scores for the current
+   game in its DMD video window and on your real DMD device, if you
+   have one.  It alternates between displaying high scores and displaying
+   the game's DMD background media (image or video), to simulate the
+   way that real machines rotate through high scores and other messages
+   and graphics in "game over" mode.
+</p>
+<p>
+   On the real machines, DMDs can generally only display two or three
+   lines of text at a time, since they don't have all that many pixels.
+   Most alphanumeric displays (used on the late 1980s machines) have
+   a fixed two-line display area.  So PinballY tries to simulate this
+   appearance by breaking up the high score text into blocks of two or
+   three lines of text per screen, and then showing the screens for
+   a few seconds each in sequence.
+</p>
+<p>
+   You can tell PinballY how to break up the text into screens by
+   inserting blank lines into the custom text.  When PinballY
+   displays the text, it scans through the list of messages and
+   breaks them up into "groups" at the blank lines.
+</p>
+<p>
+   Remember that <i>gameInfo</i>.setHighScores() takes an <b>array of
+   strings</b> as its argument to set the text, and that each string
+   in the array represents <b>one line of text</b> on the display.
+   So when you call setHighScores(), you don't have to
+   (nor should you) include newline characters explicitly.  
+   That means <b>no "\n" sequences.</b>  Just break up the lines into
+   strings and fill the array with them.  If you want to add a blank
+   line, you can simply represent it as an empty string, "".
+</p>
+<p>
+   For example, consider this Javascript snippet:
+</p>
+<div class="code">
+game.setHighScores([
+   "HIGHEST SCORES",
+   "",                    // blank line marks a group boundary
+   "GRAND CHAMPION", "MJR  9,234,567",
+   "",
+   "LJE  4,101,623", "SPJ  3,991,424",
+   "",
+   "BHG  3,401,331", "SJW  2,103,377",
+   "",
+   "CASTLE CHAMPION", "MJR", "7 CASTLES DESTROYED"
+]);
+</div>
+<p>
+   We've used blank lines to identify the group breaks.  The blank
+   lines are those empty string - "".  When displayed,
+   this will produce a series of screens like this:
+</p>
+<img class="example" src="highScoreExample.png">
+
+<p>
+   If you don't insert blank lines to delineate the groups, PinballY
+   will still break the text up into screens of one to three lines
+   each, but it'll be forced to pick the line groupings mechanically.
+   It uses this procedure:
+</p>
+<ul>
+   <li>For the alphanumeric display style, the text is broken
+   up into groups of two lines.  If there's an odd number of
+   lines, the first line is shown on its own.
+
+   <li>For other display styles, if there are three lines or fewer,
+   they're displayed as a group.  Otherwise, the text is broken
+   up into two-line groups.  If there's an odd number of lines,
+   the first line is shown on its own.
+</ul>
+
+<p>
+   Note that this procedure will be applied even if you use line
+   breaks, if the groups set off by your line breaks are too large.
+   For example, if provide a group of four lines and then a blank
+   line, the four lines will be displayed two at a time.  If there
+   are no blank lines anywhere, the procedure is simply applied to
+   the list as a whole.
+</p>
+<p>
+   It's worth pointing out that this line break procedure wasn't
+   created for Javascript's sake.  It was really designed around
+   PinEMHi's output.   PinEMHi <i>usually</i> uses blank lines to
+   set off groups of text that form "screens" - but not always,
+   so PinballY has to break up PinEMHi's output in some cases.
+   The procedure described above is just a heuristic that produces
+   decent results for nearly all PinEMHi output.  For Javascript
+   purposes, you don't have to rely on the heuristics; you can
+   control the exact layout by inserting blank lines to specify
+   the grouping you want.
+</p>
+
+<p>
+   <b>Upper/lower case:</b>  It's generally better to use pure
+   upper-case for the score information.  The DMD fonts
+   only have a few lower-case letters, since the low resolution
+   (only 128x32 dots) makes it too hard to render most of them.
+   Most lower-case letters in your source text will be replaced
+   with capitals when rendered.  But not all, so the final
+   display results tend to look bad if you mix upper and lower case.  The
+   exception is the "typewriter" style used for EM games, when
+   displayed on a <b>video</b> DMD monitor.  That uses an ordinary
+   Windows font, so mixed case will look fine there.  But
+   remember that real DMD devices are limited by their physical
+   characteristics to the 128x32 format, so there's no such thing
+   as typewriter style there.
+</p>
+      
+</body>
+</html>

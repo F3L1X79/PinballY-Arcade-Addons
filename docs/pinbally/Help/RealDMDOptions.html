@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Real DMD Options</h1>
+
+<p>
+   This dialog lets you control how PinballY uses your real DMD
+   device, if you have one.  By "real DMD", we mean an external
+   pinball-style 128x32 dot matrix display, using either a plasma
+   display like those used in the 1990s pinball machines, or an
+   LED DMD like those used in some modern Stern machines.  You
+   can add one of these to your cab by buying a commercial DMD
+   kit like PinDMD, or by building one yourself using open-source
+   plans such as Pin2DMD.
+</p>
+<p>
+   The "real DMD" settings don't affect the simulated DMD window
+   that PinballY also shows on the video monitor.  If you have a
+   real DMD and want to get rid of the redundant video DMD window,
+   simply close the window.  If you've previously closed the window
+   and want to bring it back, right-click in the main playfield
+   window and select "Show DMD" from the menu.
+</p>
+<p>
+   PinballY supports the same sets of devices that Visual Pinball
+   supports via VPinMAME, since it uses the VPinMAME DLLs to access
+   the device.  See <a href="#detect">below</a> for more details.
+</p>
+
+<h2>Enable/disable options</h2>
+<ul>
+   <li><b>Automatic:</b>  This is the default, which makes PinballY look
+   for a DMD device using the procedure described below and decide
+   what to do based on the result.  If no device is found, PinballY
+   silently ignores the DMD; there will be no error messages, since
+   it's perfectly all right not to have a DMD installed.  If
+   a device is found, PinballY will use it to display DMD media
+   for games as you visit them in the game list.
+<p>
+   If automatic detection doesn't work on your machine for some
+   reason, you can use one of the manual options below.
+</p>
+
+   <li><b>Enable always:</b>  This tells PinballY that you definitely
+   have a DMD installed.  If this is selected, PinballY looks for
+   the device using the procedure described below, and displays
+   an error message if it fails.  This option is useful if you have
+   a DMD, but PinballY doesn't seem to be using it.  When this
+   setting is in effect, and PinballY can't find your DMD, it will
+   at least display an error message with some more details on
+   the problem, which might be helpful in clearing up what's wrong.
+
+   <li><b>Disable always:</b>  This tells PinballY to ignore your DMD
+   even if it looks like you have one installed.  This is useful
+   if you have the DLL installed (see below) but you don't have
+   a physical DMD device currently attached, since in that case
+   the "Automatic" mode might trigger PinballY to show an error
+   every time it starts up.  This settings will prevent PinballY
+   from even trying to access the DMD, avoiding unnecessary
+   error messages.
+
+</ul>
+
+<h2>Display effects options</h2>
+
+<ul>
+   <li><b>Mirror horizontally:</b>  this reverses the dots across
+   the display horizontally, as though you were looking at it in
+   a mirror.
+
+   <li><b>Flip vertically:</b>  this mirrors the dots vertically.
+   This is useful if you have something like a Pinball 2000 style
+   cabinet where the DMD is meant to be viewed indirectly by its
+   reflection off the playfield glass.
+
+</ul>
+
+<h2>Gamma correction</h2>
+
+<p>
+   The <b>grayscale gamma</b> box lets you enter a gamma correction
+   value for grayscale video playback.  This is only used when playing
+   videos in grayscale mode, so it's primarily for people with
+   monochrome DMD displays, such as PinDMD v1 or v2 devices.
+</p>
+<p>
+   Gamma correction applies an adjustment to the brightness of each
+   pixel, to compensate for differences between the display device's
+   brightness curve and the way the human eye perceives brightness.
+   LED and plasma displays are actually <i>too</i> linear to look
+   right to the eye, since the eye perceives brightness on a
+   power-law curve.
+</p>
+<p>
+   The gamma value doesn't have any fixed range limits, but in
+   practice it will usually range from about 0.5 to 4.0.  Values
+   below 1.0 will tend to make the overall display look brighter
+   and decrease contrast between bright and dark pixels.
+   Values above 1.0 make the display look darker overall and
+   increase contrast.
+</p>
+<p>
+   There's no perfect or "right" gamma value, since it's all about making
+   the brightness curve look right to your eye, and that's inherently
+   subjective.  But with that in mind, it's mostly a function of the
+   display technology.  LEDs typically need a gamma around 2.8 to
+   look linear to the eye.
+</p>
+
+<a name="detect"></a>
+<h2>How PinballY detects a DMD</h2>
+<p>
+   PinballY doesn't actually detect your physical DMD device.  Instead,
+   it looks for installed software that connects to your DMD.  If the right
+   software is present, PinballY uses the software to send images to your DMD.
+</p>
+<p>
+   The "right software" is a DLL called <b>DmdDevice.dll</b>.  This usually
+   comes from your VPinMAME installation, which in turn is usually installed
+   as part of Visual Pinball.
+</p>
+<p>
+   <a name="folderSearchOrder"></a>
+   PinballY searches for DmdDevice.dll as follows:
+</p>
+<ul>
+   <li>First, it looks in your PinballY install folder for the file.
+   If it finds a copy there, it uses it.
+
+   <li>Failing that, it looks in your VPinMAME folder.  This folder
+   is found by looking in the Windows registry for the "VPinMAME
+   COM object".  If that's found, PinballY looks for DmdDevice.dll
+   in the same folder containing the COM object.
+</ul>
+
+<p>
+   If PinballY does find a copy of DmdDevice.dll in either location,
+   it proceeds as follows:
+</p>
+<ul>
+   <li>If the DmdDevice.dll is the "DMD-Extensions" version, which is
+   included in recent (2018) distributions of Visual Pinball 10,
+   PinballY checks its config file (DmdDevice.ini) to see if
+   it's set up for "virtual" mode, where it displays an on-screen
+   DMD instead of using a real DMD.
+
+   <ul>
+      <li>If virtual mode is enabled, and PinballY's DMD setting
+      is "Auto", PinballY skips the DMD for this session.  PinballY
+      provides its own on-screen DMD window, so we figure you probably
+      don't want two of those at the same time.
+      
+      <li>If virtual mode is enabled, and PinballY's DMD setting
+      is "Enabled", PinballY uses the DLL even though it'll
+      display its second on-screen DMD window.  "Enabled" means
+      "show the DMD no matter what", so we're just doing what
+      you asked.  If you don't like that second DMD window,
+      either turn off "virtual" mode in the DmdDevice.ini file,
+      or set PinballY's real DMD setting back to "Auto".
+      
+      <li>If virtual mode is disabled, PinballY goes ahead and
+      uses the DLL.  When virtual mode is disabled, we assume
+      that you have a real DMD.
+   </ul>
+   
+   <li>For any other version of DmdDevice.dll, PinballY just goes
+   ahead and loads it unconditionally.
+</ul>
+            
+<p>
+   If PinballY can't find a copy of DmdDevice.dll in either place,
+   it assumes that you don't have a real DMD installed, so it simply
+   omits any real DMD displays for the session.
+</p>
+<p>
+   The search order above is intended to make DMD setup simple but flexible.
+   Simple, in that if you've already set up your real DMD to work with
+   VPinMAME, then PinballY should automatically find it and use it, without
+   making you repeat the same setup work for PinballY.  Flexible, in that
+   you can also force PinballY to use a different copy of DmdDevice.dll
+   from the one used in VPinMAME, if you prefer, sipmly by copying
+   the alternative DmdDevice.dll into the PinballY folder.
+</p>
+<p>
+   If you do copy an alternative DLL to the PinballY folder, remember to also
+   copy any additional DLL files that it depends upon.  There might be
+   a second DLL for your specific hardware device that you have to include.
+</p>
+
+<h3>Where to get DmdDevice.dll</h3>
+
+<p>
+   There are several sources where you can get DmdDevice.dll:
+</p>
+<ul>
+   <li>If you installed Visual Pinball using its Windows Setup installer, you should
+   already have a copy of DmdDevice.dll in the VPinMAME folder under your main VP program folder.
+   This is the open-source <a target="_blank" href="https://github.com/freezy/dmd-extensions">dmd-extensions</a>
+   library, which works with all of the currently available commercial
+   DMD products as well as the DIY Pin2Dmd project.
+
+   <li>You can also download the dmd-extensions DLL directly from the
+   the <a target="_blank" href="https://github.com/freezy/dmd-extensions">GitHub project page</a>
+
+   <li>If you're using a commercial DMD product, it probably came with
+   its own copy of the DLL that only works with your device.
+</ul>
+
+<p>
+   My recommendation is to use the dmd-extensions DLL, unless for some
+   reason it doesn't work with your hardware, in which case you'll have
+   to use your hardware vendor's special version.  If dmd-extensions
+   works with your device, I recommend getting
+   the DLL directly from the GitHub project page rather than using the
+   bundled VP version, since the bundled VP copy is often a version
+   or two behind the latest official release.
+</p>
+
+<h3>64-bit versions</h2>
+<p>
+   If you're running the 64-bit version of PinballY, you <b>must</b> use a
+   64-bit version of DmdDevice.dll.
+</p>
+<p>
+   You'll probably also need to keep the 32-bit version of the DLL installed
+   on your system, since most of the other virtual pinball programs are
+   32-bit only, meaning they can only be used with a 32-bit DLL (for 
+   the same reasons that 64-bit PinballY can only use the 64-bit DLL).
+   Fortunately, there's an easy way to keep <b>both</b> the 32-bit and 64-bit
+   versions installed at the same time and in the same folder:
+</p>
+
+<ul>
+   <li>Leave your existing 32-bit DmdDevice.dll exactly where it is
+   <li>Download the 64-bit version of the DLL and rename it to <b>DmdDevice64.dll</b>
+   <li>You can now place the renamed 64-bit DLL in the same folder as the 32-bit DLL
+</ul>
+
+<p>
+   64-bit PinballY always looks for DmdDevice64.dll first in each folder it
+   searches (see the <a href="#folderSearchOrder">folder search order</a> above).
+   If DmdDevice64.dll isn't found, the program then looks for DmdDevice.dll.
+</p>
+   
+</body>
+</html>

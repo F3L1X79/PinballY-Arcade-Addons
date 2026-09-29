@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Installation</h1>
+
+<p>
+   PinballY tries to make installation mostly automatic, but there
+   are a few details that you might have to take care of manually,
+   involving interactions with other, third-party programs.
+   The PinballY Setup program is intentionally
+   designed <i>not</i> to make any changes to any other programs on
+   your system, since that's the source of so many problems in other
+   installers, but the trade-off is that you might have to perform a
+   few manual steps after installing.
+</p>
+<p>
+   PinballY requires Windows 7 or later.  It won't work on Vista or XP.
+</p>
+
+<h2>Microsoft DirectX</h2>
+<p>
+   If you're running Windows 7, it might be necessary to upgrade to the
+   latest Microsoft DirectX components.  If so, PinballY will display
+   an error box complaining about missing DirectX components when you
+   try to run it.  If you see such an error message, you probably really
+   do need to update DirectX, <i>even if you already have DirectX 11
+   installed</i>.  Microsoft released several updates to DirectX 11
+   after Windows 7 was released, so the "11" you have might
+   be one of the older ones.  Update instructions can be found on the
+   Microsoft website:
+</p>
+<div class="indented">
+   <a target="_blank" href="https://support.microsoft.com/en-gb/help/179113/how-to-install-the-latest-version-of-directx">https://support.microsoft.com/en-gb/help/179113/how-to-install-the-latest-version-of-directx</a>
+</div>
+   
+<p>
+   That shouldn't be necessary if you have Windows 8 or later,
+   since all necessary DirectX components
+   are built into the operating system.
+</p>
+
+
+<h2>PinVol</h2>
+<p>
+   If you're using <a target="_blank" href="http://mjrnet.org/pinscape/PinVol.html">PinVol</a>,
+   you should update to <b>version 1.2</b> (July 2018) or later.  PinVol added recognition
+   for PinballY in that version to make the two programs work better together.
+</p>
+
+<a name="DOF"></a>
+<h2>DOF (DirectOutput Framework)</h2>
+
+<p>
+   If you're using DOF for feedback devices in your pin cab, a few extra
+   steps might be required.
+</p>
+<ul>
+   <li>For the 64-bit version of PinballY, you'll need
+   one of my <a target="_blank" href="http://mjrnet.org/pinscape/dll-updates.html">DOF R3++</a>
+   releases dated <b>2018-09-04</b> or later.  Earlier versions of DOF
+   don't work with 64-bit programs.
+   
+   <li>Go to your Direct Output install folder, and open the Config folder.
+   Make a copy of the file <b>GlobalConfig_B2SServer.xml</b> and
+   name it <b>GlobalConfig_PinballY.xml</b>.
+   
+   <li>If you haven't refreshed your DOF config files from
+   <a target="_blank" href="http://configtool.vpuniverse.com/">DOF Config Tool</a>
+   lately, you should update them now.  Log in to the site in your
+   browser, and generate and download a fresh set of .ini files.
+   That will ensure that your DOF settings include the new effects for PinballY.
+   
+</ul>
+
+<h2>Real DMD</h2>
+<p>
+   If you're using a real DMD (dot matrix display) device, such as a PinDMD or Pin2DMD,
+   you might need to update your copy of DmdDevice.dll (the system component that
+   accesses the DMD device).
+</p>
+<p>
+   DmdDevice.dll is normally installed as part of your Visual Pinball setup.  If
+   you used the VP installer, it should have placed a copy of DmdDevice.dll in
+   VP's VPinMAME subfolder.  That might be an older version, though.  For best
+   results, make sure you're using one of the following:
+</p>
+<ul>
+   <li>An official dmd-extensions release, version <b>1.7.2 or later</b>,
+   available at
+   <a target="_blank" href="https://github.com/freezy/dmd-extensions/releases">github.com/freezy/dmd-extensions/releases</a>
+   
+   <li>One of my patched versions (1.7.1, 1.7.2), available at
+   <a target="_blank" href="https://github.com/mjrgh/dmd-extensions/releases">github.com/mjrgh/dmd-extensions/releases</a>
+</ul>
+
+<p>
+   Version 1.7.2 (even my patched 1.7.2) has a known bug that prevents it from
+   working with ROM colorizations, so some people are still using my 1.7.1
+   patch for the time being, until that bug is fixed in the official
+   release branch.
+</p>
+
+<p>
+   If you're not sure which version you have installed, open the file properties
+   (from the Windows desktop) for the file <b>DmdDevice.dll</b>, normally
+   found in your Visual Pinball\VPinMAME folder.  Check the Product
+   Version under the Details tab as shown at right.
+</p>
+
+<h2>Real DMD + 64-bit PinballY</h2>
+<p>
+   The 64-bit version of PinballY requires the 64-bit version of DmdDevice.dll.
+  It's safe to install both the 32-bit and 64-bit
+  versions of the DLL at the same time.  The trick is to make sure the 64-bit version is
+  named <b>DmdDevice64.dll</b>, so that it can coexist with the regular 32-bit
+  <b>DmdDevice.dll</b> without creating a file naming conflict.   
+</p>
+   
+
+<h2>Adobe Flash Player</h2>
+<p>
+   <b>No longer used!</b>  As of version 1.1 Beta 5, PinballY can render
+   SWF files directly, without Flash Player or any other external software.
+   In the past, PinballY required an Adobe Flash Player
+   plug-in to display Instruction Card files that were prepared in the SWF format.
+   Adobe made Flash Player obsolete at the beginning of 2021 and pushed an update
+   that disabled existing installations.  PinballY addressed this (as of 1.1 Beta 5)
+   by adding its own built-in mini-renderer that can display simple SWF files
+   without any plug-ins. If you were keeping Flash Player installed just
+   for PinballY's sake, you can delete it.
+</p>
+
+</body>
+</html>

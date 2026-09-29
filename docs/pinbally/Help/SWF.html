@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>SWF files (Shockwave Flash)</h1>
+
+<p>
+   <img src="SampleInstructionCard.png" style="float: right; margin: 0px 0px 1em 2em;">
+   For historical reasons, many of the scanned pinball apron instruction
+   cards that you can find for download on the Web are in SWF
+   (Shockwave Flash) format.
+</p>
+<p>
+   As of PinballY version 1.1 Beta 5,
+   PinballY can display simple SWF files natively, without
+   any plug-ins, using its own built-in renderer.  There's no
+   need to install Adobe Flash Player or any other third-party software.
+</p>
+
+<h2>Flash Player is no longer used</h2>
+<p>
+   In the past, PinballY relied upon the Adobe Flash Player plug-in
+   to display SWF files.  Adobe made Flash Player obsolete as
+   of the start of 2021, and pushed out an update that disabled
+   existing Flash Player installations, so PinballY can no longer
+   use it for SWF file rendering.
+</p>
+<p>
+   In version 1.1 Beta 5, PinballY addressed the end of Flash Player
+   by adding its own built-in SWF renderer.  I felt it was important
+   for PinballY to continue supporting SWF, since a large number
+   of HyperPin Media Packs contain instruction cards prepared in
+   the SWF format, and since it's relatively difficult to convert
+   existing SWF to other image file formats.  The built-in SWF
+   renderer is designed to make that possible without relying on
+   any third-party software.
+</p>
+<p>
+   If you installed Flash Player on your system in the past just
+   for the sake of PinballY, you can now remove it.  PinballY
+   no longer uses it.
+</p>
+
+
+<h2>Why SWF?</h2>
+<p>
+   Adobe considers SWF to be a dead format, so why does PinballY
+   support it?  It's simply because many of the instruction
+   cards available for download from the virtual pinball sites
+   are in SWF format.  It's convenient in PinballY to be able to
+   use those existing SWF files directly, especially since it's
+   not straightforward to convert them to other more modern
+   formats.
+</p>
+<p>
+   You might wonder how all of these SWF instruction cards
+   came to be in the first place.  SWF is known primarily as an
+   animation format, whereas the instruction cards are just
+   static graphics (and pretty simple graphics at that).
+   Why weren't
+   they originally created as PNGs or JPEGs?  There's actually a
+   good reason: SWF supports vector graphics, whereas
+   PNG and JPEG are purely raster (pixel) formats.  Vector formats
+   scale to any size without losing any fidelity, so SWF was chosen
+   as a sort of future-proofing, on the expectation that people
+   would want to display the cards at ever-larger pixel sizes
+   as monitor resolution increased.
+   Unfortunately, even though it was a great idea to use vector
+   graphics, the particular choice of file format almost ended up
+   defeating the whole purpose, since SWF files are nearly
+   useless now that the whole format is dead.  It hardly matters
+   that you can zoom them to any size if you can't display
+   them at all.  On the other hand, while Adobe has the power
+   to kill Flash Player, they can't erase the SWF format from existence.
+   They probably wish they had a time machine so they could, but
+   for now, that's beyond their powers.
+   The SWF format is documented well enough that I was able to
+   create a mini-renderer that can at least handle the
+   limited subset of SWF needed to display most of the extant
+   instruction cards.  So maybe it wasn't such a bad idea
+   to use SWF after all.  (And I'm actually happy that
+   PinballY is rid of Flash Player, because I never much
+   liked that approach for displaying these files.  The
+   integrated mini-renderer is lighter on resources, fits
+   into the rest of the program more cleanly, and eliminates
+   an annoying installation dependency.  I should have built
+   one when first writing PinballY, but Flash Player was too expedient
+   an option at the time.)
+</p>
+<p>
+   Just to be clear, PinballY doesn't require you to use SWF instruction
+   cards!  It's perfectly happy to use an ordinary image format
+   like PNG and JPEG whenever an instruction card is displayed.
+   The only reason we're talking about SWF is that it's still
+   the format of choice for a large number of extant HyperPin
+   Media Packs, so we wanted to let you use those without doing
+   any conversions.
+</p>
+
+</body>
+</html>

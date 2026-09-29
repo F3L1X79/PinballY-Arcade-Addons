@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>NativePointer Objects</h1>
+
+<p>
+   A NativePointer object represents a memory pointer value,
+   for use with external DLL functions through the
+   <a href="DllImport.html">DLL importer</a> system.  These
+   objects are automatically created by the system when
+   needed.
+</p>
+<p>
+   The reason we need our own "native pointer" type is
+   that pointers are used widely in the Windows APIs, and
+   in many other DLLs, but Javascript doesn't have any
+   concept of a pointer or memory address.  Pointers are
+   tied to the structure of physical memory, and while
+   Javascript does ultimately use memory just like any other
+   programming system, it hides all of the details of
+   how that memory is laid out from programs written
+   in the language.  If we want to be able to access 
+   external functions that work in terms of pointers,
+   we have to add something to Javascript that's capable
+   of representing a pointer value.  That's what
+   NativePointer does.
+</p>
+<p>
+   A NativePointer object isn't quite the same thing as
+   a C pointer.  A NativePointer is actually a Javascript object,
+   not some new datatype.  A NativePointer object
+   <i>contains</i> a native memory pointer value as a
+   hidden internal property.  As such, Javascript code can
+   work with a NativePointer object just like any other object,
+   and the DLL importer can access the contained memory
+   pointer value when calling between Javascript and
+   native code.
+</p>
+<p>
+   In addition to the memory address it contains, a
+   NativePointer stores the C datatype of the underlying
+   value.  This allows for type checking when using the
+   pointer and accessing the referenced memory, to help
+   avoid common errors arising from mixing pointers to
+   unlike types.
+</p>
+ 
+<h2>Creation</h2>
+
+<p>
+   You usually won't need to create NativePointer objects manually.
+   The DLL importer usually creates these for you automatically
+   when pointer values are passed to Javascript from
+   native DLL code.  For example, if you call a function that returns
+   a pointer value as its result, the importer creates a NativePointer
+   object to represent the returned pointer value.
+</p>
+<p>
+   You can also get a pointer to a native object using
+   NativeObject.addressOf(<i>nativeObject</i>).  See
+   <a href="NativeObject.html">NativeObject</a>.
+</p>
+<p>
+   If you have some unusual situation that requires creating
+   a pointer to a specific memory address that isn't already
+   in the form of a pointer, you can use NativePointer.fromNumber()
+   to create a pointer to a numeric address:
+</p>
+<div class="code">
+// create a pointer to physical memory address 0x12345678
+let p = NativePointer.fromNumber(0x12345678);
+</div>
+
+<p>
+   It should go without saying that this is inherently dangerous,
+   in the sense that it can crash the program if used improperly.
+   Use it only when you know what you're doing and have a good reason
+   for it.
+</p>
+
+
+<h2>Pointer conversions and type checking</h2>
+
+<p>
+   A pointer always points to some other type.  If you get a pointer
+   from the DLL importer, such as from the return value from a
+   native function, or an element of a native struct, the pointer
+   internally records the type of the source object.  The
+   NativePointer class uses this to ensure that you only use
+   the pointer value to reference the right kind of data.
+   In particular, you can only assign a NativePointer value
+   to a native data object if the pointer has a compatible type.
+</p>
+<div class="code">
+dllImport.define("struct Pointers { int *pInt; float *pFloat; }");
+let p = dllImport.create("struct Pointers");
+let i = dllImport.create("int");
+p.pInt = NativePointer.addressOf(i);   // valid - same pointer type
+p.pFloat = NativePointer.addressOf(i); // INVALID - different pointer type
+</div>
+
+<p>
+   This type checking is intended to avoid errors that could crash
+   the program.  If you pass any of these objects to native code in
+   a DLL, the native code won't have any of the information that
+   Javascript has about the value types; native code just sees
+   the raw bytes, and blindly assumes that the bytes are laid out
+   correctly according to the declared types.  Many types of
+   application crashes are caused by data values that got scrambled
+   because someone wasn't careful about using the right pointer
+   types.
+</p>
+<p>
+   However, native APIs sometimes force you to get into the details
+   of how the bytes are laid out, so in some cases it's necessary 
+   to forcibly convert one pointer type to another.  NativePointer
+   has a way to do this: the <i>pointer</i>.to() method.
+   This lets you do the equivalent of a C "type cast", forcing the
+   pointer to a different type.
+</p>
+<p>
+<div class="code">
+p.pFloat = NativePointer.addressOf(i).to("float*");
+</div>
+<p>
+   Needless to say, you should only use this type of forced
+   pointer conversion when the underlying memory really is laid
+   out in the way that you're asserting it to be.  Don't make
+   the newbie C programmer mistake of using a type cast to
+   "shut up the compiler" (that is, to override a system
+   safeguard without fully understand the reason for the
+   safeguard).  Be sure you know what you're doing
+   when you mess with the hardware bytes like this.
+</p>
+
+
+<h2>Methods and properties</h2>
+
+<p>
+   <b><i>pointer</i>.at:</b>  Returns a <a href="NativeObject.html">NativeObject</a>
+   that represents the native data that the physical memory pointer
+   within the NativePointer object <i>points to</i>.  This
+   new Javascript object represents the underlying native
+   data value just as though it had come from native code
+   directly, so you can access the underlying native value
+   by using the .value property or, in the case of a
+   struct type, the named elements of the struct.
+</p>
+<p>
+   <i>pointer</i>.at is analogous to the *<i>pointer</i> operator in C.
+</p>
+
+<div class="code">
+// let's define a function returning a pointer to a struct
+dllImport.define("struct foo { int a; int b; }");
+let { func } = dllImport.bind("MyDll.dll", "struct foo *func()");
+
+// calling the function returns a NativePointer pointing to a 'foo' struct
+let p = func();
+
+// 'at' gives us structure itself
+let s = p.at;
+
+// now we can access the struct's fields
+s.a = 123;
+s.b = 456;
+
+// we could also do this more directly
+p.at.a = 789;
+
+// with a pointer to a simple type, we use .value instead of a struct field
+let { func2 } = dllImport.bind("MyDll.dll", "int *func2()");
+p = func2();
+p.at.value = 7;
+</div>
+
+<p>
+   <b>NativePointer.fromNumber(<i>number</i>):</b>  Creates and
+   returns a new void* pointer that references the given memory
+   address.
+</p>
+<p>
+   A void* pointer serves as a wildcard pointer that you can
+   convert to any other pointer type.  You can't use a void*
+   pointer by itself to access the memory at the referenced
+   location, because "void" means that we haven't declared
+   what sort of data is at the referenced location.  A void
+   pointer is just a raw memory address.  What you <i>can</i>
+   do with a void* pointer is assign it freely to any other
+   pointer type:
+</p>
+<div class="code">
+// create a pointer to int, initially a null pointer (pointing nowhere)
+let pInt = dllImport.create("int*");
+
+// now point it to a location we got from some external source
+pInt.value = NativePointer.fromNumber(0x12345678);
+
+// read the value at that address
+let i = pInt.at.value;
+</div>
+<p>
+   Caution!  fromNumber() is obviously bare-metal programming
+   that bypasses the normal Javascript type checking and memory
+   management.  Even C programmers consider this sort of
+   thing bad form.  But there are some contexts
+   where you really need to do it, which is why we provide the
+   capability.  Some APIs make this sort of unstructured pointer
+   manipulation unavoidable.  But you should only use it when
+   you're really sure you know what you're doing, and you're
+   equally sure there isn't a more type-safe approach.
+</p>
+
+<p>
+   <b><i>pointer</i>.isNull:</b>  Returns true if the underlying
+   native pointer is a null pointer, false if not.  Null pointers
+   are often used in native code to represent special cases, such
+   as missing or default values, or unused "out" parameters.  They're
+   somewhat analogous to the Javascript <b>null</b> value semantically,
+   but of course a native null pointer has a specific native
+   representation.  A null pointer on current Windows platforms
+   <i>happens</i> to be represented as hardware address zero, so
+   toNumber() will return 0 for a null pointer, but it's bad practice
+   to assume this will always be true.  It could change on future
+   platforms, because the underlying representation of a pointer
+   is hardware-specific.  isNull() is the proper way
+   to test for a null pointer, since it uses the appropriate
+   hardware representation for the local machine.
+</p>
+
+<p>
+   <b><i>pointer</i>.to(<i>typeName</i>):</b> Returns a new
+   NativePointer representing the same pointer value, but with
+   its type signature changed to <i>typeName</i>.  This lets you
+   override the normal type checking that prevents mixing unlike
+   pointer types.  Needless to say, that's dangerous, so only
+   use it when (a) it's necessary and (b) you know what you're doing.
+</p>
+<div class="code">
+let pInt = dllImport.create("int*");
+let pFloat = dllImport.create("float*");
+
+pInt.value = pFloat.value;             // INVALID - incompatible type
+pInt.value = pFloat.value.to("int*");  // forcibly convert the type
+</div>
+<p>
+   If the new type name is a numeric type rather than a pointer
+   type, the bits making up the pointer's address are reinterpreted
+   as that numeric type, and a NativeObject is returned instead of
+   a NativePointer.
+</p>
+
+<p>
+   <b><i>pointer</i>.toArray(<i>numberOfElements</i>):</b> Returns
+   a new <a href="NativeObject.html">NativeObject</a> 
+   representing a native array of the same type that the pointer
+   refers to, at the same native memory location, with the given
+   number of elements.
+</p>
+<p>
+   This creates an array <b>view</b> of the same data that the
+   pointer refers to.  This routine <b>doesn't</b> allocate
+   new memory or increase the size of the memory area that
+   the pointer points to.  You should only use it when you
+   know that the memory area at the pointer <i>already</i>
+   has the number of elements that you're asking to view.
+</p>
+<p>
+   This method will seem bizarre if you're used to
+   Javascript.  But it's a very common thing to do in C.
+   In C, pointers and arrays are closely related.  A C
+   array is a block of contiguous items of the same type,
+   arranged in memory one after the other.  A variable
+   that contains an array of type <i>T</i> therefore has
+   exactly the same representation as a pointer to <i>T</i>.
+   For that reason, APIs based on C syntax
+   and C idioms will sometimes (often, in fact) use a
+   pointer parameter when they <i>really</i> mean an array.
+   In many cases, this
+   is used to refer to an array with a size that will vary
+   at run-time, meaning it can't be predicted when the
+   function interface is declared.  This function lets
+   you do the same kind of pointer/array aliasing in Javascript.
+   It's up to you to figure out how big the actual array
+   in memory is.  This is often indicated in another
+   parameter or another struct member, but there's no
+   particular convention for it, so you'll just have to
+   figure it out on a case-by-case basis when it arises.
+   If you're using a Windows API, the documentation
+   should explain how the array size can be determined.
+   Once you know the size of the live array data, this method lets
+   you exchange your pointer variable for an array
+   variable that lets you access all of the elements,
+   using the normal array[index] syntax.
+</p>
+<p>
+   The reverse case is also common
+   in C-style APIs, where you have an array object, and
+   you want to treat it as a pointer to the element type,
+   for storing in a struct or passing as a parameter.
+   You can use NativeObject.addressOf() for that, passing
+   in a NativeObject that represents a native array type.
+   That will return a pointer to the array's first element.
+</p>
+
+<p>
+   <b><i>pointer</i>.toArrayBuffer():</b>  Returns a Javascript
+   ArrayBuffer object that provides byte access to the native
+   memory that the pointer refers to.  The buffer is the same
+   size in bytes as the type that the pointer refers to.
+</p>
+
+<p>
+   <b><i>pointer</i>.toNumber():</b>  Returns the memory address
+   contained in the pointer as a Javascript number value.  Note
+   that on 64-bit Windows platforms, memory pointers are 64 bits
+   long, which is greater than the capacity of Javascript's
+   number type.  It's therefore possible that this conversion
+   won't be reversible.  It's better to use toUint64() if
+   you need a faithful representation of the address. 
+   However, regular Javascript numbers are somewhat easier
+   to work with, so you can use this routine for cases where
+   it's okay to lose precision, such as debugging or
+   informational displays.
+</p>
+
+<p>
+   <a name="toString"></a>
+   <b><i>pointer</i>.toString():</b>  Returns a string
+   representation of the pointer.
+</p>
+<ul>
+   <li>For any of the Windows string
+   types (LPSTR, LPWSTR, etc), the routine will attempt to
+   interpret the data at the pointer as a null-terminated C-style
+   string, and will return a Javascript string containing the
+   text.  For a single-byte string type (LPSTR, LPCSTR), the
+   bytes of the string will be taken to be in the local ANSI
+   character set, and will be converted to the corresponding
+   Unicode characters for the result string (since Javascript
+   uses Unicode internally for strings).
+
+   <li>For any other type, a generic representation is used,
+   showing the pointer's memory address as a hexadecimal number.
+</ul>
+
+<p>
+   <a name="toStringZ"></a>
+   <b><i>pointer</i>.toStringZ(<i>options</i>):</b>  Attempts
+   to interpret the native data at the pointer as a zero-terminated
+   string.  The pointer must refer to an 8-bit or 16-bit integer
+   type:  char, unsigned char, short, unsigned short, INT8, INT16,
+   etc.  An error is thrown if this is called for any other
+   pointer type.
+</p>
+<p>
+   The "Z" in toStringZ() is for "Zero-terminated".  The
+   convention used in the C language, and many Windows API
+   functions, is to represent a string as an array of
+   characters, with a "null" character marking the end
+   of the string.  A null character is a character with
+   ASCII or Unicode value zero.  (That's <i>not</i>
+   the character representing the digit '0' when printed.
+   The digit '0' has ASCII/Unicode value 48.
+   "Null" is a separate character with the code value 0.
+   It doesn't have any standard printed representation;
+   it's normally reserved for special purposes
+   like this.)
+</p>
+<p>
+   <i>options</i>, if present, is an object with any of the
+   properties listed below.  This lets you control some
+   details of how the character conversion is done.  Any of the
+   properties can be omitted to use the corresponding defaults,
+   and the entire <i>options</i> argument can be omitted to
+   use all default settings.
+</p>
+<ul>
+   <li><b><i>options.</i>codePage:</b> a number giving the
+      Windows code page to use for converting a single-byte
+      character string, or the string "utf8" to interpret
+      the bytes as UTF-8 characters.  The system's current
+      ANSI code page, which is determined by the Windows
+      localization control panel settings, is used by
+      default.  This is ignored if the pointer points to
+      a 16-bit integer type, since 16-bit characters are
+      always taken to be Unicode characters, which require
+      no character set conversion.
+      <p>
+         Standard Windows code pages:
+      </p>
+      <ul>
+         <li>437 - IBM PC US (DOS box code page)
+         <li>1250 = Latin 2 - Central European
+         <li>1251 = Cyrillic
+         <li>1252 = Latin 1 - Western European
+         <li>1253 = Greek
+         <li>1254 = Turkish
+         <li>1255 = Hebrew
+         <li>1256 = Arabic
+         <li>1257 = Baltic
+         <li>1258 = Vietnamese
+         <li>"utf8" = Unicode UTF-8
+      </ul>
+
+   <li><b><i>options.</i>maxLength:</b> a number giving
+      the maximum number of array elements to read from the
+      memory at the pointer.  The conversion proceeds until
+      a zero terminator character is reached or this maximum
+      length is reached, whichever comes first.
+      If this is omitted, the string continues until a zero
+      terminator is reached, with no a priori length limit.
+      <p>
+         Note that the length is specified in terms of array
+         elements in the source memory buffer, not characters
+         in the result string.  
+         Some single-byte encodings, including UTF8, can
+         use a varying number of bytes per character, so
+         the resulting string might be shorter (in
+         character count) than your maxLength value.
+      </p>
+
+   <li><b><i>options.</i>length:</b> a number giving
+      the exact length in array elements to read from the
+      memory at the pointer.  If a zero character code is
+      encountered before the length is reached, it's
+      included as a character in the Javascript string.
+      Javascript itself doesn't use zero terminators to
+      mark the ends of strings, so a zero character code
+      is perfectly valid within a Javascript string.
+      if this is omitted, the string continues up to
+      but not including the first zero terminator
+      character reached.
+      <p>
+         If both length and maxLength are supplied, and
+         maxLength is smaller, maxLength takes precedence.
+         (It is, after all, the <i>maximum</i> length.)
+      </p>
+</ul>
+
+<p>
+   <b><i>pointer</i>.toUint64():</b>  Returns a
+   <a href="Int64.html">Uint64</a> value representing the
+   memory address contained in the pointer.  This should be
+   used instead of toNumber() if you need a faithful
+   representation of the full address, since pointers on
+   64-bit Windows systems might not fit into the native
+   Javascript number type.
+</p>
+

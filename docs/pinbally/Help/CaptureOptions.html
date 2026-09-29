@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Media Capture Options</h1>
+
+<p>
+   PinballY lets you create the background media items for each of
+   your tables - images and videos of the playfield, backglass, and so on -
+   by launching the table in its player program and capturing live screen shots
+   (still or video) while it runs.  The Media Capture options dialog lets
+   you set up the details for these screen shot operations.  There's
+   a separate settings page, <a href="CaptureFfmpegOptions">Media
+   Capture Options - FFMPG</a>, where you can find the settings
+   related to the FFMPEG encoder program, which is what PinballY
+   uses to create the screen recordings and encode them into
+   standard video, audio, and image file formats.
+</p>
+<p>
+   Note that this dialog doesn't actually initiate a capture operation;
+   it's just for setting up the options.  To perform a media capture for
+   a game:
+</p>
+<ul>
+   <li>Close the options dialog and go back to the main game window
+   <li>Navigate to the game you want to capture media for
+   <li>Bring up the "System" menu by pressing the Service Enter button
+   <li>Select the "Game Setup" command
+   <li>Select the "Capture Images &amp; Video" command
+   <li>Choose the items you want to capture using the menu
+   <li>Select the "Begin Capture" command
+</ul>
+<h2>Option details</h2>
+<p>
+   <b>Wait for game to start:</b>  This setting lets you specify a
+   delay time before the first screen shot is captured, to give the
+   game a chance to initialize and enter its "attract mode".  This
+   delay time starts after the player program has loaded, so it
+   doesn't need to count the time required to start the player;
+   it only needs to count the time it takes the player to load
+   the table, plus the time the table itself takes to complete
+   its own startup.  Most tables have a "self test" that they
+   have to complete when first loaded, so you should take this
+   time into account.  The "right" value for this delay is
+   unpredictable, because it depends on so many different
+   factors: your system's performance, the player program's
+   load time, and the individual table's ROM program.  If you
+   find that the screen capture is kicking in too soon for
+   some tables, just increase this delay time setting a bit
+   and try again.
+</p>
+<p>
+   <b>Manual start:</b>  Check this box for a media type to
+   make this item wait for you to press a button before capture
+   starts for the item.  Normally (if the box isn't checked),
+   the capture process proceeds automatically through the list
+   of items to be captured, without requiring any action
+   on your part.  If you check the "Manual start" box for an
+   item, the capture process will stop when it reaches that
+   item and wait for you to press a button.  The capture
+   status window will display a prompt to tell you when
+   the capture process is paused like this.
+</p>
+<p>
+   Manual start mode is useful if you want to time an item
+   so that it starts at a particular point in the game's attract
+   mode display sequence.  For example, you might want a DMD video
+   capture to start at the beginning of the loop of messages that
+   the table's ROM displays on the DMD between games.
+</p>
+<p>
+   <b>Video and audio capture times:</b>  These settings let you set
+   the length of the videos captured for the various windows.  When
+   PinballY plays back the videos, they'll all be shown in loops,
+   so you effectively get "infinite" video coverage no matter how
+   long you make the individual videos.  But it's better to make
+   the loops long enough to cover at least one whole attract
+   mode loop for the game, so that the video isn't too
+   repetitive, and so that you don't see jumps back to the
+   beginning so often that they're distracting.
+</p>
+<p>
+   <b>Manual stop:</b>  For video and audio items, you can choose
+   "Manual stop" mode instead of the automatic timed capture
+   that's used by default.  In manual stop mode, the screen capture
+   doesn't stop when the time limit is reached; instead, it keeps
+   going indefinitely, until you manually intervene by pressing a
+   button.  You can use this in combination with Manual Start mode
+   to set the exact starting and stopping points of a captured
+   video loop.  The capture status window shows a prompt when
+   manual stop mode is in effect, letting you know that you have
+   to press a button to finish the capture.
+</p>
+
+<p>
+   <b>Manual start/stop keys:</b>  Select the button or button
+   combination you wish to use to manually stop or stop a
+   capture item.  Use these keys for any media items you set
+   to manual start or manual stop mode.
+</p>
+<p>
+   The default setting is to press both flipper buttons (or,
+   to be more precise, as we'll explain below, the buttons
+   assigned to the commands "Next" and "Previous").  This
+   is the default because we expect most people will want to
+   capture videos of tables running in attract mode
+   ("game over" mode), where the flipper buttons typically have
+   no effect on the table and thus make a good trigger.  If
+   you prefer to capture videos of your tables with the ball
+   already in play, you might want to change the trigger
+   button so that your capture videos don't all start with
+   the flippers in mid-flip.
+</p>
+<p>
+   This can be one of the following:
+</p>
+<ul>
+   <li>"Both flipper buttons" (the default), which means that
+   you simultaneously press the keys assigned to the Next and
+   Previous commands.  We refer to these as the flipper buttons
+   because we expect most pin cab users to map the Next and
+   Previous commands to the flipper buttons, but what we
+   really mean is that you should press whichever buttons
+   you actually have mapped to the Next and Previous commands.
+
+   <li>"Both Magna Save buttons", which means that you
+   simultaneously press the keys assigned to the Next Page
+   and Previous Page buttons.
+
+   <li>"Launch" (the button assigned to the Launch command)
+
+   <li>"Info" (the button assigned to the Information command)
+
+   <li>"Instructions" (the button assigned to the Instructions command)
+
+</ul>
+
+</ul>
+
+</body>
+</html>

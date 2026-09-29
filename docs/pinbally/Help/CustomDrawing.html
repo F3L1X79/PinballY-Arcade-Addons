@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Custom Drawing</h1>
+
+<p>
+   Some features in PinballY let you do your own custom drawing from
+   Javascript code.  This lets you create a custom mix of text and
+   graphics with the precise pixel layout you want.  Custom drawing
+   can be used in the following places:
+</p>
+<ul>
+   <li><a href="Popups.html">Popups</a> - message boxes displayed in
+   the main window.  To do custom drawing in a popup box, provide a
+   custom drawing function in the <b>draw()</b> property of the parameter
+   object when you call the <a href="MainWindowObject.html#showPopup">mainWindow.showPopup</a> method.
+   The system will call your custom drawing function as part of the
+   showPopup() processing.
+
+   <li><a href="DrawingLayer.html">Drawing layers</a> - custom graphics
+   layers that you can create in any of the windows through scripting code.
+   You can create a drawing layer via the
+   <a href="WindowObjects.html">createDrawingLayer()</a> method on any
+   of the system window objects (mainWindow, backglassWindow, etc).
+   That method returns an object representing the new drawing layer,
+   which you can draw custom graphics into using its
+   <a href="DrawingLayer.html#draw">draw()</a> method.
+   
+   <li><a href="MainWindowObject.html#launchOverlay">Launch overlays</a> -
+   the graphics layers shown during a game launch to provide status
+   updates on the progress of the launch.  The system lets you access
+   these layers through objects that you can get through the <b>fg</b>
+   and <b>bg</b> properties of
+   <a href="MainWindowObject.html#launchOverlay">mainWindow.launchOverlay</a>.
+   To display custom graphics in  these layers, call the
+   <a href="DrawingLayer.html#draw">draw()</a> method on the launch overlay
+   layer object, passing a reference to your custom drawing function as the argument.
+</ul>
+   
+<h2>Creating a custom drawing function</h2>
+
+<p>
+   The procedure to carry out custom drawing is a little indirect.  You
+   can't just execute drawing primitives like "draw a rectangle" from anywhere
+   in Javascript code.  Instead, all of your custom drawing code has to be contained
+   within a "custom drawing function".  This is just an ordinary Javascript
+   function, with the following signature:
+</p>
+<div class="code">
+function myDrawingFunction(dc)
+{
+    // carry out the drawing primitives here
+}
+</div>
+<p>
+   The name of the function is arbitrary - you can call it anything you
+   want, and you can create as many different drawing functions as you
+   want, all with different names.  What's important is that it's a
+   function that takes one parameter, which we've called <b>dc</b>
+   here for "drawing context".  The parameter name (like the function
+   name) is up to you, though - you can call it anything you want.
+</p>
+<p>
+   The <b>dc</b> or <b>drawing context</b> argument is a special system
+   object that the system creates and passes to your drawing function
+   when it invokes the function.  The drawing context contains the
+   system methods that let you carry out the actual graphic operations,
+   such as drawing rectangles, text, and images.  This object is only
+   valid for the duration of the function call to the drawing function,
+   so you shouldn't store it in a global variable or otherwise hang
+   onto it.  Treat it as a temporary object that exists for the
+   duration of the function call only.
+</p>
+
+<p>
+   The system calls this function after setting up the graphics
+   area for the drawing.  The argument to the function is a "drawing
+   context" object, which has methods that let you draw text and
+   graphics into the popup area.
+</p>
+
+<h2>Return value from the drawing function</h2>
+<p>
+   The return value from the drawing function depends on the context
+   where you're using the function:
+</p>
+<ul>
+   <li>For popups, the return value indicates the desired height in
+   pixels for the popup.  This is only needed if you create the
+   popup with an indeterminate height.  Using an indeterminate height
+   allows you to precisely size the overall popup according to the
+   actual contents, by measuring the sizes of the items you draw
+   within the box.
+
+   <li>For launch overlays (foreground or background layers), the
+   return value isn't used.
+</ul>
+
+<a name="drawingContext"></a>
+<h2>Drawing context</h2>
+<p>
+   When the system calls your custom drawing function, it passes
+   in an argument that we call the <b>drawing context</b>.  This
+   is a Javascript object that encapsulates the internal drawing
+   surface that all of the graphics primitives operate on.  The
+   drawing context provides a set of properties and methods that
+   you call to carry out drawing operations on the drawing surface.
+</p>
+<p>
+   The drawing surface contained in the context is, technically
+   speaking, an in-memory bitmap.  More intuitively, it's like
+   opening up a new, blank Photoshop image: it's a drawing
+   canvas with a certain pixel size, and you can use the
+   graphics primitives (the methods on the drawing context
+   object) to paint different sorts of graphics into the
+   blank image.
+</p>
+<p>
+   A drawing context is only valid within the custom drawing
+   function.  It stops being usable as soon as the drawing
+   function returns (so you shouldn't store it anywhere global,
+   to avoid accidentally using it in other scripts, where it
+   would cause errors if used).
+</p>
+
+
+<a name="colorParameters"></a>
+<h2>Color values</h2>
+<p>
+   Several of the drawing context methods take color values as
+   arguments.  You can specify these in several ways:
+</p>
+<ul>
+   <li>As a hex integer value, in the format 0xAARRGGBB, where
+   AA is the alpha (transparency) value, RR is the red component,
+   GG is the green component, and BB is the blue component.
+   Each can range from 00 to FF hex.  For example, 0xFF0000FF
+   represents opaque red (FF for the alpha component, or
+   completely opaque, and FF for the red component, for maximum
+   brightness in that component).
+   <p>
+      If you're familiar with HTML "#rrggbb" color values, these values
+      will look almost the same, with the differences that you replace
+      the "#" sign with the Javascript "hex" prefix <b>0x</b>, and you
+      always have to add an <b>FF</b> at the beginning to indicate that
+      the color is opaque.  For example, the HTML color code #123456 would
+      be written in your custom drawing code as <b>0xFF123456</b>.
+   </p>
+   <p>
+      In this format, if the alpha component (AA) is zero, the
+      <b>defaultAlpha</b> property of the drawing context is
+      automatically used.  See "Default alpha values" below.
+   </p>
+
+   <li>As an HTML-style "#RGB" color string.  For example, #00F
+   represents solid red.  For HTML-style colors, the opacity
+   is always fully opaque.
+
+   <li>As an HTML-style "#RRGGBB" color string.  The opacity with
+   this format is always fully opaque.
+
+   <li>As a pseudo-HTML string in the format "#AARRGGBB".  In
+   other words, the normal HTML color format, with the addition of
+   an alpha component (the "AA" portion), to let you specify an
+   alpha value explicitly.
+
+   <li>As the name of a configuration variable from the settings
+   file.  This lets you refer to color from the settings rather
+   than having to look it up as a separate step.
+</ul>
+
+<h2>Default alpha value</h2>
+<p>
+   For convenience, you don't have to specify the alpha value in each
+   individual color parameter.
+</p>
+<ul>
+   <li>For a color parameter passed as a hex integer value, if the
+   alpha component is zero, the default alpha value from the drawing
+   context is automatically used.
+
+   <li>For a color passed as an HTML-style "#RGB" or "#RRGGBB" string,
+   full opacity (alpha FF) is always used, regardless of the default
+   alpha in the drawing context.
+</ul>
+   
+</p>
+<p>
+   The default alpha value is given by the <b>defaultAlpha</b> property
+   of the drawing context.  You can read this property to get the current
+   default, and write it to set the new default that will apply to
+   subsequent method calls on the drawing context.
+</p>
+<p>
+   The system always sets <b>defaultAlpha</b> to 0xFF before calling your
+   custom drawing function.  (This happens on <b>every</b> call to a custom
+   drawing function, so you don't have to worry about whether other drawing
+   functions that were called before the current one might have changed it.)
+</p>
+<p>
+   Note that if you explicitly want to draw an area with an alpha of 00,
+   meaning fully transparent, you must set <b>defaultAlpha</b> to zero first.
+   Since the system always replaces a zero alpha in a color parameter with
+   the default alpha value, the only way to actually get a zero alpha in
+   the final color setting is to set the default to zero.  That will replace
+   the 00 alpha you specify in the color parameter with the 00 in the
+   <b>defaultAlpha</b> property, leaving the zero alpha unchanged for
+   the final coloring.
+</p>
+
+<h2>Text drawing</h2>
+<p>
+   The drawing context methods below include a number of primitives
+   related to drawing text strings.  Those are suitable for simple
+   text displays where you only need to display text in a single style
+   at a time; for simple tasks, they're easy to use and lightweight
+   in terms of performance impact.  However, they're not powerful
+   enough for more complex tasks where you want to display text
+   containing a mixture of styles, especially if the text needs
+   to be word-wrapped to display paragraphs or more complex
+   layouts.  For something like
+   that, you should instead use <a href="StyledText.html">StyledText</a>
+   or <a href="HtmlLayout.html">HtmlLayout</a>.  Those
+   classes provide higher-level interfaces for complex text
+   layout tasks, and they both readily inter-operate with the
+   primitives discussed below, so you can freely mix formatted text
+   layouts with the other graphics to build up composite displays.
+</p>
+
+
+<h2>Drawing context methods</h2>
+<p>
+   The drawing context has the following methods:
+</p>
+<ul>
+   <li><b>defaultAlpha:</b>  A property giving the default alpha component to
+   apply to any color parameter passed to fillRect(), frameRect(), or setTextColor()
+   that has a zero alpha.  For example, if <b>defaultAlpha</b> is 0x80 (meaning
+   50% transparency), and you pass color code 0x0000ff (blue) to fillRect(), the system
+   will notice the zero alpha in your color code and substitute the 0x80 default,
+   for a final rectangle fill color of 0x800000ff (blue with 50% transparency).
+   On the other hand, if you pass a color code of 0xFF0000FF, the alpha in the
+   color code is already non-zero, so the default is <b>not</b> applied and the
+   actual drawing color is the same as the value you specify.  Note that you
+   must set <b>defaultAlpha</b> to zero if you actually want to be able to draw
+   fully transparent areas, since any other value would override a zero alpha
+   you specify in a color parameter.  The system always sets this to 0xFF
+   (fully opaque) before <b>each</b> call to a custom drawing function, so
+   that all drawing is fully opaque by default.
+   
+   <li><b>drawImage(<i>file</i>, <i>x</i>, <i>y</i>, <i>width</i>, <i>height</i>):</b>
+   Draw an image.  <i>file</i> is the name of the image file (JPEG and PNG formats are supported);
+   this can be an absolute path, or can be a path relative to the PinballY program folder.
+   <i>x</i> and <i>y</i> give the top left coordinates in pixels within the popup drawing area.
+      
+   <li><a name="drawText"></a><b>drawText(<i>string</i>):</b>
+   Draws the text in <i>string</i>, starting at
+   the current text origin, within the current text area boundaries, using the
+   current text font and color.  This automatically moves the text origin so that
+   the next drawText() call will place its text after this text.  If <i>string</i>
+   ends in a newline character ("\n"), the text origin is advanced to the start
+   of the next "line", vertically just below the drawn text and at the left edge
+   of the text area.  If <i>string</i> doesn't end in a newline, the text origin
+   is positioned immediately to the right of the drawn text.
+   <p>
+      See <a href="HtmlLayout.html">HtmlLayout</a> and <a href="StyledText.html">StyledText</a>
+      for alternative ways of
+      drawing more complex layouts that include mixed styles.  drawText() can only
+      draw text in one font style at a time, so it's difficult to use if
+      you want to mix multiple font styles within a single text display. HtmlLayout
+      and StyledText provide higher-level interfaces for more complex layouts, and
+      they inter-operate with the rest of the Custom Drawing primitives, so they're
+      like "super" versions of drawText() that work on styled text instead of
+      plain text.
+   </p>
+   
+   <li><b>fillRect(<i>x</i>, <i>y</i>, <i>width</i>, <i>height</i>, <i>color</i>):</b>  Fills
+   a rectangle at the given position and dimensions with the given color.
+   The coordinates are in pixels relative to the popup drawing area,
+   and the dimensions are in pixels.  The color is given as an 0xAARRGGBB value,
+   where AA is the alpha transparency (00 for fully
+   transparent, FF for fully opaque), RR is the red component (00 to FF), GG is
+   the green component, and BB is the blue component. 
+   
+   <li><b>frameRect(<i>x</i>, <i>y</i>, <i>width</i>, <i>height</i>, <i>frameWidth</i>, <i>color</i>):</b>
+   Draws an outline of the given width in pixels around the specified rectangle.  The color
+   is an 0xAARRGGBB value with alpha transparency, as with fillRect().  The frame is drawn such that each frame line is
+   centered on the edge of the specified rectangle.  For example, if you draw a 4-pixel
+   frame, two of the pixels of each edge will be drawn outside the given rectangle
+   area and two of the pixels will be inside the rectangle area.
+   
+   <li><b>getImageSize(<i>filename</i>):</b>  Returns an object with properties {width: <i>integer</i>, height: <i>integer</i>}
+   giving the dimensions in pixels of the given image file.
+
+   <li><b>getSize():</b>  Returns an object with properties {width: <i>integer</i>, height: <i>integer</i>}
+   giving the dimensions in pixels of the popup drawing area.
+
+   <p>
+      For popup boxes, if you use the "dynamic layout height" option to figure the
+      popup's height based on its contents, the reported height will be invalid during
+      the first pass, because the whole point of the first pass is to calculate the
+      required height.  See <a href="Popups.html#dynamicLayoutHeight">Dynamic layout height</a>
+      in <a href="Popups.html">Popups</a>.
+   </p>
+   
+   <li><b>getTextOrigin():</b>  Returns an object with properties {x: <i>integer</i>, y: <i>integer</i>}
+   giving the current text origin, in pixel coordinates within the popup drawing
+   area.  This reflects the updates to the origin made by any drawText() calls, so
+   it's helpful when laying out text across multiple lines.  It's also useful for
+   calculating the layout height of a popup box dynamically; see
+   <a href="Popups.html#dynamicLayoutHeight">Dynamic layout height</a>
+   in <a href="Popups.html">Popups</a>.
+
+   <li><b>measureText(<i>string</i>):</b>  Figures the pixel area required to display
+   the given text.  Returns an object with properties {left: <i>integer</i>, top: <i>integer</i>,
+   right: <i>integer</i>, bottom: <i>integer</i>, width: <i>integer</i>, height: <i>integer</i>},
+   giving the pixel positions and dimensions of the bounding box the text would occupy
+   if drawn at the current text origin.  Note that this <i>doesn't</i> take into
+   account line wrapping; it measures the text as though it were going to be laid
+   out in an infinitely widely boundary area.
+   
+   <li><b>setFont(<i>name</i>, <i>pointSize</i>, <i>weight</i>, <i>italic</i>):</b>
+   Sets the text font to use for subsequent drawText() and measureText() calls.
+   Any of the arguments can be passed as <b>undefined</b> to keep the values
+   for the current font; for example, you can change just the point size, keeping
+   the current weight, by calling <tt>dc.setFont(undefined, 24)</tt>.  The
+   weight value is from 100 to 900; for most fonts, 400 is the normal weight
+   and 700 is bold.  (Some fonts have extra-light and extra-bold variations,
+   which is why the range is wider than 400-700, and some have semi-bold
+   variations between normal and bold.)
+   
+   <li><b>setFontFromPrefs(<i>str</i>):</b>  Sets the text font for subsequent
+   drawText() and measureText() calls to a font specified in the current
+   user settings.  <i>str</i> is a string giving the name of a configuration
+   variable that refers to a font.  This can be any variable name in the
+   settings, including custom variables.  The standard font option
+   variable names are:
+   <ul class="compact">
+      <li><b>MenuFont:</b> menu items
+      <li><b>PopupFont:</b> base font for popup dialogs and messages
+      <li><b>PopupTitleFont:</b> large font for title text in popups
+      <li><b>PopupSmallerFont:</b> smaller text font in popups
+      <li><b>PopupDetailFont:</b> even smaller detail text font in popups
+      <li><b>MediaDetailFont:</b> small font for line items in media file listings
+      <li><b>WheelFont:</b> game titles in the wheel when logos aren't available
+      <li><b>HighScoreFont:</b> font for the high score list in the info box
+      <li><b>InfoBoxTitleFont:</b> large font for title text in info box displays
+      <li><b>InfoBoxFont:</b> font for main text in info box displays
+      <li><b>InfoBoxDetailFont:</b> small font for fine print in info box displays
+      <li><b>StatusFont:</b> status line font
+      <li><b>CreditsFont:</b> credits message font
+   </ul>
+   <p>
+      Alternatively, you can use the string to specify the font information
+      using the format that's used in the font preference settings, without
+      actually looking in the setting for a variable.  The format is
+      "<i>pointSize</i> <i>weight/style</i> <i>family</i>", where
+      <i>pointSize</i> is an integer giving the size in points of the text;
+      <i>weight/style</i> is a combination of weight (100 to 900, or
+      one of the standard weight names: thin, extralight, light, normal,
+      medium, semibold, bold, ultrabold, black) and/or style ("regular"
+      or "italic"), with a slash "/" separating them if both are included;
+      and <i>family</i> is the font name as its appears in the Windows Fonts
+      control panel.  For example, "24 bold/italic Tahoma".
+   </p>
+
+   <li><b>setTextAlign(<i>horz</i>, <i>vert</i>):</b>  Sets the text alignment
+   for drawText().  Either parameter can be set to <b>undefined</b> to keep the
+   current alignment for that dimension.  For <i>horz</i>, -1 means left
+   alignment, 0 is center alignment, and 1 is right alignment.  For
+   <i>vert</i>, -1 is top alignment, 0 is vertically centered, and
+   1 is bottom alignment.  When drawing, the alignments are relative to the
+   current text area and the current text origin.
+   
+   <li><b>setTextArea(<i>x</i>, <i>y</i>, <i>width</i>, <i>height</i>):</b>
+   Sets the boundaries of the current text area.  The coordinates and dimensions
+   are specified in pixels relative to the popup drawing area.  The text
+   boundaries are used for word-wrapping and alignment in drawText().
+   
+   <li><b>setTextColor(<i>color</i>):</b>  Sets the color for text drawn
+   with drawText(), as an 0xAARRGGBB value, with alpha transparency (the AA
+   component), the same as in fillRect().
+   
+   <li><b>setTextOrigin(<i>x</i>, <i>y</i>):</b>  Sets the text origin
+   for the next call to drawText().  The coordinates are in pixels relative
+   to the popup drawing area.
+   
+</ul>
+
+</body>
+</html>

@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Troubleshooting Tips</h1>
+
+<p>
+   This section is a collection of miscellaneous troubleshooting ideas
+   to help diagnose and (hopefully) fix any problems you run into with PinballY.
+</p>
+
+<h2>General troubleshooting tips</h2>
+
+Later in this section, we have a list of the most common problems that
+people have run into in the past, with specific solutions, so check
+through the list to see if you can find your particular issue.
+However, if you can't find any information here on the specific issue
+you're having, here are a few basic troubleshooting techniques that
+can be applied to many sorts of problems.
+
+<h3>Try reverting to default settings</h3>
+
+<p>
+   A few people have run into problems that turned out to be due to
+   unintended settings changes.  So an easy first step in troubleshooting
+   is to reset everything to the default "factory settings", to see if
+   the problem goes away with default settings.  It's easy to do this,
+   and what's more, it's easy to do it <i>temporarily</i>, as a test, without
+   losing your custom settings.
+</p>
+<p>
+   Here's what makes it easy to revert to defaults (temporarily
+   or permanently):
+   All of PinballY's settings are stored in a file in the PinballY
+   install folder called <b>Settings.txt</b>.
+</p>
+<p>
+   If you want to discard all of your custom settings entirely, simply
+   delete Settings.txt.  This is an easy fix if you think you've
+   screwed up the settings beyond repair, or you just don't want to
+   bother going through everything individually to figure out what's
+   wrong.  If Settings.txt is missing when PinballY starts up, PinballY
+   will use factory defaults for all settings.
+</p>
+<p>
+   It's also easy to <i>temporarily</i> revert to default settings,
+   without losing all of your custom settings.  This lets you do a quick
+   test to see if a problem is related to a settings change, without
+   losing anything and without having to tediously set everything back
+   the way you like it.  Here's the procedure to temporarily revert
+   to defaults:
+</p>
+<ul>
+   <li>Quit out of PinballY (if it's running)
+   <li>Rename Settings.txt (in the PinballY install folder) to some other name, say <b>SavedSettings.txt</b>
+   <li>Run PinballY - since there's no Settings.txt file now, this session will be using entirely default settings,
+   so you can test to see if the problem you're trying to solve still occurs with factory settings
+   <li>Quit out of PinballY
+   <li>There will be a new Settings.txt file from the session you just ran, so simply delete it
+   <li>Rename the file you saved earlier (e.g., <b>SavedSettings.txt</b>) back to <b>Settings.txt</b>
+   <li>PinballY will go back to your custom settings the next time you run it
+</ul>
+
+<p>
+   All of PinballY's settings are stored in <b>Settings.txt</b>, so you don't
+   have to worry about hunting around for other files, registry settings, etc.
+   No one can quite believe that when I tell them, because we all know from
+   experience that Windows programs like to scatter their settings far and
+   wide and secret them away in hidden corners of the operating system.
+   But I was very careful in PinballY <i>not</i> to do that, because I know what
+   misery that causes in other programs.
+</p>
+<p>
+   By the way, <b>Settings.txt</b> is a simple text file in human-readable format,
+   so you can easily look at it with Notepad or any other plain-text editor.  It
+   even has lots of comments explaining the various settings variables.
+   Don't be afraid to open it in Notepad if you want to see what's inside.
+   It's a good way to see all of the settings in one view, rather than having to
+   page through the different sections of the options dialog.
+</p>
+   
+<h3>Check the log file</h3>
+
+<p>
+   Many problems can be solved (or at least diagnosed) by checking PinballY's log file.  Every
+   time you run PinballY, it creates a log file called <b>PinballY.log</b>
+   in its main program folder.  As the program runs, it writes a bunch
+   of miscellaneous status reports to the log file about what it's
+   trying to do.  It also records technical details here about any Windows system
+   errors that are encountered.  These sorts of technical details are usually omitted from on-screen
+   error messages, since most people find the Windows error codes to be largely
+   useless techno-gibberish, but once in a while it's helpful to know exactly
+   what's going wrong under the covers.  So the log file tries to keep track
+   of many of the technical details that are intentionally hidden from
+   the on-screen UI, just in case they're needed.
+</p>
+<p>
+   You've probably experienced situations where too much information
+   is as bad as no information at all.  Too much can create a haystack
+   that makes it hard to find the needle.  PinballY
+   therefore lets you control the amount of information reported in
+   the log file, via the <a href="LogFileOptions.html">Log File</a>
+   page in the settings.  That page lets you filter the type of
+   actions that PinballY reports in the log.  So before you consult
+   the log file, you should go to the Log File options page and
+   make sure that reporting is enabled for the subsystem that
+   you're trying to troubleshoot.  You might also want to turn off
+   logging for unrelated areas, to minimize the amount of other
+   reports that you have to sift through.
+</p>
+
+<h3>Asking for help/reporting bugs</h3>
+<p>
+   If you can't find what you're looking for in this Troubleshooting section
+   or elsewhere in the help files, try asking on the
+   <a href="https://www.vpforums.org/index.php?showforum=29">vpforums pin cab forum</a>.
+   I regularly monitor that group, so I should be able to help if someone
+   else doesn't get to your question first.
+</p>
+<p>
+   For any problem that's pretty clearly a program bug, you can raise
+   it on the forum, or you can file a bug report using the PinballY
+   <a href="https://github.com/mjrgh/PinballY/issues">issue tracker</a>
+   on GitHub.  Before filing a report, please read
+   <a href="https://github.com/mjrgh/PinballY/wiki/How-to-write-a-good-bug-report">How to write a good bug report</a>.
+   Following that advice will improve the chances that I can 
+   find and fix the problem.
+</p>
+
+<h2>Some common problems (and suggested solutions)</h2>
+
+The topics below list some of the more common problems that I've heard
+about, with suggestions for fixes or ways to gather more information.
+Scan through the list to see if you can find anything that sounds
+similar to any issues you're having.
+
+<h3>PinballY doesn't have keyboard focus at system startup</h3>
+
+<p>
+   Symptom: You've set up PinballY to start up automatically with
+   Windows, but each time you start up the system, PinballY ignores
+   key presses.  You have to click on the PinballY window to give
+   it keyboard focus.
+</p>
+<p>
+   Causes: If you're using Windows 10, this is probably due to a change
+   that Microsoft made in Task Scheduler (which PinballY uses for
+   startup launching).  Microsoft changed Task Scheduler in Win 10 so
+   that it doesn't give keyboard focus to the programs it launches.
+   This might sound like a bug, and it kind of is for our purposes, but
+   they did this intentionally because they consider auto-launch programs
+   to be "background" tasks that shouldn't interrupt the user.  It would have
+   been nice if they'd provided an option setting one way or the other
+   on that, but they didn't.
+</p>
+<p>
+   The only solution I've found to this issue is to make PinballY
+   force keyboard focus into its own window at some time after it
+   starts up.  In the Startup options dialog, try checking the box
+   for "Force keyboard focus to PinballY at startup".  If that
+   doesn't help, try increasing the delay time on the focus change.
+</p>
+<p>
+   If all else fails, you can try <b>pressing and holding</b> the
+   Exit Game button for about five seconds.  That's something you
+   can do at any time to bring PinballY to the foreground and give
+   it keyboard focus.
+</p>
+<p>
+   If you're using a pre-Windows 10 system, Task Scheduler normally
+   does give focus to newly launched tasks.  The most common thing that
+   can interfere with PinballY's keyboard input is another program
+   "stealing focus" by starting up shortly after PinballY does.
+   In most cases, Windows gives focus to the most recently launched program.
+   That means that if another program launches shortly after PinballY during your system
+   startup process, the other program usually gets focus, taking focus away from
+   PinballY.  To deal with this, you can try increasing the starting delay
+   parameter in the Startup options dialog ("After logon, pause
+   before starting PinballY").  The idea is to delay PinballY's launch
+   long enough that it's always the last thing launched during
+   system startup.
+</p>
+
+<h3>The PinballY backglass window is blocking the game's backglass</h3>
+<p>
+   Symptom: When you launch a game, from PinballY, PinballY's backglass
+   window shows up as a blank, black expanse that blocks out the game's
+   live backglass window.
+</p>
+<p>
+   I've heard from a couple of people who experienced this problem using
+   Visual Pinball in a "two-monitor" system, where they have both the backglass and DMD
+   windows placed on the same monitor (in other words, they don't have
+   a separate, third monitor for the DMD window).  In this situation,
+   the game's backglass window can sometimes end up behind the PinballY
+   backglass window, which shows nothing but a black background while
+   the game is running.
+</p>
+<p>
+   The reason that the PinballY backglass window is on the screen at
+   all while a game is playing is that it allows for a smoother visual
+   appearance during launch.  The PinballY backglass window
+   fills the screen until the game has placed its own window in front
+   of it, so you don't see a bunch of flashes and redraws switching
+   back and forth between PinballY, the Windows desktop, and the
+   new game.  This <i>usually</i> works out the right way, with the
+   game's live backglass in the foreground, because Windows by default
+   places a newly launched program's windows in front of any windows
+   that were already on the screen.  The problems come in when you
+   start messing with the options in VP to control the layering
+   between the game's DMD and backglass windows, which you might
+   have to do to get the game's DMD window to stay in front of
+   the game's backglass window.
+</p>
+<p>
+   There's a fairly simple solution that you can implement with a
+   little bit of Javascript, which is to hide the PinballY backglass
+   window whenever a game is running.  That should get it out of the
+   fight over who's in front that's raging among the VP windows,
+   hopefully letting VP sort out its window layering without the
+   PinballY windows getting in the way.  See
+   <a href="HideWindowExample.html">Hide a Window During Play</a>
+   in the <a href="Javascript.html">Javascript</a> &gt;
+   <a href="WorkedExamples.html">Worked Examples</a> section.
+</p>
+
+
+<h3>PinballY loses keyboard focus after finishing a game</h3>
+<p>
+   Symptom: PinballY stops responding to button or key presses until you
+   click the mouse in one of its windows.
+</p>
+<p>
+   As I'm sure you know, Windows has a concept called "keyboard focus", where
+   it only sends keyboard input to one application at a time.  The window
+   that receives keyboard input is, in most cases, simply the frontmost
+   window on the screen.  On a desktop PC, this is usually so intuitive
+   and automatic that you don't have to think about it; you just use the mouse to
+   click on the window you want to work with, and that window comes
+   to the front and gets control over the keyboard.  However, 
+   with a virtual pin cab, you probably don't want to
+   keep a mouse handy all the time.  That removes the usual way
+   that we manually change keyboard focus.  To make up for the
+   missing mouse, PinballY tries to manage focus as automatically
+   as it can, by switching focus between itself and the running game as games
+   start and exit.  But this isn't always perfect, because other programs
+   you're running might also be trying to manage focus in their own way,
+   so PinballY's idea of where focus should go at any given time might
+   sometimes get overruled by another program or by Windows itself.
+</p>
+<p>
+   If PinballY ever does seem to lose focus - that is, it doesn't respond to
+   key presses even though it's in the foreground - there's a way to
+   restore focus to PinballY without using the mouse.
+   Simply <b>press and hold</b> the EXIT GAME button for about
+   five seconds.  (The EXIT GAME button is usually the Escape key, but you can
+   change this in the settings under <a href="ButtonOptions.html">Buttons</a>.)
+   This should force PinballY back into the foreground and give it keyboard
+   focus again.
+</p>
+
+<h3>One of my monitors goes into sleep mode after PinballY starts</h3>
+<p>
+   Symptom: One of your monitors goes completely blank, shuts off, or goes into
+   power-save mode or sleep mode, a few second after PinballY starts up.
+</p>
+<p>
+   A couple of people have reported seeing this when they enable the option
+   "Force keyboard focus to PinballY at startup" (in the Startup section
+   of the settings dialog).  That option tries to force keyboard focus
+   into the PinballY window by sending a synthetic mouse click to the
+   main PinballY window a few seconds after the program starts.  My
+   best guess about why a mouse click could make a monitor go into
+   sleep mode is that there's an interaction with some other program
+   that happens to be installed on the affected systems.  There's
+   probably a hidden icon being created by that other program for "power
+   down this monitor" that the synthesized mouse click is hitting.
+   Until someone can identify the specific source of the problem, the
+   simple solution, if you're running into this, is to turn off the
+   "Force keyboard focus" option in the settings.
+</p>
+
+<h3>Errors messages about missing DirectX components</h3>
+<p>
+   If PinballY shows an error message about missing or outdated
+   DirectX components as soon as you launch the program, it usually means that
+   you have to update to the latest DirectX 11 from Microsoft.
+</p>
+<p>
+   I hear a lot of people say "But I already have DirectX 11!" when
+   they see these messages, which makes them waste a lot of time trying
+   to find some other solution besides updating DirectX.  But you should
+   take this message at face value.  You might need an update <i>even if you already have
+   DirectX11 installed</i>, because there are multiple versions of DirectX 11.
+   Windows 7 originally came with an early version of DX11 that's not compatible
+   with PinballY, so you're especially likely to run into this on a Windows 7
+   machine.  This really shouldn't be an issue on Windows 8 or 10, since those
+   systems come with a newer DX11 pre-installed, but I wouldn't rule it out;
+   core system components can sometimes get lost or damaged.
+</p>
+<p>
+   Update instructions for DirectX can be found on the Microsoft website:
+</p>
+<div class="indented">
+   <a target="_blank" href="https://support.microsoft.com/en-gb/help/179113/how-to-install-the-latest-version-of-directx">https://support.microsoft.com/en-gb/help/179113/how-to-install-the-latest-version-of-directx</a>
+</div>
+   
+
+<h3>Error message saying "MFPlat.DLL not found"</h3>
+
+<p>
+   This refers to a Windows system file that's normally installed by default
+   as part of the operating system on Windows 7 through 10, but which Microsoft
+   apparently changed to "optional" status in a newer Windows 10 update.
+   Some people have had it disappear from their system as a result.  You
+   can add it back by enabling the "Media Feature Pack" in the system settings:
+</p>
+<ul>
+   <li>Open the Windows system control panel
+   <li>Go to <b>Apps</b> &gt; <b>Apps and features</b> &gt; <b>Optional features</b> &gt; <b>Add a feature</b>
+   <li>Find <b>Media Feature Pack</b> in the list
+   <li>Click <b>Install</b>
+   <li>According to the Microsoft support site, you'll need to reboot the computer
+   to complete the installation, even though there might not be any message to this effect
+</ul>
+
+
+<h3>PinballY makes my video card fans run too loudly/too often</h3>
+
+<p>
+   By default, PinballY sends updates to the video card as fast as the
+   video card can process them.  If you have a high-performance video card,
+   the processing rate can be very fast indeed, perhaps hundreds of frames
+   per second.  On some video cards, the chips get very hot when processing
+   peak loads, which triggers the fans.
+</p>
+<p>
+   You can reduce the video card processing load by selecting the option <b>Lock frame rate to
+   monitor refresh rate</b> in the <a href="AudioVideoOptions.html">Audio/Video Options</a>
+   section in the settings.  This tells PinballY to reduce its video frame rate to match the
+   physical refresh rate of your monitors.  If you have a high-end video card, that should
+   reduce the load on the card to a fraction of its full power, which should reduce the
+   amount of heat it generates.
+</p>
+
+<h3>I'm running PinballY in Admin mode (and something's not working)</h3>
+
+<p>
+  Simple answer: Don't run PinballY in Admin mode.  If you're running
+  PinballY by right-clicking the program file and selecting "Run as Administrator",
+  or you check the box for "Run as Administrator" in the .EXE file's property
+  page, it's likely to cause a bunch of problems.  The program
+  isn't designed to run that way.  There <i>is</i> a way to run in Admin mode if necessary, but
+  not by using "Run as Administrator".  See the help section on
+  <a href="AdminMode.html">Administrator Mode</a> for the right approach.
+</p>
+<p>
+   But more importantly, you ideally shouldn't need to use Admin
+   Mode at all with PinballY.  There are two main reasons that most
+   pin cab people who use Admin Mode think they need to use Admin Mode:
+</p>
+<ul>
+   <li>Because you read some advice on the forums or in a tutorial saying
+   you should run everything all the time in Admin mode.
+   People mean well when they say that, but it's generally bad advice.
+   See <a href="http://mjrnet.org/pinscape/BuildGuideV2/BuildGuide.php?sid=software#AdminModeAllTheTime">
+         Should I use "Run as Administrator" for everything?</a> in the
+      <a href=http://mjrnet.org/pinscape/BuildGuideV2/">Pinscape Build Guide</a>
+      for an explanation.
+   </p>
+   <p>
+      If this kind of blanket advice is the only reason you're using Admin Mode
+      with PinballY (rather than as an attempt to solve a specific problem), you should
+      try undoing it and running everything without Admin Mode instead.  If you
+      set up universal Admin Mode a long time ago because it seemed to solve
+      some other problem, you might revisit the whole issue, because it might
+      never have been the right solution in the first place - and even if it was,
+      that might have been fixed by a more recent update to some of your other software.
+      "You have to use Admin Mode with this" is usually a bug, and many of the pin
+      cab programs that formerly had that as part of their instructions have since been
+      fixed.
+   </p>
+
+   <li>Because some program you're launching from PinballY can only run in Admin Mode.  In
+   the first place, I'd consider such a requirement in the other program
+   to be a bug; see the Build Guide section linked above for why.
+   But if you really can't live without the other program, and it really
+   can't run any other way, go read the help section on <a href="AdminMode.html">Administrator Mode</a>.
+   PinballY has the capability to launch Admin mode programs <i>without running
+   in Admin Mode itself</i>.  Take advantage of that to give the other program
+   its Admin Mode launch, without forcing everything else to run in Admin Mode too.
+</ul>
+
+
+<h3>PinballY isn't finding my tables</h3>
+
+<p>
+   The easiest way to figure out what's wrong when PinballY can't
+   find some or all of your tables is to look at the <b>log file</b>.
+   PinballY creates this file each time it runs, writing lots of extra
+   technical details on what it's doing during the session.  This can
+   usually pinpoint what's going wrong during table searches.
+</p>
+<p>
+   To get detailed information on table searches:
+</p>
+<ul>
+   <li>Open the Settings dialog
+   <li>Go to the Log File page
+   <li>Make sure that the checkbox <b>Player system setup and table searches</b> is ticked
+   <li>Save settings and exit the program
+   <li>Run PinballY again, let it finish starting up, then exit
+   <li>Use Notepad to view the file <b>PinballY.log</b> (in your main PinballY install folder)
+</ul>
+<p>
+   Now read through the file for an account of where the program is
+   looking for table files and what it's finding.
+</p>
+<p>
+   For a detailed explanation of exactly where PinballY looks for tables,
+   see <a href="DirectoryInfo.html">Files &amp; Folders</a>.
+</p>
+
+
+<h3>I just downloaded a new game, but PinballY didn't add it to my XML files</h3>
+
+<p>
+   Symptom: You just downloaded a new Visual Pinball ".vpx" table file
+   (or a new game for whatever other system), and you installed it in the
+   correct Tables folder, but the new game isn't appearing anywhere
+   in your XML files.
+</p>
+<p>
+   Explanation: That's as it should be.  The XML files don't get updated
+   just because you download a new .vpx file.  You have to tell PinballY
+   to add new tables to the XML files.
+</p>
+<p>
+   Does that mean you have to open the XML files in Notepad and patch them up by hand?
+   Absolutely not!  It just means that you have to
+   use the <b>Edit Game Details</b> command from the Game Setup menu.
+   What the XML files actually contain is the bibliographic information
+   for your tables (title, manufacturer, year of release, etc).
+   PinballY can't guess at that stuff based on a .vpx file, so to get
+   that information into the XML files, you have to enter the
+   information yourself.  The Edit Game Details dialog lets you do
+   that without having to open (or even know about) the XML files.
+</p>
+<p>
+   If you download and install a new table file (.vpx or whatever else),
+   the new game should immediately appear as an "unconfigured" table in the game
+   wheel, using the <b>filename</b> as the title.  For example, if
+   you download <b>Funhouse_v2_mod_07.vpx</b> and install it in
+   your Visual Pinball Tables folder, you should see a new wheel
+   entry with the title <b>Funhouse_v2_mod_08</b> when you return
+   to PinballY.  (There's no need to exit out of PinballY and
+   restart it; PinballY scans for new files whenever you
+   bring it back to the foreground after using other Windows
+   applications.)  Here's how to add the XML entry for a new game:
+</p>
+<ul>
+   <li>Navigate to the new game in the wheel (again, look for
+   the game by its <b>filename</b>)
+
+   <li>Bring up the main menu
+
+   <li>Select <b>Game Setup</b>
+
+   <li>Select <b>Edit Game Details</b>
+</ul>
+</p>
+<p>
+   If you can't find the new game anywhere in the wheel, after the table
+   file is properly installed in the appropriate Tables folder, check
+   the option setting for <b>Hide unconfigured games</b> in the
+   <b>Game Wheel</b> section of the settings dialog.  If you checked
+   that box, PinballY hides games that don't already have XML
+   entries.  You can un-check that box to restore the display of
+   games without XML entries.  Or, if you prefer not to show
+   unconfigured tables routinely, you can selectively show <i>just</i> the
+   current set of unconfigured tables using a game wheel filter.
+   Bring up the <a href="OperatorMenu.html">Operator Menu</a>
+   and select <b>Show Unconfigured Games</b>.  If you still can't
+   find the new game, try the steps under the topic
+   <b>PinballY isn't finding my tables</b> above.
+</p>
+<p>
+   See <a href="UsageTips.html#UnconfiguredTableFiles">Unconfigured Table Files</a>
+   in the <a href="UsageTips.html">Usage Tips</a> section for more
+   on viewing and setting up new games.
+</p>
+
+
+<h3>PinballY isn't showing media for my tables</h3>
+
+<p>
+   As with table search problems, the log file is the first place
+   to look when PinballY isn't finding your media files.
+   If you're having trouble getting most or all of your media
+   files displayed, try this:
+</p>
+<ul>
+   <li>Open the Settings dialog
+   <li>Go to the Log File page
+   <li>Make sure that the checkbox <b>Media file searches</b> is ticked
+   <li>Save settings
+   <li>Navigate to a game that isn't showing the right media files
+   <li>Exit the program
+   <li>Use Notepad to view the file <b>PinballY.log</b> (in your main PinballY install folder)
+</ul>
+<p>
+   Now read through the file for an account of where the program is
+   looking for media files and what it's finding.
+</p>
+<p>
+   If you're having trouble with media for just a few specific games,
+   try the built-in media list viewer:
+</p>
+<ul>
+   <li>Navigate to the game in question
+   <li>Bring up the Operator Menu (press the digit zero "0" key, or whichever other key you've assigned)
+   <li>Select <b>Show Media Files</b>
+</ul>
+<p>
+   That will display details on where the system is looking for
+   the game's media, the filename(s) it's looking for, and the
+   full names and locations for all of the matching files.  You
+   can check the file names that PinballY expects to find against
+   the actual files on your disk, and likewise check the directory
+   paths to make sure that you're placing the files where the
+   program is looking for them.
+</p>
+<p>
+   For a detailed explanation of exactly where PinballY looks for media,
+   see <a href="DirectoryInfo.html">Files &amp; Folders</a>.
+</p>
+
+<h3>I have a VP X game, but I can only select VP 9 in the Edit Game Details box (not VP X!)</h3>
+
+<p>
+   Here's the situation:
+</p>
+<ul>
+   <li>You have some Visual Pinball X  (.vpx) game
+   <li>When you try to launch the game, PinballY keeps launching VP 9 instead of VP X
+   <li>When you go the Edit Game Details box to try to fix this,
+   the "System" drop list only lets you choose from Visual Pinball 9 or Visual Pinball 9.2,
+   <b>not</b> VP X as it should be
+</ul>
+<p>
+   The most likely problem (and solution) is described in the topic
+   <b>PinballY thinks my Visual Pinball X tables are Visual Pinball 9 tables</b>
+   below.
+</p>
+
+<h3>PinballY thinks my Visual Pinball <u>X</u> tables are Visual Pinball <u>9</u> tables</h3>
+
+<p>
+   Did you just migrate to PinballY from PinballX?  And did you tell
+   PinballY to use the table databases and media files you already
+   had set up for PinballX?  If so, here's what's probably wrong:
+</p>
+<div class="indented">
+   Your PinballX table database folder for Visual PinballX was probably
+   called <b>Visual Pinball</b>
+</div>
+<p>
+   That might seem perfectly natural, especially if you only started
+   playing around with VP games recently and mostly use VP X rather
+   than the older VP 9 games.  But PinballY doesn't know that!
+   PinballY is set up by default to work with <i>both</i> VP 9 and
+   VP X.  In fact, it's set up to work with multiple versions of
+   VP 9, since there are several sub-versions of VP 9 whose games
+   require those specific versions (like VP 9.2 and "PhysMod 5").
+   To deal with this, the default settings in PinballY (the ones you
+   get when you first install the program) use the following database
+   folder names:
+</p>
+<ul>
+   <li>Visual Pinball 9's database folder is <b>Visual Pinball</b>
+   <li>Visual Pinball 9.2's database folder is <b>Visual Pinball 9.2</b>
+   <li>Visual Pinball X's database folder is <b>Visual Pinball X</b>
+</ul>
+
+<p>
+   See the problem?  When PinballY loads the system databases, it
+   looks at the settings, and it sees that the database folder for
+   Visual Pinball 9 is called <b>Visual Pinball</b>, so it looks
+   at the tables listed there.  But you put all of your VP X games
+   there when you were using PinballX.  So PinballY thinks that
+   your VP X games are actually VP 9 games.
+      
+<p>
+   Here's the solution:
+</p>
+<ul>
+   <li>Open the Settings dialog
+   <li>Open the system page for Visual Pinball 9
+   <li>Change the database folder to <b>Visual Pinball 9</b>
+   <li>Open the system page for Visual Pinball X
+   <li>Change the database folder to <b>Visual Pinball</b>
+</ul>
+<p>
+   PinballY should now be in sync with your old PinballX settings.  There's
+   no need to move or rename any of the PinballX files.  It's just a matter
+   of changing the PinballY settings to match the folder names you're using.
+</p>
+
+<h3>Capture doesn't work with "Exclusive Full Screen Mode"</h3>
+
+<p>
+   Symptom: When you run a media capture, you just get a blank image or
+   video, or just error messages, if Visual Pinball (or any other game system)
+   is running in Exclusive Full Screen Mode.
+</p>
+<p>
+   Cause: "Exclusive" mode is so named because it means that the game has
+   exclusive access to the video display; in other words, the game is the
+   only program that's allowed to access the display while the game is
+   in the foreground.  This prevents PinballY from being able to access
+   the display to take a screen shot of the game in action.
+</p>
+<p>
+   Solution: Disable Exclusive Full Screen mode in the Visual Pinball
+   options (or whichever other game player program you're capturing from)
+   before running the capture.
+</p>
+<p>
+   That's a bit inconvenient, I know!  But you can automate it with a
+   little Javascript.  See <a href="CaptureCommandLineChangeExample.html">Custom Game Command Line for Media Capture</a>
+   for the script code needed for Visual Pinball.  The Javascript code required
+   actually is pretty simple, so you should be able to adapt it for any other
+   game system as well if needed.
+</p>
+
+
+<h3>The capture screen location is wrong for the playfield/backglass/other window</h3>
+
+<p>
+   Symptom: When you use the "Capture" command to capture screenshots
+   or videos of the running game, the captured videos grab the wrong
+   screen area for one or more windows.  They're not aligned with
+   the actual Visual Pinball screen area, so they're clipped or
+   just the wrong areas entirely.
+</p>
+<p>
+   Cause: PinballY doesn't actually know where Visual Pinball's
+   windows are.  It doesn't want to make assumptions about which
+   windows go where, because that would require too much hard-coded
+   knowledge of particular pinball programs, which would make the
+   Capture feature less likely to work for new pinball programs
+   (and would also make it likely to stop working every time
+   the other programs are updated).
+</p>
+<p>
+   Instead, PinballY simply captures the screen area of the <b>PinballY windows</b>.
+   The assumption is that you have a particular monitor area that you <i>always</i>
+   use for your playfield, <i>in every player program</i>.  And another area
+   that you <i>always</i> use for your backglass, etc.  And since you're
+   using those areas in every pinball program, PinballY assumes you're going
+   to use those exact same areas for the corresponding PinballY windows.
+   That makes the Capture feature's choice of screen locations super easy:
+</p>
+<ul>
+   <li>The playfield video/image is captured from the screen area of the <b>PinballY playfield window</b>
+   <li>The backglass video/image is captured from the screen area of the <b>PinballY backglass window</b>
+   <li>And so on
+</ul>
+<p>
+   So if PinballY is capturing the wrong area for a particular player program,
+   simply move the corresponding PinballY window into the right area before
+   you run the capture.
+</p>
+<p>
+   We chose this scheme because the fixed screen locations are practically
+   a given on a pin cab.  A pin cab usually has a whole monitor devoted
+   to each function, so naturally you're going to set up both PinballY
+   and every pinball program the same way, to use those exact monitors.
+   This is less of a given for desktop users, though, so you might have
+   to juggle windows around a little bit during capture if you don't
+   always run every pinball program with the exact same window layout.
+</p>
+
+<h3>When I run capture, the backglass/topper/other window isn't offered as an option</h3>
+
+<p>
+   Symptom: When you run the capture command, the list of available media
+   types doesn't include the backglass window, or doesn't include some
+   other window you want to include.
+</p>
+<p>
+   Cause: The window you want to capture <b>must be open in PinballY</b> when
+   you run the capture command.  As described in the topic above about screen locations
+   for capture, PinballY figures the screen location for each window type
+   according to the corresponding <b>PinballY window's</b> location.
+   In order to have a location at all, the window has to be open!
+   So the list of available media types only includes the windows
+   that you currently have open.
+</p>
+<p>
+   To bring up any of the windows that you've hidden, simply right-click
+   in the main PinballY playfield window, and select <b>Show Backglass</b>
+   or <b>Show Topper</b>, etc., for whichever window you want to bring back
+   from the invisible.  Once you make the window visible, it should show
+   up in the list of available media types the next time you run a
+   capture.
+</p>
+
+<h3>PinballY won't save/restore my backglass window position</h3>
+
+<p>
+   Symptom:  Each time you start a new PinballY session, the backglass
+   window (or one of the other windows) opens at the wrong position.
+   It won't stay where you left it at the end of the last session.
+</p>
+<p>
+   The usual cause of this problem is that you're running some other
+   program that's changing the screen resolution or monitor layout
+   between sessions.  For example, you might be using a program that
+   rotates your monitors or changes the desktop resolution each time
+   you run certain programs, or you might be using a remote access
+   program that changes the screen resolution during remote sessions.
+</p>
+<p>
+   The reason PinballY moves the windows around in these situations
+   is that it normally checks all of the restored window positions to
+   make sure they're in the visible desktop area at program startup.
+   If any windows are outside of the visible area, PinballY moves
+   them into the visible area.  This is intended to help with rare
+   cases where you <i>permanently</i> change the desktop layout at
+   the hardware level, such as when you add a new monitor or replace an
+   old one with a new one of a different size.  But it can be a nuisance
+   if you <i>routinely</i> change your desktop layout at the software level,
+   such as if you need to change the layout every time you run a
+   certain application.
+</p>
+<p>
+   The easy fix that usually works is to tell PinballY to stop
+   forcing windows into the visible desktop area at the start of
+   every session:
+</p>
+<ul>
+   <li>Open the Settings dialog in PinballY
+   <li>Go to the <b>Startup</b> section
+   <li><b>Un-check</b> the box <b>Make sure all windows are positioned within the
+      visible desktop area</b>
+</ul>
+
+<p>
+   If that still doesn't help, and the window that's not "sticking"
+   to its proper position is in full-screen mode, there's a second
+   option setting that might help:
+</p>
+<ul>
+   <li>Open the Settings dialog in PinballY
+   <li>Go to the <b>Startup</b> section
+   <li>Under <b>Restore full-screen windows based on:</b>, select
+   <b>Exact saved pixel coordinates</b>
+</ul>
+<p>
+   If none of that helps, try turning on logging for <b>Window layout setup</b>
+   (in the Log File section of the settings dialog).  The next time you
+   encounter the problem with a saved window position, exit PinballY and
+   check the log file for details about window layout setup.  That should
+   explain why PinballY is making the decisions it's making about window
+   placement, which hopefully will suggest an appropriate solution.
+</p>
+
+
+<h3>The Windows taskbar pops up every time a VP X game finishes</h3>
+
+<p>Try this:</p>
+<ul>
+   <li>Open the VP X editor (without a game running)
+   <li>Select <b>Video/Graphics Options</b> from the Preferences menu
+   <li><b>Un-check</b> the box for <b>Disable Desktop Composition</b>
+   (in the Fullscreen section)
+</ul>
+<p>
+   What's going on: this checkbox makes VP ask Windows to turn off
+   the feature inside Windows that lets it draw partially transparent
+   transparent window frames and elements.  VP lets you disable this
+   because it can slow down your video card slightly; if you have a
+   low-end video card, enabling composition might slow down your
+   video card enough to cause hiccups in VP, so disabling it might
+   make VP run more smoothly.  The snag is that Windows automatically
+   turns composition back on when VP exits, which has the annoying side
+   effect of redrawing everything on the screen, which has the
+   even more annoying side effect of bringing the taskbar to the
+   foreground even if it was hidden. 
+</p>
+<p>
+   PinballY can't do much about that, since Windows has ultimate
+   control over what's on the screen.  This is one of those situations
+   where Windows asserts its authority and overrides whatever the
+   applications would prefer.  So the best way to avoid the problem
+   is to tell VP not to make this change in the first place, so that Windows
+   doesn't feel the need to redo the whole screen layout every time VP exits.
+</p>
+<p>
+   If you really need to disable desktop composition in VP for
+   performance reasons, you might have to live with the momentary
+   taskbar appearance after game sessions.  It's possible to disable
+   desktop composition across your whole system in the Windows settings, so that
+   Windows isn't constantly switching it on and off when switching
+   programs - but doing so might prevent PinballY from displaying
+   its graphics properly.  So I don't recommend that.
+</p>
+<p>
+   Note that if you have Windows 8 or later, you should definitely
+   un-check the option in VP, because it doesn't do anything anyway!
+   Microsoft made desktop composition a core feature of the operating
+   system starting in Windows 8, so applications can't disable it
+   even if they try.  VP will still try if you un-check the box,
+   so un-checking the box might still cause the glitchy taskbar redrawing,
+   but it won't have any performance benefit since Windows will otherwise
+   ignore the attempt.
+</p>
+
+<h3>Menu text (or other text) is missing</h3>
+<p>
+   Symptom: When you press the Start button to bring up a menu, you
+   just see a blank gray box with a blue highlight line, with no text
+   anywhere to be seen.  The game titles shown in the game wheel (for
+   games without icon images) might also be missing.
+</p>
+<p>
+   If you're on Windows 7, this can be caused by some system video option
+   settings.  Check the following two settings:
+</p>
+<ul>
+   <li>Open the Windows control panel, go to the <b>Appearance and Personalization</b>
+   section, and click "change the theme".  Make sure that one of the <b>Aero themes</b>
+   is selected.
+
+   <li>Still in the Windows control panel, go to the <b>Performance Information and Tools</b> section.
+   Select the <b>Visual Effects</b> tab.
+   <ul>
+      <li>If you're already using <b>Custom</b>, make sure <b>Smooth edges of screen fonts</b> is checked
+
+      <li>If you've selected <b>Adjust to best performance</b>, switch to <b>Custom</b>,
+      and check the checkbox labeled <b>Smooth edges of screen fonts</b>
+   </ul>
+</ul>
+
+<p>
+   The key appears to be that font-smoothing option.  Apparently the Windows drawing
+   functions that PinballY uses to construct the menu and other text graphics depend
+   upon it.
+</p>
+<p>
+   Note that some Windows 7 users intentionally disable the Aero theme because
+   of its performance impact, especially if you have a lower-end video card.
+   If you need to disable Aero for acceptable game performance, you might be able
+   to disable it on a game-by-game basis, instead of disabling it for the whole system.
+   Look in the game player programs you're using for option settings.  For example,
+   Visual Pinball has an option in its <b>Video/Graphics Options</b> preference
+   dialog called <b>Enable desktop composition</b>, which you can un-check to
+   disable the Aero elements that affect performance.
+</p>
+
+<h3>PinballY keeps taking control a few seconds after I launch a game</h3>
+<p>
+   Symptom: Shortly after launching a game, PinballY brings itself
+   back to the foreground, as though the game had already ended, even though
+   the game only just started!
+</p>
+<p>
+   If the game in question is a commercial game based on Steam, or
+   it's Future Pinball with BAM, or it uses any other "two-stage" launch
+   procedure, the problem might be in the option settings for the system.
+</p>
+<p>
+   Steam games and FP BAM games use a complicated launch procedure where
+   you launch one .EXE program, which then launches another .EXE program
+   that represents the actual game.  For example, with Pinball FX3, PinballY
+   has to launch the main Steam program file <b>Steam.exe</b> to get the ball rolling (as it
+   were), but Steam.exe then launches a separate program called <b>Pinball FX2.exe</b>.
+   Once that's going, Steam.exe quits and lets Pinball FX2.exe take over.
+</p>
+<p>
+   The thing that makes this tricky for PinballY is that PinballY wants to
+   monitor the launched game program, so that it can figure out when the
+   game is over and it's appropriate for PinballY to take over the screen
+   again.  With Steam (and BAM, and probably a few others), the program
+   that PinballY actually launches exits after a few seconds, even though
+   the game is still running in that second process.  But PinballY doesn't
+   just magically know that!  When it sees the directly launched program
+   quit, it thinks that the game is over and it's time to take over again.
+</p>
+<p>
+   The solution is to explicitly tell PinballY about this
+   two-stage launch setup.  PinballY has a special provision for this,
+   because it's pretty common, but PinballY can't figure it out on its
+   own; you have to tell it.  The way to do this is to go to the settings
+   dialog, navigate to the page for the system in question, and enter
+   the "final" program name in the <b>Process Name</b> box.  The "final"
+   program is the one that's actually left running after the multi-stage
+   launch has finished and the game is really going.
+</p>
+<p>
+   The name you enter in the Process Name box must <b>not</b> include
+   a path, but must <b>include</b> the .EXE suffix.  For Pinball FX3,
+   for example, you'd enter <b>Pinball FX3.exe</b>.
+</p>
+<p>
+   See <a href="SystemOptions.html#ProcessNameBox">Process Name</a>
+   in <a href="SystemOptions.html">System Options</a> for more on
+   this topic.
+</p>
+
+<a name="PinUpIsntExiting"></a>
+<h3>PinUp Player doesn't close when a game ends (or won't restart after the first game)</h3>
+
+<p>
+   Symptom: You're using PinUp Player to show topper videos while running
+   a game with VP.  When you exit the game, the PinUp window doesn't close.
+   Or the window might appear to close, but it won't open again if you
+   launch a new game that uses PinUp.
+</p>
+<p>
+   Cause:  The basic problem here is that when you run a VP game that
+   uses PinUp, you're actually running multiple Windows programs: VP
+   itself, and PinUp.  PinUp is a separate program that runs
+   alongside VP.  As such, the PinUp process has a lifetime of its own
+   that's separate from VP's, and most importantly, Windows doesn't have
+   any way to automatically end the PinUp process when VP ends, because
+   Windows doesn't know the two are related.  So PinUp can be left running
+   after VP exits.
+</p>
+<p>
+   So how is PinUp supposed to know when to exit?   It has to be <i>told</i> when to exit.
+   What's <i>supposed</i> to happen is that the VP table script sends a
+   command to PinUp just before VP exits to tell PinUp to exit at the same time.
+   This requires special scripting code in every VP table that uses PinUp.
+   This arrangement is a bit fragile, unfortunately, because there are
+   a couple of obvious things that can go wrong.  One is that some table
+   authors don't know that they're supposed to add that special scripting code
+   to tell PinUp to exit.  Another is that VP sometimes crashes, and
+   VP scripts sometimes crash, in which case the special scripting code
+   might never run.
+</p>
+<p>
+   Solution:
+   There are two ways to deal with this.  The "right" way is to make
+   sure that every VP game that uses PinUp has that special scripting
+   code that tells PinUp when it's time to quit.  This is unfortunately
+   something that has to be done <i>separately in every individual game</i>,
+   so the only way to be sure it's there in every game is to look at each
+   game's script.  Ideally, table authors would include the necessary
+   scripting before they release their games, so everything would "just work",
+   but if you've ever used a computer, you know that it's kind of a miracle
+   when anything "just works".  A lot of
+   table authors don't realize that they're supposed to add the shutdown
+   code, or they just forget.  At any rate, if you want to do things
+   the right way, you should go through your PinUp-enabled VP games
+   and check.
+</p>
+<p>
+   To access a VP game's script, open the game in the VP editor, and
+   select <b>View</b> &gt; <b>Script</b> from the menu in VP X, or <b>Edit</b> &gt; <b>Script</b>
+   in VP 9.  What you need to do is scan each script for the special
+   shutdown code; if you find it, great, and if you don't, you should
+   add it.  The required code looks <b>approximately</b> like this:
+</p>
+<div class="code">
+Sub Table1_Exit()
+    Controller.Stop
+End Sub
+</div>
+<p>
+   The exact code needed can be slightly different, because some tables use
+   a different name for the table object.  Notice how the Sub (subroutine) is
+   named <b>Table1_Exit</b>.  That's the name in most VP tables - but not all!
+   The <b>Table1</b> prefix corresponds to the name the script uses for the
+   table itself, which is <b>Table1</b> by default, but which some table authors
+   change to something else, usually the title of the game.  For example, the
+   name might end up being <b>Funhouse_Exit</b> instead.  How do you find out?
+   The best way is to search the script for a similar <b>Sub xxx_Init()</b> section.
+   Virtually all VP tables include an Init subroutine.  The Exit subroutine should
+   be named with the same prefix you find on the Init subroutine.  So if you find
+   a <b>Table1_Init()</b> subroutine, the exit routine should be called
+   <b>Table1_Exit()</b>; but if you find <b>Funhouse_Init()</b>, you have to
+   name the exit routine <b>Funhouse_Exit()</b>.  Just use the same prefix
+   you find for the Init subroutine, whatever that prefix is.
+</p>
+<p>
+   The other thing you have to be careful about is to make sure that there's not
+   already a <b>Sub xxx_Exit()</b> section in the script.  If there is, you can't
+   add another one - there can be only one.  If you find one, check it
+   to see if it already has the line saying <b>Controller.Stop</b>; if it's there,
+   you're all set, and if not, you should add that one line somewhere between
+   the <b>Sub</b> and <b>End Sub</b> lines.  I'd add it at the very end,
+   just before the <b>End Sub</b>.  If the <b>Sub xxx_Exit()</b>
+   section isn't there at all,
+   you can just add the whole new Sub as shown above, with the proviso that you
+   might have to change the name to match the <b>Sub xxx_Init()</b> section you find in the
+   table script.
+</p>
+<p>
+   I said there were two ways to deal with the PinUp-not-exiting problem.
+   The "right" way is to fix each table's script as shown above.  You should
+   definitely do that for all of your tables.  But there's also a heavy-handed
+   kludge that you can add if you still have problems even after making sure
+   all of your tables have the <b>Controller.Stop</b> instructions, and
+   that's to make PinballY seek and destroy the PinUp process after each
+   VP game exits.  That's not as good as fixing the VP table scripts as
+   described above, because killing any process on Windows can have bad
+   side effects that can destabilize the whole Windows system.  So definitely try fixing the
+   table scripts first.  But some people have found they also need the
+   kill-process approach.  That might be because they have something
+   else wrong with their setups, or they didn't get the Controller.Stop
+   scripts right, so there might be a deeper problem they
+   should be fixing instead.  Be that as it may, the "kill process" approach
+   is a solution of last resort if you can't get it working the other way.
+</p>
+<p>
+   If you want to add the "kill process" instructions on the PinballY side,
+   here's the procedure:
+</p>
+<ul>
+   <li>Create a file called ClosePinUp.bat in your PinballY folder, containing
+   the following:
+   <div class="code" style="margin-bottom: 0px;">
+taskkill /f /im PinUpPlayer.exe
+taskkill /im PinUpDisplay.exe</div>
+
+   <li>Go to the PinballY Settings dialog, and select the page for VP
+
+   <li>In the "Run After 1" box, enter:
+   <div class="code" style="margin-bottom: 0px;">
+[HIDE] cmd /c [PINBALLY]\ClosePinUp.bat</div>
+
+   <li>If you have multiple versions of VP installed, and you use PinUp
+   games with each VP version, repeat the procedure for the different
+   VP versions in your PinballY settings
+</ul>
+
+<p>
+   I should point out that the author of PinUp doesn't think you should use
+   the "kill process" approach at all.  He thinks that you should always rely
+   on the VP table scripts.  I agree to a point; you should definitely make
+   sure the scripts are doing their job.  The problem is that VP scripts aren't
+   always perfectly reliable, so relying entirely on the scripts is a bit too
+   fragile for some people's taste.  So you might still want to include the
+   "kill process" instructions as a catch-all, to make absolutely sure that
+   PinUp gets terminated even when VP crashes, the table script crashes, etc.
+   I see the "kill process" scripts as a failsafe - a fallback - to catch those crash cases.
+   They'll have no effect as long as PinUp actually does exit properly, since
+   the PinUp processes that the scripts look for will already be gone;
+   but they'll be there to clean things up in any
+   unusual cases where PinUp does for whatever reason get left stuck open.
+</p>
+   
+   
+
+</body>
+</html>

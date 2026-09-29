@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Mouse Options</h1>
+
+<p>
+   <b>Hide the mouse pointer by moving it off-screen:</b>
+   This option instructs PinballY to hide the mouse cursor when
+   necessary by moving it to a selected screen location, rather than
+   by making the cursor itself invisible.  By default (when this
+   option isn't selected), an invisible cursor is used when the
+   mouse needs to be hidden.
+</p>
+<p>
+   Whether or not this option is chosen, PinballY always tries
+   to hide the mouse cursor at program startup and whenever you
+   press a keyboard key or joystick button.  The idea is to
+   make the experience more arcade-like by hiding the fact
+   that there's a mouse.  Most of the time, you can operate
+   the program entirely with buttons/keys, so the mouse isn't
+   needed and is just an unwanted reminder that this is a
+   Windows PC and not a real pinball machine.
+</p>
+<p>
+   The reason this option exists is that the cursor can't be
+   made invisible on some systems (for reasons not understood).
+   This provides an alternative for such systems, by moving
+   the mouse to a corner of the screen where it won't be visible,
+   or at least won't be in the way.
+</p>
+<p>
+   You probably won't want to select this option unless the mouse
+   refuses to disappear with the default mode.  This option can be
+   a little annoying if you don't need it, since the mouse will keep
+   jumping off to the far corner of the screen, forcing you to drag
+   it back every time you want to use it.
+</p>
+<p>
+   To use this option, check the box, and select the coordinates
+   where you want to park the mouse in lieu of hiding it.  You
+   can type the coordinates (in screen pixels) into the box
+   directly, or more simply, use the "Drag here to select"
+   button: <b>press and hold</b> the left mouse button,
+   move the mouse to the desired parking position (while still
+   holding the button), and release the button when you get
+   to the desired location.
+</p>
+   
+
+</body>
+</html>

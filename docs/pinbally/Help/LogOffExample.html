@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Log Off (or Sleep) at Shutdown</h1>
+
+<p>
+   One of the standard commands in PinballY is "Power Off" (you can
+   find this command on the Exit menu), which sends a request to Windows
+   to shut down the system and turn off power.  This makes it possible
+   to go through a complete session (power on, play some games, power off)
+   without having to interact with the Windows desktop at any point, which
+   is nice for pin cab users, since it helps maintain the illusion that the
+   pin cab is an arcade machine instead of a Windows PC.
+</p>
+<p>
+   But Windows being Windows, everyone has a unique system configuration
+   with unique operating requirements, and this can sometimes affect the
+   process you have to use to shut down your system.  Indeed, someone
+   raised this very point on the forums, reporting that his system is set
+   up in such a way that he has to explicitly log off before shutting down.
+   That makes the "Power Off" command problematic for him.
+</p>
+<p>
+   Using Javascript, we can change the way the "Power Off" command works
+   to make it friendlier to this special situation.  In particular, we can
+   change it so that the "Power Off" command doesn't actually execute the
+   shutdown, but simply logs off the current user.  That will leave it
+   to the user to press the power button to complete the shutdown after
+   the logoff succeeds.
+</p>
+<p>
+   Another variation that some people prefer is to put the machine
+   into "Sleep" mode rather than doing a full shutdown.  Sleep mode is
+   a low-power mode that keeps all running programs in memory, which
+   makes it much faster to restart the system next time you want to use
+   it.  I pretty much always use sleep mode for my main desktop system
+   instead of powering completely off, so I can easily imagine why
+   you'd want to do the same thing with your pin cab.  We'll
+   cover how to change the normal full power off to sleep mode later
+   in this section.
+</p>
+   
+
+<h2>Logging off</h2>
+<p>
+   If you've read through any of the other examples, you've seen the
+   basic approach for changing the way any command works: we write
+   a listener for the <a href="CommandEvent.html"><b>command</b> event</a>,
+   check the ID in the event object to see if it's the
+   <a href="Commands.html#commandIDs">Command ID</a> we want to
+   override, and if so, carry out our special function.  We can then
+   call the <a href="Event.html#preventDefault">preventDefault()</a>
+   method of the event object to cancel the normal system processing.
+</p>
+<p>
+   We should mention a couple of special features of our custom "log off"
+   command before we get into the coding.
+</p>
+<p>
+   The first is that the standard Power Off command has a two-step
+   process in the UI.  The nominal "Power Off" command
+   (<a href="Commands.html#PowerOff">command.PowerOff</a>) doesn't
+   actually carry out the operation: its only function is to bring
+   up a second menu to confirm that the user really wants to shut
+   down.  I like the two-step process because I really hate it when
+   I accidentally trigger this command - it takes so long to get the
+   system back up and running if you do.  So the <i>real</i> shutdown
+   action doesn't happen on the initial PowerOff command, but on
+   the confirming command from the second menu,
+   <a href="Commands.html#PowerOffConfirm">command.PowerOffConfirm</a>.
+   That's the command we actually need to override in our event handler.
+</p>
+<p>
+   The second special feature of this customization is that we'll
+   need to talk directly to Windows to carry out the logoff command.
+   PinballY doesn't have its own built-in version of this command
+   that we can call, so we have to negotiate this directly through
+   the Windows APIs.  Fortunately, PinballY's Javascript has a
+   provision for this, which you can read all about in
+   <a href="DllImport.html">Calling Native DLLs</a>.  Even
+   more fortunately, the Windows API for logging off is very
+   simple, just a single function call.
+</p>
+<p>
+   One extra step that we should perform is to save any changes to
+   the settings before initiating the Windows log-off.  When we call
+   the Windows log-off API, Windows immediately starts shutting down
+   the current user session, which requires terminating all of the
+   programs running under that session.  Windows is supposed to give
+   running programs a chance to shut down cleanly, but in practice
+   this doesn't always happen; Windows sometimes just kills all of
+   the running programs without any warning.  In PinballY's case,
+   this can be problematic, because it can interrupt PinballY
+   in the middle of writing out any unsaved changes to the settings
+   file.  That can leave the settings file only partially written
+   to disk, which is obviously bad.  To avoid this risk, we can
+   explicitly save settings updates before we even start the
+   log-off procedure.  That'll write everything safely to disk,
+   and then mark the in-memory copy as in sync with the disk copy,
+   so that PinballY won't try to write it again at program exit.
+</p>
+<p>
+   Here's the full code to override the Power Off command and make
+   it perform a Log Off command instead.
+</p>
+
+<div class="code">
+// To log off, we just need to call ExitWindowsEx(0, 0) in the Windows API.
+// Bind the DLL function so that we can call it from Javascript when the
+// time arrives.
+let User32 = dllImport.bind("User32.dll", `
+    BOOL WINAPI ExitWindowsEx(UINT uFlags, DWORD dwReason);
+`);
+
+// Take over the Power Off Confirm command
+mainWindow.on("command", ev => {
+    if (ev.id == command.PowerOffConfirm) {
+        // save any settings changes
+        if (optionSettings.isDirty())
+            optionSettings.save();
+
+        // log off Windows
+        const EWX_LOGOFF = 0;
+        const SHTDN_REASON_FLAG_PLANNED = 0x80000000;
+        User32.ExitWindowsEx(EWX_LOGOFF, SHTDN_REASON_FLAG_PLANNED);
+
+        // quit out of PinballY
+        mainWindow.doCommand(command.Quit);
+
+        // skip the normal Power Off command processing
+        ev.preventDefault();
+    }
+});
+</div>
+
+<p>
+   Note that we only took over the execution of the command, without
+   changing the way the command appears on menus in the UI.  If you
+   wanted to fix up the menu labels to match the new
+   function, that's fairly straightforward.  We just have to listen
+   for the <a href="MenuEvent.html"><b>menuopen</b> event</a> and
+   make some edits:
+</p>
+<ul>
+   <li>Change the label of the command.PowerOff command item, if any, to "Log Off"
+
+   <li>Change the label of the command.PowerOffConfirm item, if any,j to "Confirm Log Off"
+</ul>
+
+
+<div class="code">
+mainWindow.on("menuopen", ev => {
+    ev.items.forEach(ele => {
+        if (ele.cmd == command.PowerOff) {
+            ele.title = "Log Off";
+            ev.menuUpdated = true;
+        }
+        else if (ele.cmd == command.PowerOffConfirm) {
+            ele.title = "Confirm Log Off";
+            ev.menuUpdated = true;
+        }
+    });
+});
+</div>
+
+
+<h2>Sleep mode</h2>
+
+<p>
+   If you want to change the normal full power-off command to a Sleep
+   command instead, to put the system in its low-power standby mode,
+   the procedure is similar.  We still have to intercept the normal
+   power-off command, but this time we'll replace it with a different
+   Windows API call to put the system into standby mode.
+</p>
+<p>
+   The standby mode API itself is quite simple, but there's a snag,
+   which is that it requires the calling program to enable a special
+   "privilege" mode before the API can be used (although see the note below).
+   The sequence of calls to enable the privilege is rather verbose, but it's also
+   pretty rote, so I'll just give you the code below without going
+   into a lot of explanation.  If you're interested in the internals,
+   the code has some comments explaining the step-by-step actions.
+</p>
+<p>
+   Note: the Microsoft documentation for the standby mode API says
+   that the shutdown privilege is required to use the API, but in
+   practice this doesn't always seem to be the case; some people have
+   found that it works on their machines without all of the extra
+   code to enable the privilege.  We're including the extra code
+   anyway, to conform to the documentation.
+</p>
+<div class="code">
+// Windows API bindings required for the standby and privilege functions
+let Advapi32 = dllImport.bind("Advapi32.dll", `
+    typedef struct _LUID {
+        DWORD LowPart;
+        DWORD HighPart;
+    } LUID, *PLUID;
+    typedef struct _LUID_AND_ATTRIBUTES {
+        LUID Luid;
+        DWORD Attributes;
+    } LUID_AND_ATTRIBUTES, *PLUID_AND_ATTRIBUTES;
+    typedef struct _TOKEN_PRIVILEGES {
+        DWORD PrivilegeCount;
+        LUID_AND_ATTRIBUTES Privileges[1];
+    } TOKEN_PRIVILEGES, *PTOKEN_PRIVILEGES;    
+    BOOL WINAPI OpenThreadToken(HANDLE ThreadHandler, DWORD DesiredAccess, BOOL OpenAsSelf, HANDLE *pToken);
+    BOOL WINAPI ImpersonateSelf(int ImpersonationLevel);
+    BOOL WINAPI LookupPrivilegeValueA(LPCSTR lpSystemName, LPCSTR lpName, PLUID lpLuid);
+    BOOL WINAPI AdjustTokenPrivileges(HANDLE TokenHandle, BOOL DisableAllPrivileges, PTOKEN_PRIVILEGES NewState,
+        DWORD BufferLength, PTOKEN_PRIVILEGES PreviousState, DWORD *ReturnLength);
+`);
+let Kernel32 = dllImport.bind("Kernel32.dll", `
+    HANDLE WINAPI GetCurrentThread();
+`);
+let PowrProf = dllImport.bind("PowrProf.dll", `
+    BOOL WINAPI SetSuspendState(BOOL bHibernate, BOOL bForce, BOOL bWakeupEventsDisabled);
+`);
+
+// Enable the shutdown privilege on the current thread.  This privilege
+// is required for Windows APIs that shut down the system (ExitWindowsEx,
+// SetSuspendState).
+//
+// Returns null on success, or a string with an error message if something
+// went wrong.  Sample usage:
+//
+//   let err = enableShutdownPrivilege();
+//   if (err)
+//      alert("Error trying to enable shutdown: " + err);
+//   else
+//      proceed_with_shutdown...
+//
+function enableShutdownPrivilege()
+{
+    // The first step is to open the thread security token with ADJUST
+    // PRIVILEGES access mode.  This will let us enable privileges for
+    // the thread.
+    const TOKEN_QUERY = 0x0008;
+    const TOKEN_ADJUST_PRIVILEGES = 0x0020;
+    const SecurityImpersonation = 2;
+    let hToken = new HANDLE();
+    if (!Advapi32.OpenThreadToken(Kernel32.GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, 1, hToken)) 
+    {
+        // The initial attempt to retrieve the thread token failed.  In some
+        // cases, it's necessary to "impersonate self" first, which sets the
+        // thread security token to match the containing process's token.  So
+        // try setting the impersonation mode, and then try the open again.
+        if (!Advapi32.ImpersonateSelf(SecurityImpersonation))
+            return "ImpersonateSelf failed";
+        if (!Advapi32.OpenThreadToken(Kernel32.GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, 1, hToken))
+            return "OpenThreadToken failed, even after ImpersonateSelf";
+    }
+
+    // Now we need to get the current internal ID for the privilege
+    // we're seeking (the "shutdown" privilege), which we do by
+    // looking up the value for the well-known name of the priv.
+    let luid = dllImport.create("LUID");
+    if (!Advapi32.LookupPrivilegeValueA(null, "SeShutdownPrivilege", luid))
+        return "LookupPrivilegeValue(SeShutdownPrivilege) failed";
+
+    // We're set to actually request the privilege, which we do by
+    // adjusting the token's privilege to enable the one we want.
+    const SE_PRIVILEGE_ENABLED = 0x00000002;
+    let tp = dllImport.create("TOKEN_PRIVILEGES");
+    tp.PrivilegeCount = 1;
+    tp.Privileges[0].Luid.LowPart = luid.LowPart;
+    tp.Privileges[0].Luid.HighPart = luid.HighPart;
+    tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
+    if (!Advapi32.AdjustTokenPrivileges(hToken, 0, tp, dllImport.sizeof("TOKEN_PRIVILEGES"), null, null))
+        return "AdjustTokenPrivileges failed";
+
+    // Success!  Return null to indicate that no errors occurred.
+    return null;
+}
+
+// Set Windows standby power mode (also known as Sleep mode)
+function setStandbyPowerMode()
+{
+    // Enable system shutdown privileges, so that we can set sleep mode.
+    // If any errors occur enabling the privilege, note the error message,
+    // but proceed anyway.  The "sleep" call seems to work on some systems
+    // with or without the privilege being enabled, so it might not matter
+    // on the local system if the attempt to set the privilege fails.
+    let err = enableShutdownPrivilege();
+    
+    // Set sleep mode
+    if (!PowrProf.SetSuspendState(0, 0, 0)) {
+        // SetSuspendState() returned false, which means it failed.  If
+        // an error occurred attempting to enable the shutdown privilege,
+        // that's probably why the sleep attempt failed, so show the
+        // error message from the privilege attempt.  Otherwise, just
+        // say that the sleep failed.
+        if (err)
+            mainWindow.message("Unable to set the necessary system "
+                + "privilege status for the Sleep operation ("
+                + err + ")", "error");
+        else
+            mainWindow.message("The Sleep operation failed.", "error");
+    }
+
+    // Note that if SetSuspendState() succeeded, the system will go
+    // into sleep mode *inside the API call*.  All program code
+    // (including this Javascript code) is frozen while the system is
+    // in sleep mode, so when SetSuspendState() returns, it means that
+    // the system has gone into sleep mode AND woken back up!  So when
+    // we get here, the user has returned to the machine and reawoken
+    // it.  We're going to assume that they want PinballY to still be
+    // running when they return, so we're just going to return like
+    // nothing happened.  If you wanted PinballY to terminate after
+    // a Sleep command, you could add some extra code here to exit
+    // the program (by calling mainWindow.doCommand(command.Quit),
+    // for example).
+}
+
+// Take over the Power Off Confirm command to go into sleep mode instead
+mainWindow.on("command", ev => {
+    if (ev.id == command.PowerOffConfirm) {
+        // save any settings changes
+        if (optionSettings.isDirty())
+            optionSettings.save();
+
+        // put the system in standby mode
+        setStandbyPowerMode();
+
+        // skip the normal Power Off command processing
+        ev.preventDefault();
+    }
+});
+</div>
+
+
+</body>
+</html>

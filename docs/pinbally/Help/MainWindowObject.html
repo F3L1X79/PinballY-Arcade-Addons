@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>mainWindow Object</h1>
+
+<p>
+   <b>mainWindow</b> is a pre-defined PinballY object representing the main user
+   interface window (the "playfield" window).  This window is the event target
+   for most UI-related events, and in many ways it serves as the Javascript
+   object that represents the overall PinballY application.
+</p>
+
+<h2>Class inheritance structure</h2>
+<p>
+   This object is an instance of the <a href="SecondaryWindow.html">common window base class</a>,
+   so it has all of the behavior defined in that class, in addition
+   to its own methods and properties (see below).
+</p>
+<div>
+   <a href="WindowObjects.html">Basic Window Object</a> &rarr;
+   <div class="indented">
+      mainWindow
+   </div>
+</div>
+
+
+<h2>Event target</h2>
+
+<p>
+   mainWindow is an event target object, so you can use the standard
+   event methods (on(), off(), addEventListener(), etc) to add and remove
+   event listeners.  See <a href="EventTarget.html">EventTarget</a>.
+</p>
+<p>
+   mainWindow serves as the event target for the following event types:
+</p>
+
+<div class="eventTargetTOC" data-eventtarget="mainWindow BaseWindow"></div>
+
+<a name="drawingLayers"></a>
+<h2>Drawing layer ordering</h2>
+
+<p>
+   The system displays graphics in several layers in the main window.
+   If you use custom <a href="DrawingLayer.html">drawing layers</a>, you
+   can interleave your graphics with the system's graphics by using the
+   Z index when creating a layer.  Here's the order of the layers,
+   from back to front:
+</p>
+<ul>
+   <li>Main background image or video
+   <li>Custom drawing layers with Z index 0 to 999
+   <li>Underlay
+   <li>Custom drawing layers 1000 to 1999
+   <li>Status line text
+   <li>Custom drawing layers 2000 to 2999
+   <li>Wheel images
+   <li>Custom drawing layers 3000 to 3999
+   <li>Game info box (the summary of the current game selection that appears when the UI is idle)
+   <li>Custom drawing layers 4000 to 4999
+   <li>Video overlays and popup boxes
+   <li>Custom drawing layers 5000 to 5999
+   <li>Menus and credit/coin messages
+   <li>Custom drawing layers 6000 and above
+   <li>Drag-and-drop feedback graphics
+</ul>
+
+
+<h2>Methods and properties</h2>
+
+<p>
+   The mainWindow object provides the <a href="WindowObjects.html#common">common
+   window methods and properties</a>.  It also provides the additional
+   items listed below.
+</p>
+
+<p>
+   <a name="createMediaWindow"></a>
+   <b>mainWindow.createMediaWindow(<i>desc</i>):</b>
+   Creates a new media window.  This lets you add custom media display windows of
+   your own alongside the standard backglass window, DMD window, topper window, and
+   instruction card window.  Custom media windows act just like the built-in windows,
+   the only difference being that you can specify exactly what kind of media to
+   show in a custom window.  Custom media windows also have full support for
+   <a href="DrawingLayer.html">drawing layers</a>, just like the built-in windows,
+   so you can further specialize these windows with your own custom-programmed graphics.
+</p>
+<p>
+   For an example of how to use this method, see
+   <a href="CustomMediaWindowExample.html">Custom Media Window</a> in
+   the <a href="WorkedExamples.html">Worked Examples</a> section.
+</p>
+<p>
+   The <i>desc</i> argument is an object, with a collection of properties
+   describing the new window.  All of the properties are optional, but in
+   most cases you'll want to at least specify the title and configuration
+   file prefix.
+</p>
+<ul>
+   <li><b>title:</b> a string giving the window's title, as displayed in
+   its Windows title bar and in system menus where it appears (such as the
+   right-click context menu in the main playfield window, where an item is
+   automatically added to show the window.
+
+   <li><b>configVarPrefix:</b> a string giving the prefix for the variables
+   in the PinballY settings file that store the window's location and layout
+   information between program sessions.  To work properly with the settings
+   mechanism, be sure to limit this to alphanumeric characters, underscores,
+   hyphens, and periods.  Don't use any other special characters, and don't
+   use spaces.  The variables in the settings file related to this window
+   will all start with this string, with various suffixes starting with a
+   period (".") attached.
+
+   <li><b>parent:</b> an HWND object (window handle) giving the "parent
+   window" for the new window.  If you omit this, the default parent is
+   the main playfield window, which is almost always what you'll want
+   this to be anyway, so you can just omit this property unless you're
+   trying to achieve some specific effect.  You can find out more about
+   the notion of parent windows in the Microsoft API documentation.
+   The main thing effect of the parent relationship in PinballY is
+   that a window is always kept in front of its parent window, even
+   when the parent window is the active window.  Using a null window
+   handle makes the window a top-level window, so it can be moved
+   in front of and behind any of the other windows.
+
+   <li><b>backgroundImageMediaType:</b> a string giving the media type
+   to use for the window's background image.  This lets you tell the
+   system to automatically search for and load a background image
+   associated with the currently selected game each time a new game
+   is selected.  You can use any of the pre-defined media types
+   (see <a href="MediaTypes.html">Media Types</a>
+   for a full list), but more interestingly, you can define your own
+   custom media types via <a href="GameList.html#createMediaType()">gameList.createMediaType()</a>.
+   A custom media type lets you create a new media folder hierarchy alongside
+   the standard ones - table images, backglass videos, and so on.
+   For example, you could create a custom media type for pictures
+   of the full original pinball machines, and then create a custom
+   media window to display the full machine picture for the
+   current game.
+   <p>If <b>backgroundVideoMediaType</b>
+   is also set, the window will look for a video first, and will
+   only look for a still image if no video is found.  If the video
+   type isn't set, the window will ignore videos and just look
+   for still images.
+   </p>
+   <p>If this property isn't set, the default is that the window
+   doesn't automatically load any background image at all.  This is
+   suitable if you plan to provide your own custom graphics in the
+   window using <a href="DrawingLayer.html">Drawing Layers</a>.
+
+   <li><b>backgroundVideoMediaType:</b> a string giving the media type
+   to use for the window's background video.
+
+   <li><b>defaultBackgroundImage:</b> a string giving the name of the
+   default image file to use if no background image matching the
+   media type specified in <b>backgroundImageMediaType</b> is found
+   for a selected game.  This defaults to "Default Custom".  The
+   system searches for an image file with this name in the same
+   places that the built-in windows look; see
+   <a href="DirectoryInfo.html#DefaultMediaFiles">Default media files</a>
+   in <a href="DirectoryInfo.html">Files &amp; Folders</a> for details.
+   This should be given as just the bare, root filename, with no
+   folder path and no extension.  The system has a standard set of
+   places to look and extensions to try when searching for this,
+   which it adds to this base name to form full filenames to seek.
+
+   <li><b>defaultBackgroundVideo:</b> a string giving the name of
+   the default video file to use if no background video is found
+   for a selected game.  This works like <b>defaultBackgroundImage</b>
+   above.  The default value is "Default Custom".
+
+   <li><b>startupVideo:</b> a string with the name of the startup
+   video to play in this window.  This is just the root filename
+   of the video, without any path prefix and without any extension
+   (that is, <b>don't</b> include .mp4 or .mov at the end).  The
+   system looks in the usual places for startup videos; see
+   <a href="StartupAudioVideo.html">Startup Audio and Video</a>.  In
+   order for a startup video to be displayed, the window must be
+   created before any startup videos start playing, which means
+   it has to happen during the initial Javascript loading process.
+
+   <li><b>isMediaCapturable:</b> an optional boolean value indicating
+   whether or not the window should be included in screen capture
+   operations, to create background image and video media by
+   capturing screen shots of a running game.  The default is false,
+   to disable media capture in this window.  This should only be
+   set to true for a window type that represents something that
+   a running game will display on-screen, since the point is to
+   create media by recording the running game's video displays.
+
+   <li><b>showMediaWhenRunningKey:</b> an optional string giving
+   the "key" to use to decide whether or not to continue showing
+   the window's media while a game is running.  This should be
+   a short string, and must not use any special characters.
+   For reference, the built-in windows use the keys
+   "bg", "dmd", "realdmd", "topper", and "instcard", so something
+   along those lines is recommended: descriptive and short.
+   This is stored in the settings file as well as the game
+   stats file to keep track of per-game and per-system
+   settings for the window.  This is optional; if not specified,
+   the window will use the default behavior of clearing to black
+   and moving into the background whenever a game is running.
+   You can also control this behavior through Javascript code,
+   via the <a href="CustomWindow.html#showMediaWhenRunningFlag">showMediaWhenRunningFlag</a>
+   property of the custom window object.
+</ul>
+<p>
+   The return value of the method is the newly created window object,
+   which has methods and properties described in
+   <a href="CustomWindow.html">CustomWindow</a>.
+</p>
+<p>
+   The descriptor <i>desc</i> doesn't contain any window position, size,
+   or visibility information.  That's intentional.  A custom media window
+   is a first-class window with all of the standard functionality that
+   comes with the built-in media windows, so one of the things that the
+   system will do automatically with this window is to save and restore
+   its layout information.  When you create the window, its layout
+   information will be restored from the settings file, so that the
+   window appears at the same location where the user left it at the
+   end of the last session.  Of course, there's no saved information
+   to be restored when you create a window for the first time, so the
+   window is simply shown at a default position.  If you want to
+   override the saved location every time you create the window in
+   a new session, you can use the <a href="OptionSettingsObject.html">optionSettings</a>
+   object to update the window's settings variables just before you
+   open the window.  Recall that the window's variables all start
+   with the <b>configVarPrefix</b> string you specify when creating
+   the window.
+</p>
+
+<p>
+   <a name="doButtonCommand"></a>
+   <b>mainWindow.doButtonCommand(<i>command</i>, <i>down</i>, <i>repeatCount</i>):</b>
+   Simulates a key press, or more precisely, simulates a processed key event
+   that corresponds to <a href="CommandButtonEvent.html">CommandButtonEvent</a>.
+   This carries out the effect of a named button command, specified by the
+   string <i>command</i>.  The valid command names are the values listed for the
+   .command property of the <a href="CommandButtonEvent.html">CommandButtonEvent</a>
+   object.  <i>down</i> is a boolean indicating if this simulates a key press
+   (true) or a key-up event (false) representing the user releasing the key.
+</p>
+<p>
+   <i>repeatCount</i> is an integer indicating if the simulated event represents
+   an initial key press or an auto-repeated key press (that is, repeated key
+   events generated when the key is being held down).  0 represents an initial
+   key/button press (not yet auto-repeated), 1 represents the first auto-repeat,
+   2 is the second auto-repeat, and so on.
+   <i>repeatCount</i> is only meaningful when <i>down</i> is true, for obvious
+   reasons.
+</p>
+<p>
+   Because the simulated key press is coming from Javascript already,
+   it doesn't generate any of the usual Javascript events for actual key presses;
+   it just carries out the effect of the key command.
+</p>
+
+<p>
+   <a name="doCommand"></a>
+   <b>mainWindow.doCommand(<i>id</i>):</b>  Executes the command specified by
+   <i>id</i>, which is one of the integer command codes in the
+   <a href="Commands.html">Commands</a> set.  This function carries out a
+   menu-level command, as opposed to a button-level command; for the latter,
+   use doButtonCommand().
+</p>
+
+<p>
+   <a name="DOFPulse"></a>
+   <b>mainWindow.DOFPulse(<i>name</i>):</b>  Pulses the named DOF event.  This
+   turns the effect "on" (by setting its "brightness" level in DOF to the
+   maximum value of 255), then turns the effect back off (by setting the
+   DOF brightness value to 0) after a brief interval.  This is the normal
+   way in DOF to trigger the lighting or tactile effects associated with an
+   "event".  In a simulated pinball game, a DOF event would represent a
+   specific, momentary action in the game, such as "the ball hit the Extra Ball target".
+   In a PinballY context you might use this to represent a discrete user action, such as
+   "pressed the left flipper button" or "navigated to a new game".
+</p>
+<p>
+   You can connect events fired with this method to actions in your
+   DOF Config Tool configuration by using the same event name in the
+   Config Tool, adding the <b>$</b> prefix in the Config Tool rule.
+   For example, if you write <tt>mainWindow.DOFPulse("MyEvent")</tt>
+   in Javascript, the corresponding rule in the DOF Config Tool syntax
+   would refer to the event as <tt>$MyEvent</tt>, because the Config Tool
+   uses the <b>$</b> prefix to refer to named events.
+   See <a href="DOFEvents.html">DOF Events</a> for more.
+</p>
+
+<p>
+   <a name="DOFSet"></a>
+   <b>mainWindow.DOFSet(<i>name</i>, <i>value</i>):</b>  Sets the given
+   named DOF event to the given value, from 0 (off) to 255 (full "brightness").
+   The setting stays in effect until you change it with another call to
+   DOFEffect() using the same name and a different value.
+</p>
+<p>
+   You can connect events fired with this method to actions in your
+   DOF Config Tool configuration by using the same event name in the
+   Config Tool, adding the <b>$</b> prefix in the Config Tool rule.
+   For example, if you write <tt>mainWindow.DOFSet("MyEvent", 255)</tt>
+   in Javascript, the corresponding rule in the DOF Config Tool syntax
+   would refer to the event as <tt>$MyEvent</tt>, because the Config Tool
+   uses the <b>$</b> prefix to refer to named events.
+   See <a href="DOFEvents.html">DOF Events</a> for more.
+</p>
+<p>
+   Be careful about timing.  DOF effects require a little time padding between
+   consecutive changes to a given effect's value, because DOF operates on its
+   own "clock", and only checks for updates periodically.  If you update the
+   same named event twice in a row too quickly, DOF might not notice the
+   change and might not trigger the desired hardware effects.
+   For cases where you want to represent a momentary action in the UI, such
+   as "user pressed left flipper button", it's almost always better to use
+   DOFPulse(), since that automatically paces the ON-OFF sequence at a speed
+   that DOF can handle.
+</p>
+<p>
+   This function doesn't coordinate at all with PinballY's own DOF event
+   generation, so it's easiest to use this for your own custom events, using
+   unique names that aren't part of PinballY's own named DOF event set
+   (see <a href="DOFEvents.html">DOF Events</a>).  You can use any names
+   you want for named DOF events, so you're free to invent as many new
+   events as you like representing whatever actions you like.
+   You <i>can</i> also use this to update PinballY's own named
+   events, but since PinballY updates those events itself, this
+   could cause unpredictable interactions.
+</p>
+
+<p>
+   <a name="enableJoystickAxisEvents"></a>
+   <b>mainWindow.enableJoystickAxisEvents(<i>options</i>):</b>
+   Enables or disables <a href="JoystickAxisEvent.html">JoystickAxisEvent</a>
+   (joystick axis change events) for a given set of control axes
+   on a given joystick.  By default, PinballY doesn't generate joystick
+   axis change events at all; these events can occur at fairly high
+   frequency, so filtering them out by default avoids the performance
+   impact of sending them to Javascript scripts that aren't using them.
+   This method lets you tell PinballY that you <i>are</i> using them
+   and that it should generate the Javascript calls after all.
+</p>
+<p>
+   <i>options</i> is an object that describes which joystick axes
+   on which joystick are to be enabled or disabled.  It has the
+   following properties:
+</p>
+<ul>
+   <li><b>unit:</b> Required.  The "logical unit number" of the joystick
+   to be enabled or disabled.  You can get this from a <a href="JoystickInfo.html">JoystickInfo</a>
+   object that describes the joystick of interest.  You can get a list of
+   the joysticks on the system via <a href="#getJoystickInfo">mainWindow.getJoystickInfo()</a>.
+
+   <li><b>axis:</b> Optional; if omitted, the call will affect <i>all</i>
+   of the joystick's axes.  This can be a numeric USB "usage" value identifying
+   an axis (you can obtain the usage value from the JoystickInfo object's axis list),
+   a string giving the name of an axis, or an array of usage values or axis name strings.
+   The enable/disable operation will be limited to the axes listed here.
+
+   <li><b>enable:</b> Optional; if omitted, the default is <b>true</b>.
+   A boolean (true/false) value specifying whether to enable axis change
+   events for this joystick or disable them.  If you only need to process
+   events at specific times, you can enable events as needed and then
+   disable them again when you're done with that processing interval.
+
+   <li><b>background:</b> Optional; defaults to false. A boolean (true/false)
+   value specifying whether or not the events should be enabled in the
+   background.  By default, they're not, since you usually want PinballY
+   to be as idle as possible when in the background, to minimize
+   performance impact while a game is running.  You can set this to
+   true if you do want to monitor the joystick even while a game is running.
+   Setting this to true doesn't block foreground event processing - if
+   the events are enabled at all, they're always enabled in the
+   foreground.  This is only meaningful when enabling events; it's ignored if
+   <b>enable</b> is false.
+</ul>   
+
+<p>
+   <a name="endAttractMode"></a>
+   <b>mainWindow.endAttractMode():</b>  Exits "Attract Mode" if it's currently
+   active.  There's no effect if the program isn't already in attract mode.
+   The <a href="AttractModeEvent.html"><b>attractmodeend</b></a> event isn't
+   fired when you use this method.
+</p>
+<p>
+   <a name="getActiveWindow"></a>
+   <b>mainWindow.getActiveWindow():</b>  Returns the <a href="WindowObjects.html">window object</a> (mainWindow,
+   <a href="BackglassWindow.html">backglassWindow</a>, etc) corresponding to the
+   current active window in the application.  This is the active window at the
+   operating system level, which means that it's in the foreground and has
+   keyboard focus.  If the application is currently in the background, none
+   of the windows are active, so this returns null.
+</p>
+
+<p>
+   <a name="getJoystickInfo"></a>
+   <b>mainWindow.getJoystickInfo(<i>id</i>):</b>  Retrieves
+   a joystick descriptor object with information about a particular
+   joystick device, or descriptors for all of the joystick devices in
+   the system.  If <i>id</i> is specified, the method
+   returns a single <a href="JoystickInfo.html">JoystickInfo</a> object,
+   for the joystick identified as follows:
+</p>
+<ul>
+   <li>If <i>id</i> is a number, it's the "logical unit number" of the
+   desired joystick.  The logical unit number is an internal ID that
+   PinballY assigns to each joystick it discovers during this session.
+   It's the same logical unit number found in the <b>unit</b> property in a
+   <a href="JoystickButtonEvent.html">JoystickButtonEvent</a>
+   or <a href="JoystickAxisEvent.html">JoystickAxisEvent</a>
+   object, so you can pass the <b>unit</b> property from a joystick event
+   to getJoystickInfo() to retrieve the descriptor for that device.
+   The unit number doesn't have any meaning outside of PinballY (it means
+   nothing to Windows or to other programs).
+   The unit number is only valid for the duration of a program session.
+   
+   <li>If <i>id</i> is a string, it's the GUID of the desired joystick.
+   GUID stands for Globally Unique ID; Windows assigns each joystick a
+   GUID when the device is first installed, and the GUID is intended to
+   be permanent for a given device.  It should remain the same for each
+   device across program sessions and system reboots, so it's the best
+   way to identify the device in the option settings or other long-term
+   storage.  (The GUID isn't inscribed in the device, though, so it'll
+   change if you uninstall the joystick through Device Manager, or if
+   you clear your Windows registry, such as by reinstalling the OS.)
+
+   <li>If <i>id</i> is any other type, the method simply returns
+   <b>undefined</b> to indicate that there's no matching joystick.
+</ul>
+<p>
+   If <i>id</i> is omitted, the method
+   returns an array of JoystickInfo objects, one for each joystick in the
+   system.  The array in this case is in order of logical unit number, so
+   the element at index [0] is the descriptor for unit number 0, and so on.
+</p>
+<p>
+   See <a href="JoystickInfo.html">JoystickInfo</a> for details on the
+   returned descriptor objects.
+</p>
+<p>
+   The devices in the joystick array are "logical" joystick units, meaning
+   that they might or might not be physically present in the system.
+   PinballY creates a logical unit for each joystick mentioned in the
+   settings file under a joystick button mapping.  If you plugged in
+   a joystick at one point, and then assigned some buttons from that joystick
+   to commands in the PinballY settings, PinballY will create a logical
+   joystick to represent that unit even if the device isn't physically
+   plugged in to the system during a later session.  That allows the
+   button mappings to become active again as soon as you plug the device
+   back in.
+</p>
+
+<p>
+   <a name="getKeyCommand"></a>
+   <b>mainWindow.getKeyCommand(<i>descriptor</i>):</b>  Returns an array of
+   the button commands assigned to the given key or joystick button.  <i>descriptor</i>
+   is an object describing the key or button to look up.  This can be in one of the
+   following formats:
+</p>
+<div class="code">
+{ type: "key", vkey: <i>integer</i> };  // look up by virtual key (vkey) from key event
+{ type: "key", code: <i>string</i> };   // look up by key code from key event
+{ type: "joystick", unit: <i>integer</i>, button: <i>integer</i> };  // joystick button
+</div>
+<p>
+   This is the same information provided to your event listener in a
+   <a href="KeyEvent.html">KeyEvent</a> or <a href="JoystickButtonEvent.html">JoystickButtonEvent</a>
+   object, so it's easy to look up the command information in one of those
+   handlers.
+</p>
+<p>
+   The command names in the returned array are the same names used in the
+   .command property of the <a href="CommandButtonEvent.html">CommandButtonEvent</a>
+   object.  An array is returned because it's possible for a user to assign multiple
+   commands to the same keyboard key or joystick button.  Pressing a key with multiple
+   commands assigned carries out each of the commands in sequence.
+</p>
+   
+<p>
+   <a name="getUIMode"></a>
+   <b>mainWindow.getUIMode():</b>  Returns an object describing the current UI
+   state.  Here's a quick summary of the object's contents:
+</p>
+<div class="code">
+{
+    mode: "wheel",         // see list
+    game: (object),        // GameInfo object for currently selected game in wheel
+    menuID: "main",        // see list; present only in "menu" mode
+    popupID: "about box",  // see list; present only in "popup" mode
+    runMode: "running",    // or "starting", "exiting"; present only when a game is running
+    capture: "single"      // or "batch"; present only when running a game in media capture mode
+}
+</div>
+<p>
+   The main state is given by the property .mode, which has one of the values
+   listed below.  Depending on the mode, other properties of the object might
+   be present to provide additional information.
+</p>
+<ul>
+   <li>"wheel": in the normal game wheel UI, awaiting a command
+
+   <li>"menu": a menu is being displayed (this refers to the graphical
+   menu that PinballY displays as an overlay in the playfield window, not
+   a standard Windows menu).  In this case, the .menuID property of the
+   mode object will contain a string identifying which particular menu
+   is being displayed.  See <a href="Menus.html#systemMenus">system menus</a>
+   for a list of the built-in menus and their identifiers.
+
+   <li>"popup": a popup box is being displayed.  The .popupID property of
+   the mode object is a string specifying the type of popup.  See
+   <a href="Popups.html#systemPopups">system popups</a> for a list
+   of the system popup types.
+
+   <li>"running": a running game is in progress.  Note that "menu" mode can
+   supersede this, since the user can still bring up menus while a game is
+   running.  You can determine for sure whether or not a game is running by
+   checking for the presence of another property, .runMode, which will be
+   present if and only if a game is running.  If present,
+   .runMode will be set to the string "starting" (the game has been launched
+   but hasn't opened its UI window yet), "running" (the game is in progress),
+   or "exiting" (PinballY has closed the game and is waiting for the process
+   to exit).  In addition, if the game is running for the purposes of media
+   capture, the property .capture will be present, and will be set to the
+   string "single" for a single-game capture or "batch" for a batch capture.
+
+   <li>"attract": attract mode/screen saver mode (meaning that there hasn't
+   been any user input for the period of time configured in the settings to
+   activate attract mode)
+</ul>
+<p>
+   The .game property identifies the game that's currently selected in
+   the wheel, if any.  This is present regardless of which UI mode is
+   in effect.  This is a <a href="GameInfo.html">GameInfo</a> object,
+   which has properties that access the game's details.
+   The .game property will be omitted (so it'll read as undefined) if no
+   game is selected, which can only happen when the wheel is completely
+   empty.  The wheel can be empty when the program can't find any
+   installed games, or when a filter is selected that doesn't match
+   any games.
+</p>
+
+<p>
+   <a name="launchOverlay"></a>
+   <b>mainWindow.launchOverlay:</b> This read-only property contains an object
+   representing the launch overlay, which displays graphics showing the status
+   during game launches.  This lets you customize the graphics shown
+   during the launch process.  <b>launchOverlay</b> has two properties, giving
+   you access to the two drawing layers of the launch overlay:
+</p>
+<ul>
+   <li><b>fg:</b> an object representing the foreground layer
+   <li><b>bg:</b> an object representing the background layer
+</ul>
+<p>
+   Each of those objects in turn has methods that let you show graphics in
+   its layer.  The foreground layer (<b>mainWindow.launchOverlay.fg</b>) is,
+   as the name suggests, the front layer; the background layer (<b>bg</b>) is
+   immediately behind it in the drawing order.  These are the topmost layers
+   overall, so they're draw in front of the wheel UI and the playfield
+   background.  If you draw an opaque background into either window, it'll
+   cover up everything else in the UI.
+</p>
+<p>
+   The reason we have two layers for this one overlay is that it lets the
+   system (or your Javascript code) draw some fixed graphics in the background
+   layer, and then update the message in the foreground layer at each stage
+   of the process, without having to redraw the background.  This is more
+   efficient than redrawing the whole background on every update,
+   and it's also nice if you want to show a video, since videos can't be
+   directly combined in one layer with other graphics.  You can use the
+   background layer for a video that plays throughout the loading process,
+   for example, while status messages are drawn on top of the video via
+   the foreground layer.
+</p>
+<p>
+   The launch overlay is only displayed during game launches.  Accessing it at
+   other times will have no effect.  In most cases, you'd use this object in
+   listeners for the <a href="LaunchOverlayEvent.html">LaunchOverlayEvent</a>
+   group of events.
+</p>
+<p>
+   The <b>fg</b> and <b>bg</b> objects are <a href="DrawingLayer.html">DrawingLayer</a>
+   objects.  You can draw graphics into them the same way you would with a drawing
+   layer that you created explicitly in your scripting code via
+   <a href="WindowObjects.html#createDrawingLayer">createDrawingLayer()</a>.  However, since
+   PinballY itself creates and manages the <b>fg</b> and <b>bg</b> objects,
+   there are a few differences to be aware of:
+</p>
+<ul>
+   <li>These layers only exist during the launch process, so you can't draw
+   into them at other times
+   <li>PinballY itself draws graphics in these layers during the launch process,
+   which might replace any graphics you draw if you don't intervene via the
+   <a href="LaunchOverlayEvent.html">LaunchOverlay events</a>
+   <li>Because these are system-created layers, you can't remove them with
+   <a href="WindowObjects.html#removeDrawingLayer">removeDrawingLayer()</a>
+   <li>You also can't move or resize the layers - they're always stretched
+   to exactly fill the window's height and width
+</ul>
+
+<p>
+   <a name="message"></a>
+   <b>mainWindow.message(<i>message</i>, <i>style</i>):</b>  Shows a message
+   using a graphical popup box in the main window.  Unlike the global alert()
+   function, this doesn't pause the script until the user acknowledges the
+   message; it simply shows or queues the message and returns immediately.
+   This is a good option for showing error messages or status updates, since
+   it doesn't interrupt the flow of the user interface with a modal dialog.
+   If <i>style</i> is provided, it's a string value specifying the
+   visual style of the popup message.  This can be "info", "warning", or
+   "error", to show the message with green, orange, or red trim
+   (respectively), to visually signal the nature of the message.  The
+   regular "info" style is used if <i>style</i> is omitted.
+</p>
+
+<p>
+   <a name="playGame"></a>
+   <b>mainWindow.playGame(<i>game</i>, <i>options</i>):</b>  Launches a game.
+   <i>game</i> is a <a href="GameInfo.html">GameInfo</a> object for the game to
+   be launched.  <i>options</i> is an object with properties specifying option
+   settings; this whole argument can be omitted, in which case defaults are
+   used for all options.  If you do include the object argument, you only
+   have to specify the properties for options you want to override; any
+   missing properties will use the corresponding defaults.  Here are the
+   possible <i>options</i> properties:
+</p>
+<ul>
+   <li><b>command:</b>  An integer giving the command code that the game is
+   nominally launched under.  The default is
+   <a href="commands.html#PlayGame">command.PlayGame</a>, which is also
+   the command that the system itself uses to launch games for normal
+   play (as opposed to media capture).  The command you specify here has
+   no effect on how PinballY itself handles the launch process, but it's
+   reported to your event handlers as the command code in all of the
+   <a href="LaunchEvent.html">LaunchEvent</a> events reported that fire
+   during the launch, so you can use it as the basis of any custom
+   handling you want to perform during the launch.
+
+   <li><b>system:</b>  A <a href="GameSysInfo.html">GameSysInfo</a> object
+   specifying which system to use to launch the game.  The default
+   is the system associated with the game in the game database, or the
+   system associated with the table directory where the game file is located.
+   If it's not possible for PinballY to uniquely determine the system from
+   one of those sources, you <b>must</b> specify this option to tell the
+   program which system to use.  Note that PinballY doesn't try to second-guess
+   your choice of system here; it'll let you run any game file with any system.
+   But for obvious reasons, the launched program will probably show an error,
+   crash, or otherwise fail to work properly if you try to launch it with
+   a game file designed for a different system.
+
+   <li><b>overrides:</b>  An optional object value specifying overrides for
+   the normal launch parameters.  The parameters are specified via the
+   object's properties.  These are the same
+   properties that can be set in the <b>override</b> property
+   of a <b>prelaunch</b> event; see <a href="LaunchEvent.html#overrideProperties">override properties</a>
+   for the list of properties and their meanings.
+   <p>
+      You can specify any
+      subset of the override properties.  The normal system launch parameters
+      are used for any properties you omit from the override set.  For example,
+      if you want to change the "show window" mode but use the rest of the
+      normal the launch parameters unchanged, you could do something
+      like this:
+   </p>
+
+   <div class="code">
+mainWindow.playGame(game, undefined, { swShow: SW_HIDE });
+   </div>
+   
+</ul>
+
+<p>
+   <a name="setUnderlay"></a>
+   <b>mainWindow.setUnderlay(<i>filename</i>, <i>options</i>):</b>  Display a new underlay
+   in the main window's wheel UI.  This loads the image file specified by <i>filename</i>
+   and displays it as the new underlay.  Use an empty string ("") to remove the underlay
+   image.
+</p>
+<p>
+   <i>options</i>, if present, is an object specifying additional
+   layout details for the underlay.  This lets you override the normal layout
+   parameters for an individual underlay file, in case you want to customize
+   the size or position of each underlay file separately.  If the <i>options</i>
+   object is omitted entirely, all of the layout parameters use the settings
+   from the configuration.  If you do provide an <i>options</i> object, you
+   don't have to include all of the properties listed below - just the ones
+   you want to override.  Any properties not included in your  <i>options</i>
+   object use the defaults, taken from the configuration.  Any values you
+   specify in the <i>options</i> object override the settings for duration of
+   this underlay display (so the overrides remain in effect even if the
+   user edits the option settings or resizes the window).  The options only
+   last for the duration of this single underlay display; they aren't persistently
+   attached to the file or anything crazy like that.  The following properties
+   can be specified:
+</p>
+<ul>
+   <li><b>height:</b> The display height of the underlay in the window, as
+   a percentage of the total window height.  E.g., the value <b>20.5</b> specifies 20.5%
+   of the window height.
+
+   <li><b>maxWidth:</b> The maximum display width of the underlay, as a percentage
+   of the window height.  The underlay is normally stretched to the full width
+   of the window, but <b>maxWidth</b> can be used to limit the stretch, to set
+   a limit on how far the aspect ratio is distorted.  This can be useful to
+   prevent excessive distortion when the window
+   is much wider than it is tall (as in typical landscape mode displays).
+
+   <li><b>yOffset:</b> The distance from the bottom of the window to use to position
+   the underlay vertically, as a percentage of the window height.
+</ul>
+<p>
+   See also <a href="UnderlayEvent.html">UnderlayEvent</a>, which describes the event
+   fired when the system is about to initiate its own change to the underlay because
+   of a new game selection in the wheel UI.
+</p>
+
+<p>
+   <a name="setWheelAutoRepeatRate"></a>
+   <b>mainWindow.setWheelAutoRepeatRate(<i>interval</i>):</b>  Sets the "instantaneous"
+   auto-repeat rate for the current game wheel navigation command.  The repeat interval is
+   specified in milliseconds.  This method has no
+   effect unless a wheel navigation command (Next, Previous, Next Page, Previous Page)
+   is currently in progress. If a command <i>is</i> in effect, this method sets the
+   auto-repeat rate for the current command.  The new rate overrides the repeat rate
+   set in the options, and it remains in effect from now until
+   the command ends, or until another call to <b>setWheelAutoRepeatRate()</b>.  It
+   doesn't affect future commands, since those start over at the repeat rate set
+   in the options.  This can be useful for modifying the repeat rate when the command
+   is coming from an alternative input device such as a joystick; see
+   <a href="JoystickGameSwitcherExample.html">Joystick Game Switcher</a> for an
+   example of how to use it.
+</p>
+
+<p>
+   <a name="showMenu"></a>
+   <b>mainWindow.showMenu(<i>id</i>, <i>items</i>, <i>options</i>):</b>  Displays a custom
+   menu in the main window, in the same style as the main menu, exit menu, etc.
+   See <a href="Menus.html">Menus</a> for more details.  The <a href="MenuEvent.html"><b>menuopen</b></a>
+   event isn't fired when you use this method.
+</p>
+
+<p>
+   <a name="showPopup"></a>
+   <b>mainWindow.showPopup(<i>desc</i>):</b>  Displays a custom popup dialog
+   in the main window, in the style of the standard system popups (e.g., game
+   information, high scores, ratings entry).   See
+   <a href="Popups.html#custom">Custom Popups</a> for more details.
+</p>
+
+<p>
+   <a name="showWheel"></a>
+   <b>mainWindow.showWheel(<i>show</i>):</b> Shows or hides the game wheel
+   display.  If <i>show</i> is true, the function shows the wheel; if <i>show</i>
+   is false, the wheel is hidden.  The system hides the wheel itself at certain
+   times, such as when "attract mode" is active and the options are set to
+   hide the wheel in attract mode; in these cases, showing the wheel through
+   this function will have no immediate effect.
+</p>
+
+<p>
+   <a name="startAttractMode"></a>
+   <b>mainWindow.startAttractMode():</b>  Enters "Attract Mode", the screen saver
+   mode that normally kicks in automatically when there hasn't been any keyboard
+   or mouse input for some amount of time (the exact amount of time is configurable
+   in the settings).  This function lets you explicitly enter Attract Mode from
+   Javascript code, so that you can create your own custom conditions for
+   triggering the mode, separately from the system's normal handling.  For
+   example, you could use this to enter attract mode when a certain key
+   is pressed, or from a custom menu selection.
+   The <a href="AttractModeEvent.html"><b>attractmodestart</b></a> event isn't
+   fired when you use this method.
+</p>
+
+<p>
+   <b>mainWindow.statusLines:</b>  An object containing references to the
+   <a href="StatusLine.html">StatusLine</a> objects representing the on-screen
+   status line displays.  The object has the following properties:
+</p>
+<ul class="compact">
+   <li><b>upper:</b>  The upper line of the main two-line status area
+   <li><b>lower:</b>  The lower line of the main two-line status area
+   <li><b>attract:</b>  The single-line status area that replaces the main status
+   area when attract mode is active
+</ul>
+
+</body>
+</html>

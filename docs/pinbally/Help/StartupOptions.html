@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Startup Options</h1>
+
+<p>
+   This dialog lets you customize how PinballY gets launched, and gives
+   you some options for what happens each time the program starts running.
+</p>
+
+<h2>How to start PinballY</h2>
+
+<p>
+   <b>Manually:</b>  Select this option if you want to start the program
+   manually from the Windows desktop each time.
+</p>
+
+<p>
+   <b>Automatically:</b>  Select this to make the program start automatically
+   each time you log in to Windows.  Pin cab users will usually want to select
+   this option, since it launches PinballY as soon as you boot up your system,
+   so that you never have to interact with the normal Windows desktop during a
+   gaming session.
+</p>
+
+<p>
+   <b>Automatic Administrator mode:</b>  Like the previous option, this
+   setting launches PinballY automatically when you log in, but in this case
+   the program is launched with Administrator privileges.  This allows
+   PinballY to launch games in Admin mode without any Windows UAC (User
+   Access Control) warnings.  That makes for a smoother playing experience
+   if you have any games that in fact require Admin privileges.
+</p>
+<p>
+   Even if you're accustomed to having to use Administrator mode with
+   PinballX or other systems, you might not have to do this with
+   PinballY.  I'd strongly recommend trying normal user mode first.
+   PinballY has special awareness of the privilege modes required by
+   the game programs it launches, so it should be able to tell you
+   if you run anything actually requiring Admin mode.  It's better to
+   run in normal user mode unless PinballY explicitly tells you that
+   Admin mode is required for a particular program.  The big reason
+   to avoid Admin mode is that it creates a lot of complications for
+   all of your other programs, because Windows restricts a lot of
+   the normal program-to-program interactions when an Admin program
+   is running.
+</p>
+
+<p>
+   <b>After logon, pause before starting PinballY:</b>  If you wish, you
+   can delay the automatic launch at logon by a specified
+   time in seconds.  This value is only used if you select one of the
+   Automatic modes.  A startup delay can be useful to clear up conflicts
+   with other programs that you're also launching at Windows startup.
+   Some example of when this could be helpful:
+</p>
+<ul>
+   <li>If another launch-at-startup program thrashes the disk
+   or uses a lot of CPU time while it's loading, PinballY's
+   initial video playback might look jumpy or glitchy.  Delaying
+   PinballY's launch until the other program has settled down
+   might help.
+
+   <li>Another program launched at about the same time might
+   steal keyboard focus away from PinballY, forcing you to click
+   the mouse in a PinballY window to give it keyboard focus again.
+   If you delay PinballY's startup so that it's the last program
+   to launch at startup, it should reliably get the initial
+   keyboard focus.
+</ul>
+
+<h2>Force keyboard focus to PinballY at startup</h2>
+
+<p>
+   If this box is checked, PinballY will try to force focus into its
+   main window after the program starts up by simulating a mouse click,
+   as though you were manually clicking the mouse in its main window.
+   This should ensure that PinballY has keyboard focus, so that it
+   responds properly to key presses.
+</p>
+<p>
+   In some cases, PinballY doesn't get keyboard focus when you launch
+   it automatically at Windows startup time.  This seems to be particularly
+   problematic on Windows 10 because of intentional changes Microsoft made
+   to Task Scheduler to prevent auto-launched programs from receiving
+   keyboard focus.  It can be a problem on other systems as well, since
+   other programs (or Windows itself) can "steal" focus away from PinballY.
+   Focus is a global resource that different programs are always fighting
+   over, so it's inherently a bit tricky to get everyone to agree where
+   it should end up when a bunch of things are happening at once, such
+   as during the Windows boot process.  This option is designed to
+   work around any conflicts with other programs by forcing focus to
+   the PinballY window in the most heavy-handed fashion possible, by
+   simulating a mouse click to make it look like you manually clicked
+   on the PinballY window to make it the active window.
+</p>
+<p>
+   You can enter a delay time in the next line under the checkbox if
+   desired.  In some cases, the focus change might not "stick" if it
+   happens too early, since another program that starts up around the
+   same time might try to do the same kind of thing to steal focus
+   away.  The delay time lets you adjust the timing of the simulated
+   mouse click so that it always happens after any other programs
+   have also finished starting up.
+</p>
+
+
+<h2>Wait for monitors</h2>
+
+<p>
+   This group of options lets you tell PinballY to wait for all of your
+   monitors to come online before launching.
+</p>
+<p>
+   This is useful in pin cabs that have multiple monitors (which is
+   most pin cabs!), since it lets you ensure that Windows has a chance
+   to restore your full normal desktop area before PinballY attempts to
+   position any of its windows.  In a multi-monitor setup, Windows will
+   sometimes boot up faster than the TVs, so there can be a brief period
+   during system startup where Windows is running but hasn't fully restored
+   your normal desktop area.  This sorts itself out in due course,
+   since Windows adds each TV to the desktop as it comes online,
+   but it can be problematic for a program like PinballY that
+   you launch automatically at system startup.  The snag is that Windows
+   might launch PinballY during this interval when the desktop area is
+   still incomplete.  If your window layout uses any of that missing
+   area, PinballY might not be able to restore the full layout properly.
+</p>
+<p>
+   So what you really want to do is tell Windows: "launch
+   this program at system startup, but not until all of the monitors
+   are ready."  That's exactly what the "wait for monitors" setting does.
+   It makes PinballY deliberately stop and wait until all of your
+   monitors are online.
+</p>
+<p>
+   To use this feature, check the "Wait for monitors" box, then adjust
+   the parameters:
+</p>
+<ul>
+   <li><b>Number of monitors:</b>  The minimum number of monitors that
+   must be online before PinballY starts up.  PinballY will wait until
+   Windows thinks that at least this many physical displays are active
+   in the system.
+
+   <li><b>Maximum wait time:</b>  The time limit on how long to wait.
+   This is just a fail-safe, to make sure that PinballY doesn't get stuck
+   forever if for some reason you're not going to attach all of your monitors
+   for this session.  (You can also cancel the wait manually at any
+   time, by clicking the Cancel button in the little dialog box that
+   the program displays during the wait.)
+
+   <li><b>Additional wait time:</b>  This is an extra delay time,
+   in seconds, after all of the monitors have been recognized.  Some
+   video cards have a quirk where they appear in Windows as soon as
+   an attached TV is first turned on, but then drop out again for a
+   couple of seconds while the TV establishes its connection.  The
+   additional wait time can help work around such startup glitches.
+</ul>
+
+
+<h2>"Restore full-screen windows based on:"</h2>
+
+<p>
+   These buttons let you select how PinballY restores the saved
+   positions of full-screen windows at program startup.  There
+   are two ways it can do this:
+</p>
+<ul>
+   <li><b>Nearest monitor:</b>  This is the default method.
+   When this is selected, PinballY saves the <b>pre-</b>full-screen
+   position of each full-screen window, rather than saving the
+   actual full-screen position.  When the program starts, PinballY
+   finds the nearest monitor containing that saved pre-full-screen
+   position, and then positions the window so that it exactly
+   covers that monitor.
+
+   <li><b>Exact pixel coordinates:</b>  This is an alternative
+   method that doesn't pay any attention to the monitor layout,
+   but simply restores the exact coordinates of each full-screen
+   window, as they were at the end of the last program session.
+</ul>
+<p>
+   The "Nearest Monitor" method is the more flexible of the two,
+   because it automatically adjusts for any changes to the desktop
+   layout or screen resolution that you've made since the last
+   time you ran the program.  That's why it's the default.  However,
+   that also might make it a nuisance if you routinely make temporary
+   changes to the screen layout, since it can cause full-screen
+   windows to move around when you run PinballY while temporary
+   changes are in effect.  One case where you might see this happen
+   is if you use regularly use remote desktop software to access
+   your PC.  Remote desktop software tends to set up a virtual
+   desktop area while it's running, which can change the way
+   that Windows calculates the available monitor positions.
+   If you read the description of the "Nearest Monitor" method
+   above, you can see that this method depends on how Windows
+   reports the available monitor positions, which in turn affects
+   where full-screen windows are positioned.  If you find that
+   your full-screen windows are restored to the wrong positions
+   while you're running a remote desktop program or some other
+   software, try the "Pixel Coordinates" method instead.  As
+   long as you also un-check the "visible desktop area" checkbox
+   described below, that will make your restored full-screen
+   window positions completely independent of any changes to
+   the monitor layout or resolution.
+</p>
+
+
+<h2>"Make sure restored window positions are within the visible desktop area"</h2>
+
+<p>
+   This checkbox lets you control the way PinballY
+   sets up the initial window locations during program startup.
+</p>
+<p>
+   PinballY always saves and restores the positions of all of
+   your open windows between session.  That lets it restore the
+   same window layout each time you start a new session.  This
+   box tells PinballY what to do when a saved window position
+   is outside of the bounds of the current display area.
+</p>
+<p>
+   If this box is checked (which is the default), PinballY
+   checks the position for each saved window to make sure that
+   it's within the visible area of your desktop, meaning it's
+   within the bounds of one of your display monitors.  If so,
+   great, PinballY just restores the saved window position,
+   so you get the same layout as during the last session.
+   If the window <i>isn't</i> within the bounds of any active
+   monitor, though, PinballY repositions the window to place
+   it within the monitor that's closest to the saved location.
+</p>
+<p>
+   If this box is un-checked, PinballY skips the extra scrutiny
+   and simply restores the window at the exact saved position.
+   If the window is outside the visible display area, so be it.
+</p>
+<p>
+   Why you might want to leave this option enabled:  This option
+   is enabled by default because it compensates for any changes
+   you've made to your desktop layout since the last PinballY
+   session.  Changes to the desktop layout can result in a
+   saved window position placing the window outside of the
+   visible screen area.  It's difficult to work with a window
+   that's outside of the desktop bounds, because you can't move
+   the mouse there to grab the window's title bar and
+   reposition it.
+</p>
+<p>
+   Why you might want to <i>disable</i> this option:  The
+   automatic window fixup at startup can be problematic if you
+   have to make special changes to your desktop layout when running
+   other programs.  For example, some games don't work correctly unless
+   you rotate a monitor, change the display resolution, or change the
+   ordering of the monitors on the desktop before running it.  As a
+   result, some people use tools that change the desktop layout each
+   time they run a certain program.  In that situation, if the
+   layout change happens at the wrong time, it can make PinballY think
+   it needs to rearrange its windows even though that's not actually
+   necessary, leaving your PinballY windows in the wrong locations.
+   This can also happen if you use a remote-access program, since
+   those programs often create a virtual monitor area while
+   running, which has the side effect of changing the screen
+   layout. 
+</p>
+<p>
+   Note that you might also want to change the full-screen window
+   restoration method to the "Pixel Coordinates" method - see
+   "Restore full-screen windows based on" above.
+</p>
+<p>
+   <b>How to find a window that's fallen off the edge of the world:</b>
+   If you disable the "make sure they're in the visible desktop area"
+   option, there's a risk that some windows might be outside the
+   bounds of the screen when the program starts up.  The whole point of the option, after all,
+   is to prevent that confusing situation.  But if this happens,
+   you can still get the windows back into the usable area.
+</p>
+<p>   
+   As long as the main playfield window is still visible, you can
+   easily bring any of the other windows back into view by
+   right-clicking on the playfield window and selecting "Show
+   <i>whichever window</i>" from the context menu.  If that window
+   is off in some unreachable location, PinballY will move it back
+   into the visible area.  If the playfield window itself is missing,
+   and any other window is visible, right-click in one of the other
+   windows and select "Show Main Window" from the menu.  If none
+   of the windows are visible, your best bet is probably to delete
+   the saved window position from the settings file manually:
+</p>
+<ul>
+   <li>Quit out of PinballY
+   <li>Open the options file (Settings.txt) in Notepad
+   <li>Find the line that starts with <b>PlayfieldWindow.Position =</b>
+   <li>Delete that whole line
+</ul>
+<p>
+   That will remove the problematic saved window position.  PinballY
+   will open the window at a default position the next time you run,
+   which should be somewhere within the main monitor.  You can then
+   reposition it where you want it.
+</p>
+
+<h2>Splash screen</h2>
+
+<p>
+   The program normally displays a "splash screen" for a few seconds
+   each time you launch it, showing the program name and version number.
+   Un-check this box to skip the splash screen.
+</p>
+
+<h2>Run command at startup/exit</h2>
+
+<p>
+   These boxes let you enter commands that PinballY will run when it
+   starts up, and just before it exits, respectively.
+</p>
+<p>
+   Use the normal Windows command line syntax here, as though you
+   were typing a command into the Windows+R "Run" box.
+   A few tips:
+</p>
+<ul>
+   <li>Specify the full drive name and folder path to the program
+      you want to run: <tt>C:\Windows\System32\Notepad.exe</tt>
+
+   <li>If the path or program name contain any spaces, be sure to
+      enclose the whole program name in double quotes:
+      <tt>"C:\Visual Pinball\vpinball.exe"</tt>
+
+   <li>To use DOS-box commands or .BAT or .CMD batch/script files,
+      use CMD.EXE:  <tt>cmd.exe /c MyBatchScript.bat</tt>
+
+   <li>If you need to run a series of commands, create a batch
+      file (.BAT) that runs the commands, and use the CMD.EXE
+      syntax above to invoke the batch script
+
+</ul>
+
+   
+</body>
+</html>

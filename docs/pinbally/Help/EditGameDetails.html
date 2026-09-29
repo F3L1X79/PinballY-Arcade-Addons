@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Editing a Game's Details</h1>
+
+<p>
+   PinballY keeps track of some extra information for each game
+   in your collection.  This includes descriptive information
+   about the game (title, manufacturer, year of release), plus
+   internal information that PinballY uses to customize how
+   the game is displayed and launched.
+</p>
+<p>
+   You can edit most of these details directly through the
+   main PinballY wheel user interface:
+</p>
+<ul>
+   <li>Bring up the <a href="OperatorMenu.html">Operator Menu</a>
+   <li>Select <a href="GameSetupMenu.html">Game Setup</a>
+   <li>Select Edit Game Details
+</ul>
+
+<p>
+   That will display the Game Details dialog:
+</p>
+<img src="EditGameDetails.png" class="example">
+
+<h2>Setting up a new game</h2>
+<p>
+   If a game hasn't been configured yet, the main menu will
+   include the Game Setup command when the game is selected
+   in the wheel.  You can use this command to reach the
+   Game Setup menu, where you can select Edit Game Details
+   to bring up the Game Details dialog.
+</p>
+<p>
+   When you first open this dialog for a game that hasn't
+   been configured yet, most of the fields will be blank.  The
+   only ones that are normally pre-filled are the Title, which will
+   contain the file name of the table file, and possibly the
+   System, which PinballY can usually guess from the folder
+   path where the game file was found.  In cases where you've
+   set up two or more systems that share the same table folder,
+   though, the system will be ambiguous, so PinballY won't be
+   able to guess and will leave the System field blank.
+</p>
+<p>
+   <b>Filling in the form from IPDB data:</b>
+   Take a close look at the Title field, and you'll notice that
+   there's a little drop-list arrow next to it.  Click the arrow
+   (or press the Down Arrow cursor key) to display a list of
+   possible matches from
+   <a target="_blank" href="https://www.ipdb.org/">IPDB</a>.
+   PinballY has a built-in list of titles from IPDB that it
+   tries to match to the filename.
+</p>
+<p>
+   The initial selection list is based on the game's filename,
+   since that's all PinballY has to work with at this point.
+   In many cases, the filename will contain enough of the
+   game's true title that PinballY can find a good match in
+   the IPDB title list.  In some cases, though, filenames
+   are so cryptic that they stump the "fuzzy match" guesswork
+   that PinballY is doing here.
+</p>
+<p>
+   If the drop list includes the correct title for the table,
+   simply select it with the mouse or arrow keys (if using
+   the arrow keys, press Enter to confirm the selection).
+   PinballY will automatically fill in the rest of the form
+   with the game's details from the IPDB list.
+</p>
+<p>
+   What if the drop list <i>doesn't</i> include the title you're
+   looking for?  In this case, you can help improve PinballY's
+   guesswork by typing the first few characters of the correct
+   title into the box.  As you type, the drop list will show
+   new guesses based on what you're typing, similar to how
+   Google shows you suggested search terms as you type.
+   In most cases, the correct title will appear after you
+   enter a few characters.  Once it does, select it with
+   the mouse or arrow keys (press Enter to confirm if you
+   use the arrow keys).  PinballY will automatically fill
+   in the rest of the form with the IPDB information for
+   the table you select.
+</p>   
+<p>
+   Matching a filename to a real machine's title requires a bit of
+   guesswork on PinballY's part, since table file names tend
+   to be a bit cryptic.  They often use initials or abbreviations,
+   and usually have a bunch of other information apart from the
+   title packed into them, such as the author's nickname,
+   table version numbers, system version numbers, etc.  The list
+   that pops up usually has five or ten possible matches, and of
+   course only one of these can be right (if the right match is
+   there at all).  That's why PinballY doesn't just pick one on
+   its own: it needs your human intervention to make the final
+   decision.
+</p>
+
+<p>
+   <b>Filling in the details manually:</b>  If you can't find
+   the right match for the game in the title drop list even
+   after typing the full name, or if there's anything you disagree
+   with in the pre-populated data, you can simply type values into
+   any of the fields manually.
+</p>
+
+<p>
+   <b>Filling in the details form the IPDB number:</b>  If you
+   know the IPDB number for the table you're entering, you can
+   skip all of the title searching described above and just
+   enter the IPDB number.  Then click the button labeled "Fill
+   in form from this IPDB ID" - this will populate the rest of
+   the form with details from the IPDB list, just like when
+   you select a title from the title drop list.
+</p>
+
+<p>
+   <b>Choosing the system:</b>  If the System box isn't already
+   filled in, you'll have to specify the system manually.  The
+   program figures out which system or systems are associated
+   with the table folder where the file is located; if there's
+   only one system using that table folder, the program automatically
+   selects that system, since that's the only one it could be.
+   But if you've set things up so that there are two or more
+   systems sharing the same table folder, PinballY can't guess
+   at the system based on the file path alone.  In that case,
+   you'll have to specify the system manually.  Simply use
+   the drop list to select the system that you want to be
+   used when the game is launched.
+</p>
+
+
+<h2>Editing an existing game</h2>
+<p>
+   After a game has been set up the first time, PinballY removes
+   the Game Setup command from the main menu.  Most
+   people don't want to see a bunch of administrative options
+   on the main menu during normal play; once a game has
+   been set up, it's considered to be ready for normal play.
+   But Game Setup is always available through the
+   <a href="OperatorMenu.html">Operator Menu</a>:
+</p>
+<ul>
+   <li>Navigate to the game in the wheel
+   <li>Bring up the <a href="OperatorMenu.html">Operator Menu</a>
+   <li>Select <a href="GameSetupMenu.html">Game Setup</a>
+   <li>Select Edit Game Details
+</ul>
+   
+
+<h2>Details on the fields</h2>
+
+<p>
+   <b>Title:</b>  The title of the game.  PinballY uses this to
+   display the game's name in the wheel UI.  This also serves as
+   part of the "key" that identifies the game in the XML database
+   (the title is combined with the manufacturer name and year to
+   form the full ID).
+</p>
+<p>
+   <b>IPDB ID:</b>  If the game is a re-creation of a real table
+   that has an entry on <a target="_blank" href="https://www.ipdb.org/">IPDB</a>,
+   you can fill this in with the game's ID on IPDB.  The ID is a number
+   that IPDB uses as its database key to identify the game.  
+   If you look up the game on IPDB through a search, you'll find
+   the ID number listed right at the top of the listing:
+</p>
+<img src="ipdbId.jpg" class="example">
+
+<p>
+   PinballY doesn't currently do much with the IPDB ID other than
+   storing it, but I think it's a good piece of information to
+   have on hand, if only for future reference.  It would
+   make a particularly good key for correlating information from
+   external sources, since it's so specific and unambiguous.
+
+<p>
+   <b>Manufacturer:</b>  The name of the company that built and
+   marketed the original pinball machine, such as Williams or Gottlieb.
+   For a purely virtual table (one that never existed as a physical arcade
+   pinball machine), you could enter the software publisher or author's name here.
+</p>
+<p>
+   I prefer to use the informal marketing name of the manufacturer here
+   (e.g., "Williams") rather than the full legal name of the company
+   ("Williams Electronic Games, Inc."), which you'll find if you look
+   games on IPDB.  PinballY uses the name you
+   enter here for a number of purposes, such as selecting which logo
+   file to use, so it's easier to shorten those long legal names down
+   to the more familiar marketing names.  If you let PinballY auto-populate
+   this field based on the title, it'll use the short name.
+</p>
+
+<p>
+   <b>Release year:</b>  The year of release of the original real
+   pinball machine, or, for a purely virtual game, the year the software
+   was first published.  Use a full four-digit year number here (e.g., 1995,
+   not 95).
+</p>
+
+<p>
+   <b>System:</b>  The game player system that PinballY should use to
+   launch the game.  The drop list will only allow you to choose systems
+   that are associated with the table folder where the file is located.
+</p>
+
+<p>
+   <b>Table type:</b>  The IPDB 
+   <a target="_blank" href="https://www.ipdb.org/showhelp.pl?item=type">table type</a>
+   classification:
+</p>
+<ul>
+   <li>ME (pure mechanical), for very old games without any electronic scoring system
+   <li>EM (electromechanical), for games from about the 1950s through 1970s that worked
+   like old mechanical adding machines, with score reels or individual scoring lights
+   <li>SS (solid state), for games from the late 1970s onwards that use microprocessors
+   to control the game and display scores with digital displays (segmented or dot matrix)
+</ul>
+
+<p>
+   <b>High score display:</b>  The style to use for the synthesized high score
+   displays that PinballY shows in the DMD window.
+</p>
+<ul>
+   <li>Auto: PinballY chooses the appropriate style based on the machine's release year
+   and table type
+   <li>DMD: Dot-matrix style, like machines in the 1990s and later
+   <li>Alpha: 16-segment alphanumeric style, like machines in the 1980s
+   <li>TT: Typewriter style, meant to resemble the sort of hand-made
+   sticky notes that you might have used to record high scores on old
+   EM games that didn't keep track of high scores themselves
+   <li>None: Suppress the automatic DMD window high score display for this game entirely.
+   (This doesn't prevent you from viewing the high scores with the High Score command
+   in the main menu; it just prevents PinballY from showing its synthesized high score
+   display in the DMD window.)
+</ul>
+
+<p>
+   <b>ROM name:</b>  The name of the ROM for this game.  This is only applicable
+   to games that use VPinMAME, and Visual Pinball is currently the only system
+   that uses VPinMAME, so you can leave this blank for games based on other systems.
+   PinballY uses this information when fetching high scores from ROM-based games,
+   and to inform DOF which game is loaded on the wheel (to select game-dependent
+   DOF effects, such as flipper button colors and undercab lighting colors).
+   "Default" lets PinballY pick the ROM automatically based on the list of
+   tables in the DOF configuration.  You can select a specific ROM if the
+   automatic selection is wrong.
+</p>
+
+<p>
+   <b>Date added:</b>  The date that you added the game to your system, in
+   MM/DD/YYYY format (month/day/year).  This is automatically populated with
+   today's date the first time you set up a game, but you can set a different
+   date if you actually installed the game earlier and are just now setting
+   it up in PinballY.  This is used primarily for the sake of the "Date Added"
+   filters, to let you select games that were added within or outside of
+   a certain time horizon.
+</p>
+
+<p>
+   <b>Media name:</b>  This is the base filename to use for this game's
+   media file (the table's main background image and video, backglass
+   image and video, etc).  By default, this takes the form
+   "Title (Manufacturer Year)".  That's the naming pattern that
+   most HyperPin Media Packs use, so this usually matches any
+   existing media files that you previously installed for HyperPin
+   or PinballX.  
+</p>
+<p>
+   If this is set to <b>[Default]</b>, the dialog automatically updates
+   the media name using the "Title (Manufacturer Year)" pattern when you
+   click the OK button.  If you change the media name to anything else, it
+   overrides the normal pattern, so the dialog will leave the name you
+   enter unchanged when you click OK.  This lets you customize your media
+   file names if you prefer, which might be desirable if you're using
+   existing media files that weren't already using the HyperPin/PinballX
+   naming conventions.
+</p>
+
+<p>
+   <b>Grid Row x Col:</b>  The coordinates of the game in the "grid" for
+   the game system's game selection UI.  Enter this as <i>row</i> x <i>col</i>,
+   as in 3x4 for row 3, column 4.
+</p>
+<p>
+   This is only displayed if the
+   selected system uses the grid position somewhere in its startup keys
+   script (see <a href="SystemOptions.html#startupKeys">Startup Keys</a>
+   in System Options).
+</p>
+<p>
+   The grid position is an idiosyncratic feature
+   designed mostly for Farsight's
+   <i>The Pinball Arcade</i>, which doesn't provide a way to launch a
+   game directly from an outside program, but always requires you to
+   go through its own internal game selection menu every time it starts.
+   PinballY lets you define a series of keystrokes (the Startup Keys
+   setting mentioned above) to send to the game system just after
+   launching to try to navigate to the right game.  Since Farsight
+   arranges their game selection UI as a rectangular grid, the key
+   script had to know how many "down" and "right" arrow keys to
+   send to get to any given game; that's what the grid position
+   entry is for.
+</p>
+
+<p>
+   <b>"Keep the following windows open...":</b>  These checkboxes
+   let you tell PinballY to continue showing one or more of the
+   PinballY windows while the playing this game.  The
+   selected windows will remain in the foreground and will continue
+   to show their background graphics or videos throughout the game.
+</p>
+<p>
+   Normally, PinballY blanks all of its windows while a game is running,
+   and allows the running game to place its windows in front of the
+   PinballY windows (to the extent they're situated in the same
+   display area).  The assumption is that you want the game to take
+   over the entire display while it's running, and that you don't
+   want PinballY wasting CPU time and video memory by continuing to
+   play back videos in windows that are covered up by the running game.
+</p>
+<p>
+   However, some game systems and some individual games only use a
+   portion of the display.  For example, few systems display anything
+   at all in the "Topper" monitor (if you have one).  Some games don't
+   even include any backglass or DMD graphics.  In these cases, you
+   might prefer to let PinballY keep showing its graphics in the
+   display areas that the game system doesn't use, so that there's
+   something more interesting in those areas than blank black
+   backgrounds.  Simply check the box for each window that you want
+   PinballY to keep open while the game is running.  PinballY will
+   continue to show the game's video or background image in that
+   window during play.
+</p>
+<p>
+   When you set a window to continue showing graphics while
+   running, PinballY also forces that window into the "topmost"
+   window layer on the monitor while the game is executing,
+   so that the PinballY window stays in front of any window
+   the game itself displays in the same screen area.
+   This is an attempt to ensure that the PinballY window
+   not only fills in for missing game graphics, but actually
+   replaces any graphics the game tries to display in that
+   screen area.  The idea is to let you replace any game
+   graphics that you don't like with your own custom images
+   or videos.  For example, some systems make a half-hearted attempt
+   at backglass graphics by displaying a static image with
+   no animation.  You might prefer to show the PinballY backglass
+   video throughout play instead in such cases.  The automatic
+   "topmost" layering helps ensure that the PinballY window
+   will appear in front of the game system's window, effectively
+   replacing it on the screen.  (This isn't absolutely guaranteed
+   to keep the PinballY window in front, because the game could
+   also lay claim to the "topmost" layer, in which case it will
+   usually have precedence because it's the foreground application.
+   You might need to resort to tweaking the game's settings in
+   such a case to tell the game not to show the unwanted window.)
+</p>
+<p>
+   These checkboxes are a little unusual in that they have <i>three</i>
+   possible states:
+</p>
+<style type="text/css">
+ul.ckboxNotes img {
+    vertical-align: middle;
+    margin-right: 1ex;
+}
+img.ckbox {
+    vertical-align: middle;
+}
+</style>
+<ul class="ckboxNotes">
+   <li><img src="CkBoxChecked.png"> Show this window's graphics while running
+   <li><img src="CkBoxBarred.png"> Blank this window while running
+   <li><img src="CkBoxEmpty.png"> Use the default setting for this game's system
+</ul>
+
+<p>
+   The first two settings, <img src="CkBoxChecked.png" class="ckbox"> (always show)
+   and <img src="CkBoxBarred.png" class="ckbox"> (always blank), let you specify
+   exactly what to do for this particular game, overriding the system settings
+   and the global settings.  If you select one of these options, it doesn't
+   matter what options are set for the game's system; the window will always
+   do what you specify here for this game.  The third setting,
+   <img src="CkBoxEmpty.png" class="ckbox"> (use defaults), lets you leave it
+   up to the system or global settings to decide what to do.  If you choose
+   this option, the system or global settings will be consulted each time the
+   game is run, so whatever system or global settings are in effect then
+   will be used.
+</p>
+<p>
+   Note that you can <b>also</b> select which windows to show on a per-system
+   basis, using the controls in the <a href="SystemOptions.html">player system options</a>
+   page of the main settings dialog, as well as globally (for all games and all
+   systems), using the <a href="GameLaunchOptions.html">Game Launch</a> page
+   of the settings dialog.  In some cases, you might want to enable a
+   particular window for all games, in which case it's more convenient
+   to use the global Game Launch options.  For example, since none of the
+   current player systems feature a dedicated instruction card window,
+   you might want to enable PinballY's instruction card window across
+   the board.  In other cases, you might want to enable a particular
+   window for all games that run under a particular player system, in
+   which case you can configure it in that system's settings page, so
+   that the setting applies to all games using that system.  For example,
+   some player systems don't show anything in the backglass window,
+   so you might want to keep the PinballY backglass active for all games
+   using that system.
+</p>
+<p>
+   <b>"DMD" vs. "Real DMD":</b>  The DMD checkbox refers to PinballY's
+   on-screen window where it displays DMD-style graphics.  The Real DMD
+   checkbox refers to your physical DMD device (such as a PinDMD or
+   Pin2DMD unit), if you have one.  The Real DMD isn't a window, but the
+   same principle applies: if you check this box, PinballY will continue
+   to show its image or video media on your real DMD device while the
+   game is running.  This will prevent the launched game from displaying
+   anything on the DMD, since the real DMD devices only allow access from
+   one program at a time.  (In some cases, a game that tries to access
+   the device might detect the conflict and show an error, or exit
+   abruptly, or even crash, so it's best to use this option only with
+   games that don't try to access the DMD device themselves.)
+</p>
+
+
+<h2>Where are the details stored on my disk?</h2>
+
+<p>
+   The details for a game are split between two files:
+</p>
+<ul>
+   <li>The basic descriptive items (title, manufacturer, release
+   year) are stored in the XML database file where the game's
+   entry is stored.  The exact file name and location of a particular
+   game's XML entry depends upon which system the game is
+   associated with.  See <a href="DirectoryInfo.html#tableDatabases">Table Database</a>
+   for details on how these files are arranged.
+
+   <li>Other items are stored in PinballY's "game statistics"
+   database file, GameStats.csv, which you can find in the main
+   PinballY install folder (unless you explicitly change its
+   location using the <a href="CommandLine.html">command line option</a>
+   /GameStats when launching the program).
+   See <a href="DirectoryInfo.html#gameStatsCsv">Table Statistics</a>
+   for details.
+</ul>
+
+   
+
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+
+<h1>systemInfo Object</h1>
+
+<p>
+   <b>systemInfo</b> is a pre-defined object that provides information about
+   the PinballY program.  You can access it by referring to properties
+   of the global systemInfo object:
+</p>
+<div class="code">
+message("The PinballY version number is " + systemInfo.version.display);
+</div>
+
+<h2>Properties</h2>
+
+<p>
+   <b>platform:</b> Processor architecture of the current session.  This is
+   one of the following:
+</p>
+<ul>
+   <li>"x86" for 32-bit Windows on a CPU using the Intel x86 instruction set
+   <li>"x64" for 64-bit Windows on a CPU using the Intel x64 instruction set
+</ul>
+
+<p>
+   To future-proof your code, you shouldn't assume that those are the only
+   possible values, since other platforms could be added in the future.
+   For example, Windows itself runs on ARM CPUs in addition to Intel x86
+   and x64 platforms, so PinballY could potentially be ported to the ARM
+   version of Windows at some point.  Likewise, Windows could add support
+   in the future for new processors that don't even exist yet.
+</p>
+
+<p>
+   <b>programDir:</b> A string containing the full Windows file system path
+   to the PinballY install folder.
+</p>
+<p>
+   <b>programExe:</b> A string containing the full Windows file system path
+   to the PinballY program (.EXE) file.
+</p>
+
+<p>
+   <b>programName:</b> A string containing the name of the program ("PinballY").
+</p>
+
+<p>
+   <b>version:</b>  An object with information on the program version.  The object
+   has the following properties:
+</p>
+<ul>
+  <li><b>basic:</b>  The basic three-part program version string (e.g., "1.0.0")
+
+  <li><b>build:</b>  An integer giving the build number (an arbitrary serial number
+  that increases on each build, mostly to help identify precise release versions when
+  troubleshooting)
+
+  <li><b>buildDate:</b>  A Date object representing the build date of the running version
+
+  <li><b>display:</b>  The program version string, in a format suitable for display,
+  capturing the basic three-part version, build number, and release status information
+
+  <li><b>semantic:</b>  The <a href="https://semver.org/">semantic versioning</a> representation of the program version
+
+  <li><b>status:</b>  Release status: "Dev", "Alpha", "Beta", "RC" (release candidate), or "Release"
+</ul>
+
+</body>
+</html>

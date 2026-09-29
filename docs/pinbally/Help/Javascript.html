@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<!-- This file is part of PinballY
+ Copyright 2018 Michael J Roberts | GPL v3 or later | NO WARRANTY -->
+<html>
+<head>
+   <title>PinballY Help</title>
+   <link rel="stylesheet" type="text/css" href="main.css">
+</head>
+<body>
+<script src="jquery-1.12.1.js" type="text/javascript"></script>
+<script src="PinballYHelp.js" type="text/javascript"></script>
+
+<h1>Javascript Scripting</h1>
+
+<p>
+   PinballY includes a full Javascript engine for user scripting customizations.
+   Many of the things that PinballY does automatically can be overridden
+   or customized through Javascript code.
+</p>
+<p>
+   The Javascript engine has access to a lot of PinballY events and features,
+   but not all of them, since the system has to provide Javascript hooks
+   for the specific features that are to be made scriptable.
+   If there's something we've missed that you'd
+   like to customize from Javascript, let me know.  The Javascript interface
+   can be extended to almost any area of the program, so capabilities
+   that aren't currently there could be added in the future according
+   to interest.
+</p>
+
+<p>
+   The underlying Javascript engine is ChakraCore,
+   Microsoft's high-performance, standards-compliant Javascript engine.  Microsoft
+   built ChakraCore for the Edge  browser and released it as open source.  It has
+   top-tier performance and implements modern Javascript standards.  You can use all
+   of the cool new ES6 language features,
+   like "let", "class", "for..of", destructuring assignments, "arrow" (=&gt;)
+   functions, template literals, promises, the spread operator, and typed arrays.
+</p>
+
+
+<h2>Is this like Web browser Javascript?</h2>
+
+<p>
+   Yes and no.  PinballY's Javascript <i>language</i> is exactly
+   the same as the Javascript language in a modern Web browser.
+   But the programming environment is somewhat different.
+   Some of the common objects and functions that you might think of as
+   "native Javascript" aren't actually that.  They're really "native
+   Web browser" things.  For example, the "document" and "window" objects
+   in browser Javascript come from the browser, not from Javascript, so
+   you won't find them in PinballY, nor will you find an HTML DOM tree,
+   nor common Web browser events like "onclick" and "onchar".
+   Instead, PinballY provides its own, somewhat different set of objects
+   that represent the PinballY user interface environment.  With that in
+   mind, we've tried to maintain familiar names and concepts wherever
+   we can.  For example, PinballY's event system is similar to a browser's,
+   and a number of common browser-like functions are available, such as
+   timeouts and intervals.  At the same time, we've intentionally used
+   new names for things that might resemble browser features but aren't
+   quite the same conceptually, to avoid creating the false impression
+   that they'd work exactly the same way.
+</p>
+
+<h2>Javascript language documentation</h2>
+
+<p>
+   I won't attempt to write a Javascript tutorial or reference manual,
+   since you can easily find better ones on the Web than I could write.  PinballY
+   uses standard Javascript, so the information in any Javascript language
+   manual should apply.  One good place to look is the
+   <a target="_blank" href="https://developer.mozilla.org/">Mozilla Developer Network (MDN)</a>:
+</p>
+<div class="indented">
+   <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/JavaScript">JavaScript documentation on MDN</a>
+</div>
+<p>
+   But remember that PinballY doesn't have the
+   usual complement of Web browser environment objects ("document",
+   the HTML DOM tree, etc).  A lot of "Teach Yourself Javascript"
+   Web sites think that Javascript is always about Web development,
+   so they might take it for granted that you're working in a
+   browser.  This is gradually changing, as Javascript has been
+   gaining popularity for server programming and in other
+   contexts, thanks to systems such as Node.js.  But many online
+   tutorials and examples still assume that Web browser objects
+   are an integral part of the language, so you might have to
+   adjust source code examples you find online accordingly.
+</p>
+
+
+<h2>How to enable scripting</h2>
+
+<p>
+   You don't have to change any option settings to enable scripting.
+   It's always enabled; to use it, you just place a Javascript
+   source file in a certain location.  Specifically, you place a
+   file called <b>main.js</b> in the <b>Scripts</b> folder within your
+   main PinballY folder.  PinballY always automatically checks for
+   this file at startup.  If PinballY finds <b>Scripts\main.js</b>
+   when it starts up, it loads the file and executes it.
+</p>
+<p>
+   What goes in main.js?  In general terms, any valid
+   Javascript code.  But practically speaking, what you'll usually do here
+   is set up some "event listeners" for PinballY's program events.  Event
+   listeners are functions that you write in Javascript for PinballY
+   to call when particular events happen in the user interface.  If
+   you've ever done any Web browser Javascript programming, you'll
+   recognize that as the same basic approach that you'd use there.
+   The only difference is that you're working with PinballY's event
+   scheme in this case rather than with Web browser events.
+</p>
+<p>
+   If you wish, you can organize your code into multiple files.
+   This is particularly useful if you want to share your code
+   or use modules written by other people.  See <a href="#multipleFiles">How to
+   use multiple script files</a> later in this section.
+
+<h2>Overall program flow</h2>
+
+<p>
+   When PinballY starts up, it loads the <b>main.js</b> file that
+   you provide.  Javascript immediately executes all of the code in
+   the file that's defined outside of any function or class
+   definitions.
+   If you're familiar with more traditional programming languages
+   like C or C++, you can think of this "outer" Javascript code as the
+   equivalent of the "main" routine that's executed at program startup
+   in a C or C++ program.
+</p>
+<p>
+   The main thing that the top-level code in your main.js file
+   will usually do is set up <i>event listeners</i>.  An event
+   listener is a function you write that will be called when a
+   specific event occurs.  Once an event listener is set up,
+   PinballY will call it whenever the associated event occurs.
+</p>
+
+<h2>Events</h2>
+
+<p>
+   Most of the code you write for PinballY will be there to handle
+   events.  An event is something like "the user pressed a key"
+   or "a game is being launched".
+</p>
+<p>
+   A function you write to handle an event is called an
+   <i>event listener</i>.  PinballY notifies you that
+   something is happening by calling your event listeners for
+   that particular event.
+</p>
+<p>
+   If you've used Visual Basic or C#, you might expect that
+   event handlers are set up by using a special function name
+   when you define an event handler function.  That's not how it works
+   in Javascript.   Instead, you set up each handler explicitly,
+   so you can use any name for any handler function.
+</p>
+<p>
+   You set up an event listener by calling a function to add
+   the listener to the <i>event target</i> object that generates
+   the events of interest.  An event target represents a PinballY
+   user interface element that's associated with one or more
+   events.  The primary event target for most events is the
+   <b>mainWindow</b> object, which represents the main playfield
+   window.  Most UI events are handled in this window, even
+   when other windows (such as the backglass or DMD) are open.
+</p>
+<p>
+   To attach an event listener to an event target, you use the
+   <b>on()</b> method of the event target object:
+</p>
+
+<div class="code">
+// This is an event listener function for "key down" events.  The
+// name doesn't matter, because we're going to call on() in a moment
+// to register the listener.  (This isn't like Visual Basic, where
+// event handlers are tied to special function names.)
+function myListener(event)
+{
+   // do something with the key-down event
+}
+
+// &gt;&gt;&gt;&gt;&gt; Here's where we register our listener! &lt;&lt;&lt;&lt;&lt; 
+mainWindow.on("keydown", myListener);
+
+// Event listeners don't even have to be named at all.  You can use
+// anonymous functions, like this:
+mainWindow.on("keydown", function(ev) { /* do something with the event */ });
+
+// Using the more succinct "arrow" function notation
+mainWindow.on("keydown", ev => { /* handler */ });
+</div>
+
+<p>
+   You can attach a listener to more than one event with a single "on" call,
+   by separating the event names with spaces:
+</p>
+<div class="code">
+mainWindow.on("keydown keyup", ev => { /* this is called for both keydown and keyup events! */ });
+</div>
+
+<p>
+   <b>on()</b> <i>adds</i> a listener.  It doesn't replace or
+   remove existing listeners for the same event.  If there's already another
+   event listener on the same object, the old listener and the new
+   listener will both be called when the event occurs.  You can add any
+   number of listeners this way.  This is especially useful if you're
+   mixing packages written by different people, because it lets
+   listeners from different packages co-exist peacefully, without
+   having to know about each other.
+</p>
+<p>
+   There's variation of <b>on()</b> called <b>one()</b>, which
+   adds a listener that only runs a single time.  The first time a
+   "one" handler is called, it runs normally, then the system
+   automatically removes it.
+</p>
+
+<p>
+   You can remove an event listener explicitly via the <b>off</b>
+   method:
+</p>
+<div class="code">
+   mainWindow.off("keydown");
+</div>
+<p>
+   Calling <b>off()</b> with an event name simply removes all listeners
+   for the given event name.  You can remove a specific
+   listener by passing in the same function you used to set up the
+   listener in the first place with <b>on()</b>:
+</p>
+<div class="code">
+mainWindow.off("keydown", myListener);
+</div>
+
+<p>
+   You can specify a "namespace" with each event created with <b>on()</b>.
+   A namespace is specified after the event name, separated with a period (.).
+</p>
+<div class="code">
+mainWindow.on("keydown.MyPlugin", (ev) => { /* handler */ });
+</div>
+
+<p>
+   The point of a namespace is to identify the listener
+   for later removal.  When you call <b>off()</b>, you can 
+   use the same namespace qualifier to remove only the listener(s)
+   created with that namespace:
+</p>
+<div class="code">
+mainWindow.off("keydown.MyPlugin");   // removes only the MyPlugin handler(s)
+</div>
+
+<p>
+   Remember, the normal <b>off()</b> removes <i>all</i> listeners for the
+   named event.  Using a namespace qualifier removes only listeners
+   with the same namespace.  This is especially useful for sharing code,
+   because it lets you make nicely isolated code that won't interfere with
+   other people's code that it's combined with.
+</p>
+<p>
+   Using a namespace also lets you easily remove every event listener
+   of every type that you installed under the namespace.  Just call <b>off()</b>
+   with the namespace qualifier alone, with no event name:
+</p>
+<div class="code">
+mainWindow.off(".MyPlugin");  // removes every mainWindow event with a .MyPlugin namespace
+</div>
+
+<p>
+   See also:
+</p>
+<ul>
+   <li><a href="EventTarget.html">EventTarget</a>, for a full reference
+   to the methods for adding and removing event listeners to event
+   target objects like <a href="MainWindowObject.html">mainWindow</a>.
+
+   <li><a href="Event.html">Event</a>, for a reference to the properties
+   and methods of the Event object that's passed as a parameter to each
+   event listener.  The Event object describes the details of the event,
+   such as which key was pressed.
+</ul>
+
+<h2>System objects and classes</h2>
+
+<p>
+   PinballY provides access to the program environment through a number
+   of pre-defined system objects.  These are analogous to the system
+   objects in a Web browser ("window", "document", etc), but are tailored
+   to the PinballY environment instead of a browser environment.
+   See <a href="SystemObjects.html">System Objects</a> for details.
+</p>
+<p>
+   In addition, the system provides some additional functionality
+   through pre-defined system classes.  These are object classes that
+   you and/or the system can instantiate to carry out operations
+   beyond the normal scope of Javascript's type system.
+   See <a href="SystemClasses.html">System Classes</a> for details.
+</p>
+
+<h2>Built-in functions</h2>
+
+<p>
+   All of the standard Javascript built-in functions are implemented in
+   the ChakraCore engine.  You can find documentation on those in any
+   Javascript reference.  In addition, PinballY provides a number of
+   its own built-in functions for access to the program environment
+   and to replicate some of the basic built-in features in Web browsers,
+   such as timeouts and intervals.  See <a href="SystemFunctions.html">System Functions</a>
+   for details.
+</p>
+
+<h2>File system access</h2>
+<p>
+   Javascript doesn't have any built-in access to the local file system,
+   since Javascript is most widely used in browsers, where file system
+   access isn't just unsupported, it's actively blocked, due to the security
+   risks it would create.  But PinballY is obviously a very different
+   context, and it does give you a couple of ways to access files.
+</p>
+<p>
+   The easiest is to use FileSystemObject, a standard Windows scripting component.
+   You can access this using PinballY's <a href="OLEAutomation">OLE Automation</a>
+   support.  FileSystemObject provides simple scripting access to basic file
+   functions, such as getting directory listings and reading and writing text files.
+</p>
+<div class="code">
+let fs = createAutomationObject("Scripting.FileSystemObject");
+</div>
+
+<p>
+   If you need lower-level access, or more advanced functions beyond what
+   FileSystemObject provides, you can call most native Windows API functions
+   directly via the <a href="DllImport.html">DLL Import</a> system.
+</p>
+   
+
+<h2>HTTP requests</h2>
+<p>
+   You can use Javascript to send HTTP requests to Web sites and process
+   the results.  See <a href="HttpRequest.html">HttpRequest</a> for
+   details.
+</p>
+
+<h2>Performance tip: avoid long-running operations</h2>
+
+<p>
+   Avoid operations in Javascript that will take a long time to complete,
+   especially things like timing loops or waiting for external calls
+   (such as network reads) to complete.  "A long time" means anything
+   long enough for you to perceive on a human scale, which is anything
+   longer than about 30 to 50 milliseconds.   Javascript
+   runs as part of the main user interface thread, so any lengthy operation
+   in Javascript can make the UI appear to be frozen for as long as the operation
+   takes to complete.  This can cause the video to momentarily freeze or
+   stutter, and can also delay the processing of button inputs enough
+   to make the response feel sluggish or laggy.
+</p>
+<p>
+   Instead of using timing loops or waits, use a timeout or interval.
+   That'll let PinballY run the UI while waiting for the scheduled time.
+   If you have a long-running, CPU-intensive task to perform, try to
+   break it up into smaller tasks, and use intervals to spread the
+   subtasks out over time.
+</p>
+<p>
+   When waiting for an external event, such as a network request,
+   always use some kind of asynchronous mechanism, rather than
+   polling for completion.  Javascript Promise objects were designed
+   specifically for such situations, but you can also use ad
+   hoc approaches, such as checking periodically with timeouts
+   or intervals.
+</p>
+
+<h2>Debugging</h2>
+
+<p>
+   A good debugger is indispensable for any non-trivial programming
+   project.  PinballY doesn't have a debugger UI built in, but it
+   has something better: support for connecting an external debugger
+   of your chocie.  You can use it with Visual Studio Code
+   (Microsoft's free code editor and Javascript IDE) as well as
+   the Chrome DevTools debugger (built into the Chrome browser).
+   For details on setting up a debugger, see
+   <a href="JsDebug.html">Javascript Debugging</a>.
+</p>
+
+
+<a name="multipleFiles"></a>
+<h2>How to use multiple script files</h2>
+
+<p>
+   By default, PinballY only loads one file, Scripts\main.js.  But that
+   doesn't mean that you have to cram all of your scripting code into that
+   one place.  You can use the standard Javascript ES6 <b>import</b>
+   command to load additional modules.  This lets you mix and match
+   feature modules created by other users, and lets you create your
+   own individual feature modules to share.
+</p>
+<p>
+   (Don't confuse the Javascript ES6 <i>import</i> command with the
+   <a href="DllImport.html">DLL import</a> system.  The DLL import feature is
+   a PinballY add-on, not standard Javascript.  The standard <b>import</b>
+   command imports other Javascript files, whereas the DLL import
+   scheme lets you access native code in external DLLs.)
+</p>
+<p>
+   The import system is specifically
+   designed to make it easy to combine code written by different people,
+   by letting you say exactly which symbols (and only those) are shared
+   among modules.  That avoids all sorts of problems that <i>usually</i>
+   come up when people try to share code, such as when two people
+   both used the same names for their variables and functions.
+</p>
+<p>
+   The basic Javascript import syntax looks like this:
+</p>
+<div class="indented">
+   import { <i>function-or-object-name</i> } from "<i>module.js</i>";
+</div>
+<p>
+   You can import multiple symbols from the module by listing them
+   inside the braces, separated by commas.
+</p>
+<p>
+   There's a lot more to the "import" syntax than this, including a
+   dynamic form (the import() function) that lets you import code
+   conditionally or at specific points in time.  Refer to a Javascript
+   language reference for full details.
+</p>
+
+<h2>Calling external DLL functions</h2>
+
+<p>
+   PinballY's Javascript has extensions that let you call
+   external native code in DLLs (dynamic link libraries).
+   The system is unlike most "plug-in" systems in that you
+   can call most native code directly from Javascript,
+   even if the native code you're calling was never written
+   with PinballY in mind.  In particular, you can use the
+   extensions to call most Windows APIs directly from
+   Javascript, with no external C or C++ code required.
+   You can also use it to add your own custom code to PinballY,
+   written in any native-code language, without having to build
+   PinballY from source.   You just compile your code into a DLL,
+   and call your DLL from Javascript using these same extensions.
+   See <a href="DllImport.html">DLL Imports</a> for details.
+</p>
+
+<h2>Browser frameworks (jquery, etc)</h2>
+
+<p>
+   Web Javascript frameworks like jQuery generally <b>won't</b>
+   work in PinballY.  That's because Web browser frameworks
+   depend heavily on the Web browser HTML document structure and
+   event model.  As we've already discussed, those don't exist in
+   PinballY.  But jQuery in particular has influenced some of the
+   pre-defined framework in PinballY's Javascript environment,
+   so some of the concepts carry over in general terms, even if
+   the exact details can't.
+</p>
+
+<h2>System script files</h2>
+
+<p>
+   Many of the classes, objects, and functions that constitute 
+   PinballY's Javascript "application environment" are implemented
+   in Javascript, so you can easily view the code to see what it's
+   doing, in case you need any details beyond what's covered in
+   this section.  You can even change the system code if you have
+   some unusual situation that requires such drastic measures,
+   although that's strongly discouraged, for the obvious reason that
+   it will make it harder to update to a new release.
+</p>
+<p>
+   PinballY's system scripts are in the <b>Scripts\System</b> folder
+   within your PinballY program folder.  These files are automatically
+   loaded when PinballY starts up (or, in some cases, later on when
+   needed), so there's no need to copy any of these files into your
+   own .js files or to load them explicitly with "import" or any
+   other means.  You can simply expect these files to be available
+   at all times.
+</p>
+<p>
+   A quick summary of the files:
+</p>
+<ul>
+   <li><b>SystemClasses.js:</b>  The main application environment
+      classes, such as the <b>mainWindow</b> object and the 
+      event handling classes.
+
+   <li><b>CParser.js:</b>  Code that parses C-style function and
+      struct definitions for use in the DllImport system.
+</ul>
+
+</body>
+</html>
