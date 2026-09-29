@@ -40,7 +40,8 @@ const SCRIPT_NAME = "AchievementsEngine";
 // family nor the Profile Stats line exists.
 const getEnabledChallenges = () => (config.addOns.challenges === false ? null : getChallenges());
 
-function getAllAchievements() {
+// Exported for the tests, which read each Achievement's rank.
+export function getAllAchievements() {
     const challenges = getEnabledChallenges();
     return [
         ...buildDayManufacturersAchievements(),

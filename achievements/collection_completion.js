@@ -16,6 +16,9 @@ import { getProfileStore } from "../common/profile_store.js";
 // Achievement again to players who already earned it. Each one also needs
 // its title in every lang/ file.
 const COLLECTION_PERCENT_THRESHOLDS = [10, 25, 50, 75, 100];
+// The Achievement Rank ladder: the first table ever, then each percentage.
+const FIRST_TABLE_STEP = "firstTable";
+const COLLECTION_LADDER = [FIRST_TABLE_STEP, ...COLLECTION_PERCENT_THRESHOLDS];
 
 export function buildCollectionCompletionAchievements() {
     const { achievements: TEXT } = lang;
@@ -26,14 +29,19 @@ export function buildCollectionCompletionAchievements() {
         return countPlayedTables(getVisibleTables(), getProfileStore());
     }
 
+    // A target of 1 shows no Achievement Progress.
     const achievements = [
-        {
-            id: "collectionMilestone:firstTable",
+        countedAchievement({
+            id: `collectionMilestone:${FIRST_TABLE_STEP}`,
             family: ACHIEVEMENT_FAMILY.COLLECTION,
             getTitle: () => TEXT.firstTableTitle(),
             getDescription: () => TEXT.firstTableDescription(),
-            checkUnlocked: () => countPlayed() >= 1,
-        },
+            target: 1,
+            ladder: COLLECTION_LADDER,
+            step: FIRST_TABLE_STEP,
+            unit: PROGRESS_UNIT.TABLES,
+            getCurrent: countPlayed,
+        }),
     ];
 
     for (const percent of COLLECTION_PERCENT_THRESHOLDS) {
@@ -45,6 +53,8 @@ export function buildCollectionCompletionAchievements() {
             getTitle: () => TEXT.collectionPercentTitles[percent],
             getDescription: () => TEXT.collectionPercentDescription(percent, requiredCount, totalCount),
             target: requiredCount,
+            ladder: COLLECTION_LADDER,
+            step: percent,
             unit: PROGRESS_UNIT.TABLES,
             getCurrent: countPlayed,
         }));

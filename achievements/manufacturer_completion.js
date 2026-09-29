@@ -3,7 +3,8 @@
 // the fictional "VPX Community" manufacturer, treated like any other):
 // unlocked once the active Profile has played every visible table from
 // that manufacturer at least once, with the tables played of that
-// manufacturer as Achievement Progress. Sorted by manufacturer. Called by
+// manufacturer as Achievement Progress and an Achievement Rank from the
+// number of its tables. Sorted by manufacturer. Called by
 // achievements_engine.js; no side effects.
 // ============================================================
 
@@ -32,6 +33,7 @@ export function buildManufacturerCompletionAchievements() {
             getTitle: () => TEXT.manufacturerCompletionTitle(manufacturer),
             getDescription: () => TEXT.manufacturerCompletionDescription(manufacturer, gamesForManufacturer.length),
             target: gamesForManufacturer.length,
+            isGroupCompletion: true,
             unit: PROGRESS_UNIT.TABLES,
             getCurrent: () => gamesForManufacturer.filter(game => getProfileStore().hasPlayed(game.configId)).length,
         }));

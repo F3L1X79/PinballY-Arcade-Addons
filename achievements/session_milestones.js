@@ -6,7 +6,7 @@
 // the longest session in whole minutes as Achievement Progress.
 // ============================================================
 
-import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT } from "../common/achievements.js";
+import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT, standaloneAchievement } from "../common/achievements.js";
 import lang from "../common/i18n.js";
 import { getProfileStore } from "../common/profile_store.js";
 import {
@@ -35,25 +35,26 @@ export function buildSessionMilestoneAchievements() {
         getTitle: () => TEXT.marathonTitles[minutes],
         getDescription: () => TEXT.marathonDescription(minutes),
         target: minutes,
+        ladder: MARATHON_THRESHOLDS_MINUTES,
         unit: PROGRESS_UNIT.MINUTES,
         getCurrent: longestMinutes,
     }));
 
-    achievements.push({
+    achievements.push(standaloneAchievement({
         id: "rageQuit",
         family: ACHIEVEMENT_FAMILY.SESSIONS,
         getTitle: () => TEXT.rageQuitTitle(),
         getDescription: () => TEXT.rageQuitDescription(RAGE_QUIT_MIN_SECONDS, RAGE_QUIT_MAX_SECONDS),
         checkUnlocked: () => activeSessions().rageQuit,
-    });
+    }));
 
-    achievements.push({
+    achievements.push(standaloneAchievement({
         id: "grandReturn",
         family: ACHIEVEMENT_FAMILY.SESSIONS,
         getTitle: () => TEXT.grandReturnTitle(),
         getDescription: () => TEXT.grandReturnDescription(GRAND_RETURN_THRESHOLD_DAYS),
         checkUnlocked: () => activeSessions().grandReturn,
-    });
+    }));
 
     return achievements;
 }

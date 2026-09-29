@@ -29,6 +29,7 @@ export function buildRandomGameFanAchievements() {
         getTitle: () => TEXT.randomGamesTitles[count],
         getDescription: () => TEXT.randomGamesDescription(count),
         target: count,
+        ladder: RANDOM_GAME_THRESHOLDS,
         unit: PROGRESS_UNIT.RANDOM_GAMES,
         getCurrent: randomGame.getRandomGamesPlayed,
     }));

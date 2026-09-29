@@ -28,6 +28,7 @@ export function buildChallengeAchievements(challenges) {
         getTitle: () => TEXT.challengesCompletedTitles[count],
         getDescription: () => TEXT.challengesCompletedDescription(count),
         target: count,
+        ladder: CHALLENGE_THRESHOLDS,
         unit: PROGRESS_UNIT.CHALLENGES,
         getCurrent: getCompletedCount,
     }));

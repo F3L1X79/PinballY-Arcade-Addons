@@ -1,10 +1,13 @@
 ﻿// ============================================================
 // Generic achievement evaluation. An achievement is a plain object:
-//   { id, family, getTitle(), getDescription(), checkUnlocked(), getProgress() }
-// where family is one of ACHIEVEMENT_FAMILY and the optional getProgress()
-// returns its Achievement Progress, { current, target, unit } with unit one
-// of PROGRESS_UNIT, or null. countedAchievement() builds both from one value
-// (or from a value and its record, for a Streak).
+//   { id, family, rank, getTitle(), getDescription(), checkUnlocked(), getProgress() }
+// where family is one of ACHIEVEMENT_FAMILY, rank its Achievement Rank (one
+// of ACHIEVEMENT_RANK) and the optional getProgress() returns its
+// Achievement Progress, { current, target, unit } with unit one of
+// PROGRESS_UNIT, or null. countedAchievement() builds both from one value
+// (or from a value and its record, for a Streak) and deduces the rank;
+// standaloneAchievement() builds one that stands alone, always Gold. The
+// rank is never persisted nor part of an ID.
 // "Unlocked" is computed live from the active Profile's progress; only the
 // fact that a Profile was Notified is persisted (its profile.json
 // "notified" list), so each Achievement is announced once per Profile.
@@ -39,6 +42,44 @@ export const PROGRESS_UNIT = Object.freeze({
     CHALLENGES: "challenges",
 });
 
+// Every Achievement's Achievement Rank, from the easiest.
+export const ACHIEVEMENT_RANK = Object.freeze({
+    BRONZE: "bronze",
+    SILVER: "silver",
+    GOLD: "gold",
+    PLATINUM: "platinum",
+});
+const RANKS_IN_ORDER = Object.values(ACHIEVEMENT_RANK);
+
+// A group completion's rank from the size of its group: up to each limit,
+// that rank; above the last one, Platinum.
+const GROUP_COMPLETION_RANK_LIMITS = [
+    { maxTables: 3, rank: ACHIEVEMENT_RANK.BRONZE },
+    { maxTables: 10, rank: ACHIEVEMENT_RANK.SILVER },
+    { maxTables: 25, rank: ACHIEVEMENT_RANK.GOLD },
+];
+
+// A ladder is a series of Achievements that only differ by their threshold:
+// its first step is always Bronze, its last always Platinum, the others
+// spread in between. A single step is no ladder: it is Gold, like a
+// standalone Achievement.
+function ladderRank(ladder, step) {
+    const position = ladder.indexOf(step);
+    if (position === -1) throw new Error(`"${step}" is not a step of its ladder`);
+    if (ladder.length === 1) return ACHIEVEMENT_RANK.GOLD;
+    return RANKS_IN_ORDER[Math.round(position * (RANKS_IN_ORDER.length - 1) / (ladder.length - 1))];
+}
+
+function groupCompletionRank(tableCount) {
+    const limit = GROUP_COMPLETION_RANK_LIMITS.find(({ maxTables }) => tableCount <= maxTables);
+    return limit ? limit.rank : ACHIEVEMENT_RANK.PLATINUM;
+}
+
+// An Achievement outside any ladder or group, such as a Period Table's first play.
+export function standaloneAchievement({ id, family, getTitle, getDescription, checkUnlocked }) {
+    return { id, family, rank: ACHIEVEMENT_RANK.GOLD, getTitle, getDescription, checkUnlocked };
+}
+
 // Below this target, an Achievement Progress would only ever read "0/1".
 const MIN_PROGRESS_TARGET = 2;
 
@@ -47,10 +88,20 @@ const MIN_PROGRESS_TARGET = 2;
 // getRecord (the best value ever reached, never below getCurrent()), the
 // record unlocks it instead, so it stays Unlocked when the value drops
 // again, while a missing one still shows the value.
-export function countedAchievement({ id, family, getTitle, getDescription, target, unit, getCurrent, getRecord = getCurrent }) {
+// Its rank comes either from its ladder, the thresholds of its series in
+// order, and its step in it (its target unless the ladder counts something
+// else, such as percentages), or, for a group completion, from the size of
+// the group, which is its target.
+export function countedAchievement({
+    id, family, getTitle, getDescription, target, unit, getCurrent, getRecord = getCurrent,
+    ladder, step = target, isGroupCompletion = false,
+}) {
+    const hasLadder = ladder !== undefined;
+    if (hasLadder === isGroupCompletion) throw new Error(`${id} needs either a ladder or to be a group completion, not both`);
     return {
         id,
         family,
+        rank: hasLadder ? ladderRank(ladder, step) : groupCompletionRank(target),
         getTitle,
         getDescription,
         checkUnlocked: () => getRecord() >= target,

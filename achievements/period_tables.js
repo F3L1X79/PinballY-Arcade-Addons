@@ -9,7 +9,7 @@
 // counters kept by common/period_table.js; writes nothing.
 // ============================================================
 
-import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT } from "../common/achievements.js";
+import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT, standaloneAchievement } from "../common/achievements.js";
 import lang from "../common/i18n.js";
 import { getTableOfTheDay, getTableOfTheWeek } from "../common/period_table.js";
 
@@ -18,27 +18,28 @@ export function buildPeriodTableAchievements() {
     const tableOfTheDay = getTableOfTheDay();
     const tableOfTheWeek = getTableOfTheWeek();
 
-    // Each threshold also needs its title in every lang/ file.
+    // Each threshold also needs its title in every lang/ file. Each list is
+    // its own ladder of Achievement Ranks.
     const dailyPeriodsPlayedThresholds = [10, 50, 100];
     const weeklyPeriodsPlayedThresholds = [10, 26, 52];
     const dailyStreakThresholds = [3, 7, 30];
     const weeklyStreakThresholds = [4, 12];
 
     const achievements = [
-        {
+        standaloneAchievement({
             id: "tableOfTheDayFirstPlay",
             family: ACHIEVEMENT_FAMILY.PERIOD_TABLES,
             getTitle: () => TEXT.dailyFirstPlayTitle(),
             getDescription: () => TEXT.dailyFirstPlayDescription(),
             checkUnlocked: () => tableOfTheDay.getLongestStreak() >= 1,
-        },
-        {
+        }),
+        standaloneAchievement({
             id: "tableOfTheWeekFirstPlay",
             family: ACHIEVEMENT_FAMILY.PERIOD_TABLES,
             getTitle: () => TEXT.weeklyFirstPlayTitle(),
             getDescription: () => TEXT.weeklyFirstPlayDescription(),
             checkUnlocked: () => tableOfTheWeek.getLongestStreak() >= 1,
-        },
+        }),
     ];
 
     for (const days of dailyPeriodsPlayedThresholds) {
@@ -48,6 +49,7 @@ export function buildPeriodTableAchievements() {
             getTitle: () => TEXT.dailyPeriodsPlayedTitles[days],
             getDescription: () => TEXT.dailyPeriodsPlayedDescription(days),
             target: days,
+            ladder: dailyPeriodsPlayedThresholds,
             unit: PROGRESS_UNIT.DAYS_PLAYED,
             getCurrent: tableOfTheDay.getPeriodsPlayed,
         }));
@@ -60,6 +62,7 @@ export function buildPeriodTableAchievements() {
             getTitle: () => TEXT.weeklyPeriodsPlayedTitles[weeks],
             getDescription: () => TEXT.weeklyPeriodsPlayedDescription(weeks),
             target: weeks,
+            ladder: weeklyPeriodsPlayedThresholds,
             unit: PROGRESS_UNIT.WEEKS_PLAYED,
             getCurrent: tableOfTheWeek.getPeriodsPlayed,
         }));
@@ -72,6 +75,7 @@ export function buildPeriodTableAchievements() {
             getTitle: () => TEXT.dailyStreakTitles[days],
             getDescription: () => TEXT.dailyStreakDescription(days),
             target: days,
+            ladder: dailyStreakThresholds,
             unit: PROGRESS_UNIT.DAYS_IN_A_ROW,
             getCurrent: tableOfTheDay.getStreak,
             getRecord: tableOfTheDay.getLongestStreak,
@@ -85,6 +89,7 @@ export function buildPeriodTableAchievements() {
             getTitle: () => TEXT.weeklyStreakTitles[weeks],
             getDescription: () => TEXT.weeklyStreakDescription(weeks),
             target: weeks,
+            ladder: weeklyStreakThresholds,
             unit: PROGRESS_UNIT.WEEKS_IN_A_ROW,
             getCurrent: tableOfTheWeek.getStreak,
             getRecord: tableOfTheWeek.getLongestStreak,

@@ -34,6 +34,7 @@ export function buildPlayTimeTotalAchievements() {
         getTitle: () => TEXT.playTimeMilestoneTitles[hours],
         getDescription: () => TEXT.playTimeMilestoneDescription(hours),
         target: hours,
+        ladder: PLAY_TIME_THRESHOLDS_HOURS,
         unit: PROGRESS_UNIT.HOURS,
         getCurrent: getTotalPlayTimeHours,
     }));

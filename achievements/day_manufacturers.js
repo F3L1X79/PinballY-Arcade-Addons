@@ -23,6 +23,7 @@ export function buildDayManufacturersAchievements() {
         getTitle: () => TEXT.dayManufacturersTitles[count],
         getDescription: () => TEXT.dayManufacturersDescription(count),
         target: count,
+        ladder: DAY_MANUFACTURERS_THRESHOLDS,
         unit: PROGRESS_UNIT.MANUFACTURERS,
         getCurrent: () => getProfileStore().getProfileData().sessions.mostManufacturersInADay,
     }));
