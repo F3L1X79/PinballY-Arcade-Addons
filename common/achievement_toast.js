@@ -16,7 +16,7 @@ import lang from "./i18n.js";
 import { safeHandler } from "./safe_handler.js";
 import { createPinballYHost } from "./pinbally_host.js";
 import config from "./config.js";
-import { CHALLENGE_ACCENT_COLOR } from "./challenge_card.js";
+import { STEAMBALL_COLORS, STEAMBALL_FONTS } from "./steamball_palette.js";
 
 const SCRIPT_NAME = "AchievementToast";
 
@@ -56,15 +56,15 @@ const DEFAULT_TOAST_SCALE = 1;
 const MIN_TOAST_SCALE = 0.5;
 const MAX_TOAST_SCALE = 3;
 const GLOW_MAX_ALPHA = 0x38;
-const FONT = "Segoe UI";
+const FONT = STEAMBALL_FONTS.body;
 const COLORS = Object.freeze({
-    gradientTop: 0xFF2A3547,
-    gradientBottom: 0xFF171D27,
-    border: 0xFF3E4C60,
-    tile: 0xFF15181E,
-    title: 0xFFFFFFFF,
-    description: 0xFFA9B4C2,
-    transparent: 0x00000000,
+    gradientTop: STEAMBALL_COLORS.panelTop,
+    gradientBottom: STEAMBALL_COLORS.panel,
+    border: STEAMBALL_COLORS.border,
+    tile: STEAMBALL_COLORS.tile,
+    title: STEAMBALL_COLORS.title,
+    description: STEAMBALL_COLORS.description,
+    transparent: STEAMBALL_COLORS.transparent,
 });
 
 export const TOAST_KIND = Object.freeze({ ACHIEVEMENT: "achievement", CHALLENGE: "challenge" });
@@ -72,13 +72,13 @@ export const TOAST_KIND = Object.freeze({ ACHIEVEMENT: "achievement", CHALLENGE:
 // drawImage resolves relative paths from the PinballY folder, not Scripts/.
 const KIND_LOOKS = Object.freeze({
     [TOAST_KIND.ACHIEVEMENT]: {
-        accent: 0xFFE8B84A,
+        accent: STEAMBALL_COLORS.gold,
         iconFile: "Scripts\\assets\\achievement_trophy.png",
         header: () => lang.achievements.toastHeader,
     },
     // The Challenge Card's accent, so the toast reads as the card's news.
     [TOAST_KIND.CHALLENGE]: {
-        accent: CHALLENGE_ACCENT_COLOR,
+        accent: STEAMBALL_COLORS.challengeAccent,
         iconFile: "Scripts\\assets\\challenge_target.png",
         header: () => lang.challenges.toastHeader,
     },

@@ -26,6 +26,7 @@ The project's words (Profile, Avatar, Table of the Day, Challenge, Achievement, 
 - `random_game`: the Random Game.
 - `wheel_dialog`: spontaneous dialogs from Add-ons, shown one at a time when the wheel is free, by priority.
 - `achievement_toast`: Achievement Toasts and Challenge Toasts, drawn in the bottom-right corner of the playfield screen, never as a dialog.
+- `steamball_palette`: the colours and fonts shared by the Achievement List, the Achievement Toast and the Challenge Card, so that they look like one product.
 - `main_menu`: every main menu entry after "Play", placed by a fixed position. Only a PinballY filter may reach the main menu on its own, through `createFilter({ group: "[Top]" })`.
 - `i18n`: every text shown to the player, in the active language.
 - `safe_handler`: wraps event handlers and callbacks so that an error is logged with the script's name instead of being lost.

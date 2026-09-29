@@ -14,6 +14,7 @@
 
 import lang from "./i18n.js";
 import { safeHandler } from "./safe_handler.js";
+import { STEAMBALL_COLORS, STEAMBALL_FONTS } from "./steamball_palette.js";
 
 const SCRIPT_NAME = "ChallengeCard";
 
@@ -32,21 +33,19 @@ const HEADER = Object.freeze({ y: 14, size: 11 });
 const TITLE = Object.freeze({ y: 34, size: 16 });
 const BAR = Object.freeze({ y: 66, height: 6 });
 const PROGRESS = Object.freeze({ y: 78, size: 12 });
-const FONT = "Segoe UI";
-// Also the Challenge Toast's accent.
-export const CHALLENGE_ACCENT_COLOR = 0xFF4FD1B0;
+const FONT = STEAMBALL_FONTS.body;
 const HIGHLIGHT = Object.freeze({ ms: 1200, glowRings: 8, glowMaxAlpha: 0x60 });
 // How long the verdict stays before the week's Challenge replaces it.
 export const CHALLENGE_VERDICT_MS = 5000;
 const COLORS = Object.freeze({
-    background: 0xEB141C28,
-    border: 0xFF3E4C60,
-    accent: CHALLENGE_ACCENT_COLOR,
-    accentLit: 0xFFB8FFF0,
-    barTrack: 0xFF273246,
-    title: 0xFFFFFFFF,
-    text: 0xFFA9B4C2,
-    transparent: 0x00000000,
+    background: STEAMBALL_COLORS.panelTranslucent,
+    border: STEAMBALL_COLORS.border,
+    accent: STEAMBALL_COLORS.challengeAccent,
+    accentLit: STEAMBALL_COLORS.challengeAccentLit,
+    barTrack: STEAMBALL_COLORS.track,
+    title: STEAMBALL_COLORS.title,
+    text: STEAMBALL_COLORS.description,
+    transparent: STEAMBALL_COLORS.transparent,
 });
 
 function drawText(host, dc, text, { y, size, weight = 400, color }) {
