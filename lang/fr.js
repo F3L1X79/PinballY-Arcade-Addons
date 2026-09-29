@@ -294,8 +294,8 @@ export default {
         missingSection: "Succès à obtenir",
         // After a section's title.
         sectionCount: (count) => `(${count})`,
-        // PinballY's button names, as on the cabinet's key caps.
-        keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
+        // The key caps: Next and Prev are the right and left flipper buttons.
+        keyCaps: { next: "Droite", prev: "Gauche", exit: "Exit" },
         browse: "Parcourir",
         back: "Retour",
         // A missing Achievement's Achievement Progress, on its row.

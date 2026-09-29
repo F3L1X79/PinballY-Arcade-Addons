@@ -142,7 +142,7 @@ function drawFooter(host, dc, g, footer) {
     });
     const label = () => host.createStyledText({ textStyle: { font: FONTS.display, size: 18, weight: 600, color: COLORS.description } });
     const pieces = [
-        { key: footer.nextKey }, { gap: 8 }, { key: footer.prevKey }, { gap: 12 }, { label: footer.browse },
+        { key: footer.prevKey }, { gap: 8 }, { key: footer.nextKey }, { gap: 12 }, { label: footer.browse },
         { gap: 48 },
         { key: footer.exitKey }, { gap: 12 }, { label: footer.back },
     ].map(piece => {
