@@ -374,44 +374,26 @@
         </div>
       </li>
 
-      <li draggable="true" tabindex="0" class="item tr-profiles" id="marked-profiles" data-track="profiles" data-rank="silver">
+      <li draggable="true" tabindex="0" class="item tr-share" id="nested-install" data-track="share" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>
         <div class="content">
           <div class="item-head">
-            <h3>Profiles marqués : admin, enfant et remise à zéro des succès</h3>
-            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span><span class="tag">un seul grilling</span></div>
+            <h3>Installation non invasive : un sous-dossier et une ligne dans <code>main.js</code></h3>
+            <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen</span></div>
           </div>
-          <p>Marquer un Profile pour changer ce qu'il voit. Un Profile <strong>admin</strong> garde les menus de configuration (Table Setup, réglages de PinballY…), les autres ont un menu principal épuré. Un Profile <strong>enfant</strong> ne voit pas les tables de la catégorie « NSFW » (déjà créée dans PinballY), qui deviennent Hidden pour lui seulement. Un bouton <strong>remet les Achievements à zéro</strong> sans toucher aux fichiers, a priori dans le menu admin.</p>
+          <p>Tout le projet vit dans <code>Scripts\ArcadeAddons\</code> (nom à choisir) et l'installation se résume à ajouter <code>import "./ArcadeAddons/main.js";</code> au <code>main.js</code> du joueur. On n'écrase plus ses scripts, et nos dossiers génériques (<code>addons\</code>, <code>common\</code>, <code>lang\</code>, <code>assets\</code>, <code>profiles\</code>) ne risquent plus d'entrer en collision avec les siens.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Touche aussi les Weekly Challenges (Challenge Tables)</div>
+          <div class="links">Recoupe peut-être la <a href="#distrib">Distribution (n° <span data-ref="distrib"></span>)</a> : à trancher pendant le grill</div>
           <details>
-            <summary>Questions ouvertes : admin (3)</summary>
+            <summary>Questions ouvertes (4)</summary>
             <ul>
-              <li>Comment désigner un admin : une liste <code>ADMIN_PROFILES=…</code> dans <code>.env.local</code> (recommandé) ou un champ dans <code>profile.json</code>, comme pour l'enfant ?</li>
-              <li>Quels menus cacher exactement ?</li>
-              <li>Que faire quand aucun admin n'est défini ?</li>
+              <li>Faut-il fusionner ce chantier avec la Distribution, ou le traiter avant pour qu'elle installe déjà dans un sous-dossier ?</li>
+              <li>Où placer le dépôt git : à la racine du sous-dossier, avec <code>System\</code> hors du dépôt ? Il faut alors revoir <code>tests/file_layout.test.js</code> et la règle « la racine ne contient que <code>main.js</code> ».</li>
+              <li>Chemins écrits en dur à calculer à partir du dossier du projet : <code>Scripts\assets\...</code> (<code>achievement_toast.js</code>), <code>Scripts\.env.local</code> (<code>config.js</code>), <code>profiles\</code>.</li>
+              <li>Migration des installations existantes : déplacer <code>profiles\</code> et <code>.env.local</code> automatiquement, ou via une consigne du README ?</li>
             </ul>
-            <p class="ctx">Désencombrer, pas protéger : aucun mot de passe. Déconseillé : fusionner avec Guest, qui sert aux visiteurs et est actif sur une installation neuve.</p>
-          </details>
-          <details>
-            <summary>Questions ouvertes : enfant (4)</summary>
-            <ul>
-              <li>Comment marquer le Profile : <code>"isChild": true</code> dans <code>profile.json</code> ?</li>
-              <li>Que faire quand la Table of the Day commune est NSFW ?</li>
-              <li>Les Achievements de collection comptent-ils sans les tables NSFW ?</li>
-              <li>Les Challenge Tables et le Random Game doivent-ils aussi les exclure ?</li>
-            </ul>
-            <p class="ctx">Ce n'est pas un contrôle parental : aucun mot de passe.</p>
-          </details>
-          <details>
-            <summary>Questions ouvertes : remise à zéro (4)</summary>
-            <ul>
-              <li>Seulement le Profile actif, ou tous ?</li>
-              <li>Effacer seulement les annonces (<code>notified</code>) ou aussi la progression (parties, Streaks, stats de session) ?</li>
-              <li>Confirmation obligatoire : comment la rendre difficile à déclencher par erreur avec les boutons du cabinet ?</li>
-              <li>Menu admin, ou aussi l'Achievement List quand aucun admin n'est défini ?</li>
-            </ul>
+            <p class="ctx">Idée issue d'une évaluation externe, qui proposait une « plateforme d'extension » (loader générique, Add-ons tiers). Écartée : PinballY ne fournit pas de <code>main.js</code> d'origine, notre <code>main.js</code> est déjà un loader, et les Add-ons sont volontairement couplés (Profile store en premier, ordre imposé).</p>
           </details>
         </div>
       </li>
@@ -465,6 +447,48 @@
         </div>
       </li>
 
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="marked-profiles" data-track="profiles" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Profiles marqués : admin, enfant et remise à zéro des succès</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span><span class="tag">un seul grilling</span></div>
+          </div>
+          <p>Marquer un Profile pour changer ce qu'il voit. Un Profile <strong>admin</strong> garde les menus de configuration (Table Setup, réglages de PinballY…), les autres ont un menu principal épuré. Un Profile <strong>enfant</strong> ne voit pas les tables de la catégorie « NSFW » (déjà créée dans PinballY), qui deviennent Hidden pour lui seulement. Un bouton <strong>remet les Achievements à zéro</strong> sans toucher aux fichiers, a priori dans le menu admin.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Touche aussi les Weekly Challenges (Challenge Tables)</div>
+          <details>
+            <summary>Questions ouvertes : admin (3)</summary>
+            <ul>
+              <li>Comment désigner un admin : une liste <code>ADMIN_PROFILES=…</code> dans <code>.env.local</code> (recommandé) ou un champ dans <code>profile.json</code>, comme pour l'enfant ?</li>
+              <li>Quels menus cacher exactement ?</li>
+              <li>Que faire quand aucun admin n'est défini ?</li>
+            </ul>
+            <p class="ctx">Désencombrer, pas protéger : aucun mot de passe. Déconseillé : fusionner avec Guest, qui sert aux visiteurs et est actif sur une installation neuve.</p>
+          </details>
+          <details>
+            <summary>Questions ouvertes : enfant (4)</summary>
+            <ul>
+              <li>Comment marquer le Profile : <code>"isChild": true</code> dans <code>profile.json</code> ?</li>
+              <li>Que faire quand la Table of the Day commune est NSFW ?</li>
+              <li>Les Achievements de collection comptent-ils sans les tables NSFW ?</li>
+              <li>Les Challenge Tables et le Random Game doivent-ils aussi les exclure ?</li>
+            </ul>
+            <p class="ctx">Ce n'est pas un contrôle parental : aucun mot de passe.</p>
+          </details>
+          <details>
+            <summary>Questions ouvertes : remise à zéro (4)</summary>
+            <ul>
+              <li>Seulement le Profile actif, ou tous ?</li>
+              <li>Effacer seulement les annonces (<code>notified</code>) ou aussi la progression (parties, Streaks, stats de session) ?</li>
+              <li>Confirmation obligatoire : comment la rendre difficile à déclencher par erreur avec les boutons du cabinet ?</li>
+              <li>Menu admin, ou aussi l'Achievement List quand aucun admin n'est défini ?</li>
+            </ul>
+          </details>
+        </div>
+      </li>
+
       <li draggable="true" tabindex="0" class="item tr-profiles" id="stats-drawn" data-track="profiles" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>
@@ -514,30 +538,6 @@
           <details>
             <summary>Contexte</summary>
             <p class="ctx">Les notes et favoris natifs sont des colonnes globales de <code>GameStats.csv</code> : l'invite de notation et les filtres de favoris devront lire les données du Profile.</p>
-          </details>
-        </div>
-      </li>
-
-      <li draggable="true" tabindex="0" class="item tr-share" id="nested-install" data-track="share" data-rank="silver">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Installation non invasive : un sous-dossier et une ligne dans <code>main.js</code></h3>
-            <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen</span></div>
-          </div>
-          <p>Tout le projet vit dans <code>Scripts\ArcadeAddons\</code> (nom à choisir) et l'installation se résume à ajouter <code>import "./ArcadeAddons/main.js";</code> au <code>main.js</code> du joueur. On n'écrase plus ses scripts, et nos dossiers génériques (<code>addons\</code>, <code>common\</code>, <code>lang\</code>, <code>assets\</code>, <code>profiles\</code>) ne risquent plus d'entrer en collision avec les siens.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Recoupe peut-être la <a href="#distrib">Distribution (n° <span data-ref="distrib"></span>)</a> : à trancher pendant le grill</div>
-          <details>
-            <summary>Questions ouvertes (4)</summary>
-            <ul>
-              <li>Faut-il fusionner ce chantier avec la Distribution, ou le traiter avant pour qu'elle installe déjà dans un sous-dossier ?</li>
-              <li>Où placer le dépôt git : à la racine du sous-dossier, avec <code>System\</code> hors du dépôt ? Il faut alors revoir <code>tests/file_layout.test.js</code> et la règle « la racine ne contient que <code>main.js</code> ».</li>
-              <li>Chemins écrits en dur à calculer à partir du dossier du projet : <code>Scripts\assets\...</code> (<code>achievement_toast.js</code>), <code>Scripts\.env.local</code> (<code>config.js</code>), <code>profiles\</code>.</li>
-              <li>Migration des installations existantes : déplacer <code>profiles\</code> et <code>.env.local</code> automatiquement, ou via une consigne du README ?</li>
-            </ul>
-            <p class="ctx">Idée issue d'une évaluation externe, qui proposait une « plateforme d'extension » (loader générique, Add-ons tiers). Écartée : PinballY ne fournit pas de <code>main.js</code> d'origine, notre <code>main.js</code> est déjà un loader, et les Add-ons sont volontairement couplés (Profile store en premier, ordre imposé).</p>
           </details>
         </div>
       </li>
