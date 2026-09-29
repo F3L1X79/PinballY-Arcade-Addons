@@ -39,7 +39,7 @@ Dozens of Achievements from Bronze to Platinum, announced without interrupting y
 
 PinballY's own menus and messages in French, German, Spanish, Italian or Portuguese.
 
-**And also**: a Random Game spun on a wheel of fortune, "Hall of Fame" and "Original Tables" filters, a clock, a status line, a reminder to rate a table, launches without a black flash, the backglass hidden during a game, launch and Achievement sounds.
+**And also**: a Random Game spun on a wheel of fortune, "Most Played Tables" and "Original Tables" filters, a clock, a status line, a reminder to rate a table, launches without a black flash, the backglass hidden during a game, launch and Achievement sounds.
 
 ## Install
 

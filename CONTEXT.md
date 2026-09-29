@@ -56,7 +56,7 @@ A table drawn at random from the current wheel selection and launched right away
 _Avoid_: random table, lucky pick
 
 **Hall of Fame**:
-The ten visible tables the active Profile has spent the most time on, ranked from the most played, offered as a wheel selection from the main menu. Shown as "Tables les plus jouées" in French, like the same tables in the Profile Stats.
+The ten visible tables the active Profile has spent the most time on, ranked from the most played, offered as a wheel selection from the main menu. Shown as "Most Played Tables" ("Tables les plus jouées" in French), like the same tables in the Profile Stats.
 _Avoid_: top played, most played, leaderboard
 
 **Streak**:
