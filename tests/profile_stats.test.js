@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Profile Stats module tests: over the fake PinballY host with a real
 // Profile store, real Period Tables and a real Achievement List, checks
 // what the player sees (title naming the active Profile, games played,
@@ -18,7 +18,7 @@ import { createProfileStats } from "../common/profile_stats.js";
 import { createProfileStore } from "../common/profile_store.js";
 import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
 import { createAchievementList } from "../common/achievement_list.js";
-import { ACHIEVEMENT_FAMILY } from "../common/achievements.js";
+import { ACHIEVEMENT_FAMILY, ACHIEVEMENT_RANK } from "../common/achievements.js";
 import lang from "../common/i18n.js";
 import { chromeTexts, pressAndGlide } from "./achievement_list_reader.js";
 
@@ -53,7 +53,7 @@ const GUEST_PLAYS = {
 
 function fakeAchievement(id, unlocked) {
     return {
-        id, family: ACHIEVEMENT_FAMILY.COLLECTION, unlocked,
+        id, family: ACHIEVEMENT_FAMILY.COLLECTION, rank: ACHIEVEMENT_RANK.BRONZE, unlocked,
         getTitle: () => id, getDescription: () => id, checkUnlocked() { return this.unlocked; },
     };
 }

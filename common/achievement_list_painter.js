@@ -1,19 +1,28 @@
 ﻿// ============================================================
 // Achievement List painter: draws the pieces of the drawn Achievement List
 // (the dimmed backdrop and panel, the header and footer, a section header,
-// an Achievement row) into a drawing layer's context, in the Steamball look
-// validated with the prototype. It only draws what it is given: it holds no
+// an Achievement row, a rank emblem) into a drawing layer's context, in
+// the Steamball look validated with the prototype. It only draws what it is given: it holds no
 // state, reads no Achievement and listens to no event. Sizes are in layout
 // pixels, fonts in points.
 // ============================================================
 
-import { STEAMBALL_COLORS as COLORS, STEAMBALL_FONTS as FONTS } from "./steamball_palette.js";
+import { ACHIEVEMENT_RANK, RANKS_IN_ORDER } from "./achievements.js";
+import { STEAMBALL_COLORS as COLORS, STEAMBALL_FONTS as FONTS, RANK_COLORS } from "./steamball_palette.js";
 
 // The wheel shows dimmed through it.
 const OVERLAY_COLOR = 0xD0080A0E;
 // The footer's gradient top, a step lighter than the panel.
 const FOOTER_TOP_COLOR = 0xFF1C2330;
 const HEADER_BOTTOM_COLOR = 0xFF222B3A;
+const BLACK = 0xFF000000;
+// The gem in the middle of each rank's emblem.
+const RANK_GEMS = Object.freeze({
+    [ACHIEVEMENT_RANK.BRONZE]: 0xFFF0B27A,
+    [ACHIEVEMENT_RANK.SILVER]: 0xFFE8F0F8,
+    [ACHIEVEMENT_RANK.GOLD]: 0xFFFFE27A,
+    [ACHIEVEMENT_RANK.PLATINUM]: 0xFF7FF6FF,
+});
 
 export const LIST_LOOK = Object.freeze({
     panelRatio: 0.75,
@@ -30,7 +39,17 @@ export const LIST_LOOK = Object.freeze({
     gaugeHeight: 7,
     gaugeTipRadius: 10,
     rankEdgeWidth: 4,
-    textLeft: 32,
+    emblemCenterX: 52,
+    // The header's small emblems, next to their count.
+    headerEmblemScale: 0.45,
+    // A rank's small emblem and its count, side by side.
+    rankCountWidth: 76,
+    rankCountTextLeft: 38,
+    textLeft: 102,
+    progressBarHeight: 6,
+    progressBarMaxWidth: 320,
+    // Wide enough for an hours text such as "12.5/100 h".
+    progressTextWidth: 100,
     // Kept free on the right of a row's texts for the Unlock Rate.
     ownersWidth: 220,
 });
@@ -59,6 +78,86 @@ function fillDiamond(dc, centerX, centerY, radius, color) {
     for (let dy = -radius; dy <= radius; dy++) {
         const half = radius - Math.abs(dy);
         dc.fillRect(Math.round(centerX - half), Math.round(centerY + dy), 2 * half + 1, 1, color);
+    }
+}
+
+const withAlpha = (color, alpha) => alpha * 2 ** 24 + (color & 0xFFFFFF);
+
+// How far a rounded corner eats into line i (0 = top line) of a shape.
+function cornerInset(radius, i) {
+    return Math.round(radius - Math.sqrt(radius * radius - (radius - i - 0.5) ** 2));
+}
+
+// A disc centred on (centerX, centerY), drawn line by line.
+function fillDisc(dc, centerX, centerY, radius, color) {
+    for (let i = 0; i < 2 * radius; i++) {
+        const inset = cornerInset(radius, Math.min(i, 2 * radius - 1 - i));
+        dc.fillRect(centerX - radius + inset, centerY - radius + i, 2 * (radius - inset), 1, color);
+    }
+}
+
+// A rank emblem in the spirit of League of Legends' season 2 badges,
+// centred on (centerX, centerY), about 64 pixels tall at scale 1: a pointed
+// shield with a gem and a crest, and wings growing with the rank. Unlocked,
+// it is in the rank's colour, and with a halo it gets a glow growing with
+// the rank, plus sparkles for Platinum; missing, it is muted and never has
+// a halo.
+export function drawRankEmblem(dc, centerX, centerY, { rank, unlocked, halo = unlocked, scale = 1 }) {
+    const px = value => Math.round(value * scale);
+    const rankIndex = RANKS_IN_ORDER.indexOf(rank);
+    const rankColor = RANK_COLORS[rank];
+    const base = unlocked ? rankColor : mixColors(rankColor, COLORS.tile, 0.65);
+    const light = mixColors(base, COLORS.title, unlocked ? 0.5 : 0.1);
+    const shade = mixColors(base, BLACK, 0.4);
+    if (unlocked && halo) {
+        // Stacked translucent discs, wider and brighter by rank.
+        const radius = px(26 + 6 * rankIndex);
+        const steps = 3 + 2 * rankIndex;
+        for (let step = steps; step >= 1; step--) {
+            fillDisc(dc, centerX, centerY, Math.round(radius * step / steps), withAlpha(rankColor, 0x0A + 3 * rankIndex));
+        }
+    }
+    // One feather per rank and one more, longer as the rank rises.
+    for (let feather = 0; feather <= rankIndex; feather++) {
+        const length = px(10 + 4 * rankIndex - 2 * feather);
+        const startY = centerY + px(-9 + 6 * feather);
+        for (let step = 0; step <= length; step++) {
+            const color = mixColors(light, shade, step / Math.max(1, length));
+            const lift = Math.round(step * (0.9 - 0.15 * feather));
+            dc.fillRect(centerX - px(15) - step, startY - lift, 1, Math.max(1, px(4)), color);
+            dc.fillRect(centerX + px(15) + step, startY - lift, 1, Math.max(1, px(4)), color);
+        }
+    }
+    const crestHeight = px(9);
+    for (let i = 0; i < crestHeight; i++) {
+        const half = Math.floor(i / 2);
+        dc.fillRect(centerX - half, centerY - px(26) + i, 2 * half + 1, 1, light);
+    }
+    // Straight sides, then a point; bevelled, lit on the left.
+    const shieldHeight = px(40);
+    const shieldTop = centerY - px(18);
+    const bevel = Math.max(1, px(3));
+    for (let i = 0; i < shieldHeight; i++) {
+        const ratio = i / shieldHeight;
+        const half = Math.round(px(16) * (ratio < 0.55 ? 1 : 1 - (ratio - 0.55) / 0.45));
+        if (half <= 0) continue;
+        dc.fillRect(centerX - half, shieldTop + i, half, 1, light);
+        dc.fillRect(centerX, shieldTop + i, half, 1, base);
+        const inner = half - bevel;
+        if (inner > 0 && i >= bevel) {
+            dc.fillRect(centerX - inner, shieldTop + i, inner, 1, mixColors(shade, COLORS.tile, 0.5));
+            dc.fillRect(centerX, shieldTop + i, inner, 1, mixColors(shade, COLORS.tile, 0.7));
+        }
+    }
+    const gem = unlocked ? RANK_GEMS[rank] : mixColors(RANK_GEMS[rank], COLORS.tile, 0.7);
+    fillDiamond(dc, centerX, centerY + px(1), px(9), mixColors(gem, BLACK, 0.35));
+    fillDiamond(dc, centerX, centerY + px(1), px(6), gem);
+    if (!unlocked) return;
+    fillDiamond(dc, centerX - px(2), centerY - px(2), px(2), COLORS.title);
+    if (halo && rank === ACHIEVEMENT_RANK.PLATINUM) {
+        for (const [dx, dy, radius] of [[-30, -22, 3], [31, -18, 2], [-26, 24, 2], [28, 23, 3], [0, -38, 2]]) {
+            fillDiamond(dc, centerX + px(dx), centerY + px(dy), px(radius), COLORS.title);
+        }
     }
 }
 
@@ -95,7 +194,9 @@ export function drawBackdrop(dc, g) {
 }
 
 // The Avatar in a double gold frame, the title, the Profile's name, the
-// total line and its gauge, with a diamond at the gauge's tip.
+// total line and its gauge, with a diamond at the gauge's tip; on the
+// name's line, right-aligned, the count of Unlocked Achievements of each
+// rank after its small emblem.
 function drawHeader(host, dc, g, header) {
     const look = LIST_LOOK;
     const { x, y, panelWidth: width } = g;
@@ -110,11 +211,24 @@ function drawHeader(host, dc, g, header) {
 
     const textX = avatarX + avatar + 28;
     const textWidth = width - (textX - x) - look.padding - 8;
-    drawText(host, dc, [
+    const rankCountsWidth = header.rankCounts.length * look.rankCountWidth;
+    // Only the title and the name share their width with the rank counts.
+    const nameSize = drawText(host, dc, [
         { size: 11, weight: 600, color: COLORS.gold, text: `${header.title}\n` },
-        { size: 20, weight: 600, color: COLORS.title, text: `${header.profileName}\n` },
-        header.totalLine,
-    ], { x: textX, y: avatarY + 2, width: textWidth, size: 12, color: COLORS.description });
+        { size: 20, weight: 600, color: COLORS.title, text: header.profileName },
+    ], { x: textX, y: avatarY + 2, width: textWidth - rankCountsWidth, size: 12, color: COLORS.description });
+    drawText(host, dc, [header.totalLine], { x: textX, y: avatarY + 2 + nameSize.height, width: textWidth, size: 12, color: COLORS.description });
+
+    let rankX = textX + textWidth - rankCountsWidth;
+    for (const { rank, count } of header.rankCounts) {
+        // Centred on the Profile name's line.
+        drawRankEmblem(dc, rankX + look.rankCountTextLeft / 2, avatarY + 36, { rank, unlocked: true, halo: false, scale: look.headerEmblemScale });
+        drawText(host, dc, [count], {
+            x: rankX + look.rankCountTextLeft, y: avatarY + 24, width: look.rankCountWidth - look.rankCountTextLeft,
+            size: 13, weight: 600, color: COLORS.title,
+        });
+        rankX += look.rankCountWidth;
+    }
 
     // The empty part as tall as the filled one, so the gauge reads as one bar.
     const gaugeY = avatarY + avatar - 10;
@@ -183,15 +297,17 @@ export function drawSectionHeader(host, dc, width, { title, count }) {
     dc.fillRect(ruleX, textY + titleSize.height / 2, Math.max(0, width - ruleX - 6), 1, COLORS.border);
 }
 
-// An Achievement's row: its background, a gold left edge when Unlocked,
-// its title and description, and the short text of its Achievement
-// Progress when it has one.
-export function drawRow(host, dc, width, { title, description, unlocked, progress }) {
+// An Achievement's row: its background, its rank emblem, its rank's colour
+// on the left edge when Unlocked, its title and description, and when it
+// has an Achievement Progress ({ text, ratio }) a gold bar with its short
+// text.
+export function drawRow(host, dc, width, { title, description, rank, unlocked, progress }) {
     const look = LIST_LOOK;
     dc.fillRect(0, 0, width, look.rowHeight, unlocked ? COLORS.rowUnlocked : COLORS.rowMissing);
-    if (unlocked) dc.fillRect(0, 0, look.rankEdgeWidth, look.rowHeight, COLORS.gold);
+    if (unlocked) dc.fillRect(0, 0, look.rankEdgeWidth, look.rowHeight, RANK_COLORS[rank]);
+    drawRankEmblem(dc, look.emblemCenterX, look.rowHeight / 2, { rank, unlocked });
     const textWidth = width - look.textLeft - look.ownersWidth;
-    const reserved = progress ? 18 : 0;
+    const reserved = progress ? 14 : 0;
     const text = host.createStyledText({ textStyle: { font: FONTS.body, size: 11, color: unlocked ? COLORS.description : COLORS.dim } });
     text.add({ size: 13, weight: 600, color: unlocked ? COLORS.title : COLORS.description, text: `${title}\n` });
     text.add(description);
@@ -199,6 +315,13 @@ export function drawRow(host, dc, width, { title, description, unlocked, progres
     const textY = (look.rowHeight - height - reserved) / 2;
     text.draw(dc, { x: look.textLeft, y: textY, width: textWidth, height });
     if (progress) {
-        drawText(host, dc, [progress], { x: look.textLeft, y: textY + height + 2, width: textWidth, size: 10, color: COLORS.description });
+        const barY = textY + height + 8;
+        const barWidth = Math.min(textWidth - look.progressTextWidth, look.progressBarMaxWidth);
+        const filled = Math.round(barWidth * Math.min(1, Math.max(0, progress.ratio)));
+        dc.fillRect(look.textLeft, barY, barWidth, look.progressBarHeight, COLORS.track);
+        if (filled > 0) dc.fillRect(look.textLeft, barY, filled, look.progressBarHeight, COLORS.gold);
+        drawText(host, dc, [progress.text], {
+            x: look.textLeft + barWidth + 10, y: barY - 7, width: look.progressTextWidth - 10, size: 10, color: COLORS.description,
+        });
     }
 }

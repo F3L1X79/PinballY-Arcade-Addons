@@ -6,7 +6,8 @@
 // sections in their order (a waiting toast first, then the most recently
 // Notified, then the missing ones), the highlighted line moving, skipping
 // the section headers and wrapping, the buttons swallowed only while it is
-// open, Exit and attract mode closing it.
+// open, Exit and attract mode closing it, the rank emblems and the
+// Achievement Progress bars on the rows, the header's counts per rank.
 // ============================================================
 
 import { test } from "node:test";
@@ -14,20 +15,22 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost } from "./fake_pinbally_host.js";
 import { createAchievementList } from "../common/achievement_list.js";
 import { createProfileStore } from "../common/profile_store.js";
-import { ACHIEVEMENT_FAMILY, PROGRESS_UNIT } from "../common/achievements.js";
+import { ACHIEVEMENT_FAMILY, ACHIEVEMENT_RANK, PROGRESS_UNIT } from "../common/achievements.js";
+import { RANK_COLORS, STEAMBALL_COLORS } from "../common/steamball_palette.js";
 import lang from "../common/i18n.js";
 import {
-    press, pressAndGlide, chromeTexts, isListOpen, shownItems, highlightedTexts, readSections, readRows,
+    press, pressAndGlide, chromeTexts, headerRankCounts, isListOpen, shownItems, highlightedTexts, readSections, readRows,
 } from "./achievement_list_reader.js";
 
 const TEXT = lang.achievementList;
 const PROFILES = "C:\\PinballY\\Scripts\\profiles";
 const upper = text => text.toLocaleUpperCase();
 
-function fakeAchievement(id, unlocked = false, progress = undefined) {
+function fakeAchievement(id, unlocked = false, progress = undefined, rank = ACHIEVEMENT_RANK.BRONZE) {
     const achievement = {
         id,
         family: ACHIEVEMENT_FAMILY.COLLECTION,
+        rank,
         unlocked,
         progress,
         getTitle: () => `${id} title`,
@@ -223,11 +226,11 @@ test("the list follows the active Profile: its name and its own Notified order",
     assert.deepEqual(readSections(fake, TEXT)[0].rows.map(texts => texts[0]), ["alpha title", "beta title", "gamma title", "delta title"]);
 });
 
-test("a missing Achievement shows its Achievement Progress; an Unlocked one or one without shows none", () => {
+test("a missing Achievement shows its Achievement Progress with a gold bar; an Unlocked one or one without shows none", () => {
     const tables = (current, target) => ({ current, target, unit: PROGRESS_UNIT.TABLES });
     const { fake } = setUp({
         achievements: [
-            fakeAchievement("williams", false, tables(7, 12)),
+            fakeAchievement("williams", false, tables(3, 5)),
             fakeAchievement("bally", true, tables(12, 12)),
             fakeAchievement("stern", false, null),
             fakeAchievement("gottlieb", false),
@@ -235,11 +238,12 @@ test("a missing Achievement shows its Achievement Progress; an Unlocked one or o
         notified: ["bally"],
     });
 
-    assert.deepEqual(readRows(fake, TEXT).map(({ title, progress }) => [title, progress]), [
-        ["bally title", null],
-        ["williams title", TEXT.progressUnits[PROGRESS_UNIT.TABLES].short(7, 12)],
-        ["stern title", null],
-        ["gottlieb title", null],
+    const hasBar = row => row.fills.includes(STEAMBALL_COLORS.gold) && row.fills.includes(STEAMBALL_COLORS.track);
+    assert.deepEqual(readRows(fake, TEXT).map(row => [row.title, row.progress, hasBar(row)]), [
+        ["bally title", null, false],
+        ["williams title", "3/5", true],
+        ["stern title", null, false],
+        ["gottlieb title", null, false],
     ]);
 });
 
@@ -249,4 +253,59 @@ test("an Achievement Progress in an unknown unit is an error, not a blank", () =
     const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore: createProfileStore(fake) });
 
     assert.throws(() => list.open(), /parsecs/);
+});
+
+const isHalo = (fill, color) => fill >>> 24 < 0xFF && fill % 0x1000000 === color % 0x1000000;
+
+test("an Unlocked row shows its rank's emblem in full with a halo, a missing one of the same rank a muted one without", () => {
+    const { PLATINUM } = ACHIEVEMENT_RANK;
+    const { fake } = setUp({
+        achievements: [fakeAchievement("shiny", true, undefined, PLATINUM), fakeAchievement("far", false, undefined, PLATINUM)],
+        notified: ["shiny"],
+    });
+
+    const [shiny, far] = readRows(fake, TEXT);
+    assert.equal(shiny.title, "shiny title");
+    const inRankColor = row => row.fills.filter(fill => fill === RANK_COLORS[PLATINUM]).length;
+    assert.ok(inRankColor(shiny) > 1, "the Unlocked emblem is in the rank's colour, not only the left edge");
+    assert.ok(shiny.fills.some(fill => isHalo(fill, RANK_COLORS[PLATINUM])), "the Unlocked emblem has its halo");
+    assert.ok(!far.fills.includes(RANK_COLORS[PLATINUM]), "the missing emblem is muted");
+    assert.ok(!far.fills.some(fill => fill >>> 24 < 0xFF), "the missing emblem has no halo");
+});
+
+test("each row's emblem is in its own rank's colour", () => {
+    const achievements = Object.values(ACHIEVEMENT_RANK).map(rank => fakeAchievement(rank, true, undefined, rank));
+    const { fake } = setUp({ achievements, notified: Object.values(ACHIEVEMENT_RANK).reverse() });
+
+    for (const row of readRows(fake, TEXT)) {
+        const rank = row.title.replace(" title", "");
+        for (const [otherRank, color] of Object.entries(RANK_COLORS)) {
+            assert.equal(row.fills.includes(color), otherRank === rank, `${rank} row in ${otherRank}'s colour`);
+        }
+    }
+});
+
+test("the header counts the Unlocked Achievements of each rank next to its emblem", () => {
+    const { BRONZE, SILVER, GOLD, PLATINUM } = ACHIEVEMENT_RANK;
+    const { fake } = setUp({
+        achievements: [
+            fakeAchievement("b1", true, undefined, BRONZE),
+            fakeAchievement("b2", true, undefined, BRONZE),
+            fakeAchievement("s1", false, undefined, SILVER),
+            fakeAchievement("g1", true, undefined, GOLD),
+            fakeAchievement("p1", true, undefined, PLATINUM),
+            fakeAchievement("p2", false, undefined, PLATINUM),
+        ],
+        notified: [],
+    });
+
+    assert.deepEqual(headerRankCounts(fake), { [BRONZE]: "2", [SILVER]: "0", [GOLD]: "1", [PLATINUM]: "1" });
+});
+
+test("an Achievement without an Achievement Rank is an error, not a blank emblem", () => {
+    const fake = createFakePinballYHost();
+    const achievements = [fakeAchievement("odd", false, undefined, "mithril")];
+    const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore: createProfileStore(fake) });
+
+    assert.throws(() => list.open(), /mithril/);
 });

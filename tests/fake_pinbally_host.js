@@ -231,21 +231,23 @@ export function createFakePinballYHost({
     }
 
     // A drawing layer that keeps only what the tests look at: the texts,
-    // image paths and frames (frameRect) drawn since the last draw or
-    // clear, the canvas size of the last draw, its position, scale and
+    // image paths, frames (frameRect) and fill colours (fillRect) drawn
+    // since the last draw or clear, the fills and texts in their drawing
+    // order, the canvas size of the last draw, its position, scale and
     // alpha. Like PinballY, a draw without a size gets a canvas the size of
     // the window.
     function createDrawingLayer(zIndex) {
         let texts = [];
         let images = [];
         let frames = [];
+        let strokes = [];
         let canvasSize = null;
         let position = { x: 0, y: 0 };
         // PinballY's default: stretched to the whole window.
         let scale = { xSpan: 1, ySpan: 1 };
         const dc = {
             getSize: () => ({ ...canvasSize }),
-            fillRect() {},
+            fillRect: (x, y, width, height, color) => { strokes.push({ fill: color }); },
             frameRect: (x, y, width, height) => { frames.push({ x, y, width, height }); },
             drawImage: (path) => { images.push(path); },
             // Like PinballY: throws on a missing or unreadable image.
@@ -253,7 +255,10 @@ export function createFakePinballYHost({
                 if (!isImageReadable(path)) throw new Error(`Cannot load image: ${path}`);
                 return { width: 256, height: 256 };
             },
-            drawText: (text) => { texts.push(text); },
+            drawText: (text) => {
+                texts.push(text);
+                strokes.push({ text });
+            },
         };
         const layer = {
             zIndex,
@@ -262,6 +267,7 @@ export function createFakePinballYHost({
                 texts = [];
                 images = [];
                 frames = [];
+                strokes = [];
                 canvasSize = width === undefined ? { ...currentLayoutSize } : { width, height };
                 drawFunction(dc);
                 drawingList.push({ zIndex, texts: [...texts] });
@@ -270,12 +276,16 @@ export function createFakePinballYHost({
                 texts = [];
                 images = [];
                 frames = [];
+                strokes = [];
             },
             setPos(x, y, align) { position = align === undefined ? { x, y } : { x, y, align }; },
             setScale(options) { scale = { ...options }; },
             texts: () => [...texts],
             images: () => [...images],
             frames: () => frames.map(frame => ({ ...frame })),
+            fills: () => strokes.filter(stroke => "fill" in stroke).map(stroke => stroke.fill),
+            // Fills ({ fill: color }) and texts ({ text }) in drawing order.
+            strokes: () => strokes.map(stroke => ({ ...stroke })),
             canvasSize: () => ({ ...canvasSize }),
             position: () => ({ ...position }),
             scale: () => ({ ...scale }),

@@ -2,9 +2,11 @@
 // Achievement List module: the screen the player opens (from the main menu
 // or the Profile Stats) to browse every Achievement of the active Profile
 // in one drawn scrolling list over a dimmed wheel (see docs/adr/0005): a
-// header with the Profile and its total, then the Unlocked Achievements
-// (a toast still waiting first, then the most recently Notified) and the
-// missing ones, each part under its section header.
+// header with the Profile, its total and its count per Achievement Rank,
+// then the Unlocked Achievements (a toast still waiting first, then the
+// most recently Notified) and the missing ones, each part under its
+// section header. Each row shows its rank emblem and, when missing, its
+// Achievement Progress.
 // Next / Prev glide the highlighted line from one Achievement to the next,
 // wrapping; the other lines are dimmed. Exit closes the list and calls the
 // return given to open(); attract mode closes it too. While it is open,
@@ -20,6 +22,7 @@
 import lang from "./i18n.js";
 import { safeHandler } from "./safe_handler.js";
 import { displayNameOf } from "./profile_name.js";
+import { RANKS_IN_ORDER } from "./achievements.js";
 import { LIST_LOOK, computeGeometry, drawBackdrop, drawMask, drawSectionHeader, drawRow } from "./achievement_list_painter.js";
 
 const SCRIPT_NAME = "AchievementList";
@@ -55,11 +58,16 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
 
     // The current Achievements with their live status.
     function readEntries() {
-        return getAchievements().map(achievement => ({ achievement, unlocked: achievement.checkUnlocked() }));
+        return getAchievements().map(achievement => {
+            if (!RANKS_IN_ORDER.includes(achievement.rank)) {
+                throw new Error(`Achievement "${achievement.id}" has an unknown Achievement Rank "${achievement.rank}".`);
+            }
+            return { achievement, unlocked: achievement.checkUnlocked() };
+        });
     }
 
-    // The short text of a missing Achievement's Achievement Progress, or
-    // null when it has none.
+    // A missing Achievement's Achievement Progress as its short text and
+    // how far along it is (0 to 1), or null when it has none.
     function describeProgress(achievement, unlocked) {
         if (unlocked || typeof achievement.getProgress !== "function") return null;
         const progress = achievement.getProgress();
@@ -68,7 +76,7 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
         if (!unitTexts) {
             throw new Error(`Achievement "${achievement.id}" has an unknown progress unit "${progress.unit}".`);
         }
-        return unitTexts.short(progress.current, progress.target);
+        return { text: unitTexts.short(progress.current, progress.target), ratio: progress.current / progress.target };
     }
 
     // Unlocked ones whose toast still waits first, in natural order, then
@@ -108,6 +116,7 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
                     height: LIST_LOOK.rowHeight,
                     title: achievement.getTitle(),
                     description: achievement.getDescription(),
+                    rank: achievement.rank,
                     unlocked: isUnlocked,
                     progress: describeProgress(achievement, isUnlocked),
                 });
@@ -132,6 +141,10 @@ export function createAchievementList(host, { getAchievements, profileStore }) {
             avatarPath: profile.avatarPath,
             totalLine: TEXT.totalLine(unlocked, total, percent),
             ratio: total === 0 ? 0 : unlocked / total,
+            rankCounts: RANKS_IN_ORDER.map(rank => ({
+                rank,
+                count: String(entries.filter(entry => entry.unlocked && entry.achievement.rank === rank).length),
+            })),
         };
     }
 

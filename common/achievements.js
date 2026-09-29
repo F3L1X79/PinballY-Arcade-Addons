@@ -50,7 +50,7 @@ export const ACHIEVEMENT_RANK = Object.freeze({
     GOLD: "gold",
     PLATINUM: "platinum",
 });
-const RANKS_IN_ORDER = Object.values(ACHIEVEMENT_RANK);
+export const RANKS_IN_ORDER = Object.freeze(Object.values(ACHIEVEMENT_RANK));
 
 // A group completion's rank from the size of its group: up to each limit,
 // that rank; above the last one, Platinum.
