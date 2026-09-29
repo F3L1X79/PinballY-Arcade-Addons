@@ -1,5 +1,5 @@
 // ============================================================
-// Manufacturers family: Achievements for tables of 3, 5 and 8 different
+// Manufacturers family: Achievements for tables of 3, 5, 8 and 10 different
 // manufacturers played on the same calendar day. Reads the active Profile's
 // one-day record, kept by session_stats_tracker.js, also shown as
 // Achievement Progress; writes nothing.
@@ -12,7 +12,7 @@ import { getProfileStore } from "../common/profile_store.js";
 // Each value is part of an Achievement ID: changing one would announce the
 // Achievement again to players who already earned it. Each one also needs
 // its title in every lang/ file.
-const DAY_MANUFACTURERS_THRESHOLDS = [3, 5, 8];
+const DAY_MANUFACTURERS_THRESHOLDS = [3, 5, 8, 10];
 
 export function buildDayManufacturersAchievements() {
     const { achievements: TEXT } = lang;

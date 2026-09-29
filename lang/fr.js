@@ -200,11 +200,13 @@ export default {
         weeklyFirstPlayDescription: () => "Lancer la table de la semaine pour la première fois.",
         dailyPeriodsPlayedTitles: {
             10: "Explorateur du dimanche",
+            25: "Explorateur curieux",
             50: "Explorateur chevronné",
             100: "Indiana Flippers",
         },
         dailyPeriodsPlayedDescription: (days) => `Lancer la table du jour ${days} jours différents.`,
         weeklyPeriodsPlayedTitles: {
+            4: "Un mois de rendez-vous",
             10: "Habitué de la semaine",
             26: "Six mois de fidélité",
             52: "Un an, pas une ride",
@@ -213,6 +215,7 @@ export default {
         dailyStreakTitles: {
             3: "Jamais deux sans trois",
             7: "Semaine parfaite",
+            14: "Quinzaine de fer",
             30: "Moine du flipper",
         },
         dailyStreakDescription: (days) => `Lancer la table du jour ${days} jours d'affilée.`,
@@ -256,6 +259,7 @@ export default {
         grandReturnDescription: (days) => `Rejouer une table après ${days} jours d'absence ou plus.`,
         randomGamesTitles: {
             10: "Et pourquoi pas ?",
+            25: "Pile ou face",
             50: "Joueur de dés",
             100: "J'adooooore le hasard !!",
         },
@@ -273,6 +277,7 @@ export default {
             3: "Tour du monde express",
             5: "Papillon du flipper",
             8: "Infidèle en série",
+            10: "Casanova du flipper",
         },
         dayManufacturersDescription: (count) => `Jouer des tables de ${count} fabricants différents le même jour.`,
         // Header of the Achievement Toast card.

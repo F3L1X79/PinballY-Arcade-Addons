@@ -196,11 +196,13 @@ export default {
         weeklyFirstPlayDescription: () => "Den Tisch der Woche zum ersten Mal starten.",
         dailyPeriodsPlayedTitles: {
             10: "Sonntagsentdecker",
+            25: "Neugieriger Entdecker",
             50: "Erfahrener Entdecker",
             100: "Indiana Flippers",
         },
         dailyPeriodsPlayedDescription: (days) => `Den Tisch des Tages an ${days} verschiedenen Tagen starten.`,
         weeklyPeriodsPlayedTitles: {
+            4: "Ein Monat voller Dates",
             10: "Stammgast der Woche",
             26: "Sechs Monate Treue",
             52: "Ein Jahr und keine Falte",
@@ -209,6 +211,7 @@ export default {
         dailyStreakTitles: {
             3: "Aller guten Dinge sind drei",
             7: "Perfekte Woche",
+            14: "Zwei eiserne Wochen",
             30: "Flipper-Mönch",
         },
         dailyStreakDescription: (days) => `Den Tisch des Tages ${days} Tage in Folge starten.`,
@@ -252,6 +255,7 @@ export default {
         grandReturnDescription: (days) => `Einen Tisch nach ${days} oder mehr Tagen Pause wieder spielen.`,
         randomGamesTitles: {
             10: "Warum nicht?",
+            25: "Kopf oder Zahl",
             50: "Würfelspieler",
             100: "Ich liiiiebe den Zufall",
         },
@@ -269,6 +273,7 @@ export default {
             3: "Weltreise im Eiltempo",
             5: "Flipper-Schmetterling",
             8: "Serien-Untreuer",
+            10: "Flipper-Casanova",
         },
         dayManufacturersDescription: (count) => `Am selben Tag Tische von ${count} verschiedenen Herstellern spielen.`,
         // Header of the Achievement Toast card.

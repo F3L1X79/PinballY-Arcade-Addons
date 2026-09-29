@@ -196,11 +196,13 @@ export default {
         weeklyFirstPlayDescription: () => "Iniciar a mesa da semana pela primeira vez.",
         dailyPeriodsPlayedTitles: {
             10: "Explorador de domingo",
+            25: "Explorador curioso",
             50: "Explorador experiente",
             100: "Indiana Flippers",
         },
         dailyPeriodsPlayedDescription: (days) => `Iniciar a mesa do dia em ${days} dias diferentes.`,
         weeklyPeriodsPlayedTitles: {
+            4: "Um mês de encontros",
             10: "Frequentador da semana",
             26: "Seis meses de fidelidade",
             52: "Um ano sem uma ruga",
@@ -209,6 +211,7 @@ export default {
         dailyStreakTitles: {
             3: "Não há dois sem três",
             7: "Semana perfeita",
+            14: "Quinzena de ferro",
             30: "Monge do pinball",
         },
         dailyStreakDescription: (days) => `Iniciar a mesa do dia ${days} dias seguidos.`,
@@ -252,6 +255,7 @@ export default {
         grandReturnDescription: (days) => `Voltar a jogar uma mesa depois de ${days} dias ou mais.`,
         randomGamesTitles: {
             10: "E por que não?",
+            25: "Cara ou coroa",
             50: "Jogador de dados",
             100: "Eu adoooooro o acaso",
         },
@@ -269,6 +273,7 @@ export default {
             3: "Volta ao mundo expressa",
             5: "Borboleta do pinball",
             8: "Infiel em série",
+            10: "Casanova do pinball",
         },
         dayManufacturersDescription: (count) => `Jogar mesas de ${count} fabricantes diferentes no mesmo dia.`,
         // Header of the Achievement Toast card.

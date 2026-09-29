@@ -1,8 +1,9 @@
 ﻿// ============================================================
 // Period Tables family: Achievements for playing the Table of the Day / the
 // Table of the Week. First play (once during its Period), Periods Played
-// (10, 50 and 100 days; 10, 26 and 52 weeks, consecutive or not) and
-// Streaks (3, 7 and 30 consecutive days; 4 and 12 consecutive weeks).
+// (10, 25, 50 and 100 days; 4, 10, 26 and 52 weeks, consecutive or not)
+// and Streaks (3, 7, 14 and 30 consecutive days; 4 and 12 consecutive
+// weeks).
 // Periods Played and Streaks show those counters as Achievement Progress,
 // the current Streak for a Streak; a Streak Achievement is unlocked by the
 // longest Streak, so a broken Streak never takes it back. Reads the
@@ -20,9 +21,9 @@ export function buildPeriodTableAchievements() {
 
     // Each threshold also needs its title in every lang/ file. Each list is
     // its own ladder of Achievement Ranks.
-    const dailyPeriodsPlayedThresholds = [10, 50, 100];
-    const weeklyPeriodsPlayedThresholds = [10, 26, 52];
-    const dailyStreakThresholds = [3, 7, 30];
+    const dailyPeriodsPlayedThresholds = [10, 25, 50, 100];
+    const weeklyPeriodsPlayedThresholds = [4, 10, 26, 52];
+    const dailyStreakThresholds = [3, 7, 14, 30];
     const weeklyStreakThresholds = [4, 12];
 
     const achievements = [

@@ -66,6 +66,7 @@ const EXPECTED_ACHIEVEMENT_IDS = [
     "collectionMilestone:50percent",
     "collectionMilestone:75percent",
     "collectionMilestone:firstTable",
+    "dayManufacturers:10",
     "dayManufacturers:3",
     "dayManufacturers:5",
     "dayManufacturers:8",
@@ -85,17 +86,21 @@ const EXPECTED_ACHIEVEMENT_IDS = [
     "rageQuit",
     "randomGames:10",
     "randomGames:100",
+    "randomGames:25",
     "randomGames:50",
     "tableOfTheDayFirstPlay",
     "tableOfTheDayPeriodsPlayed:10",
     "tableOfTheDayPeriodsPlayed:100",
+    "tableOfTheDayPeriodsPlayed:25",
     "tableOfTheDayPeriodsPlayed:50",
+    "tableOfTheDayStreak:14",
     "tableOfTheDayStreak:3",
     "tableOfTheDayStreak:30",
     "tableOfTheDayStreak:7",
     "tableOfTheWeekFirstPlay",
     "tableOfTheWeekPeriodsPlayed:10",
     "tableOfTheWeekPeriodsPlayed:26",
+    "tableOfTheWeekPeriodsPlayed:4",
     "tableOfTheWeekPeriodsPlayed:52",
     "tableOfTheWeekStreak:12",
     "tableOfTheWeekStreak:4",
@@ -111,12 +116,12 @@ const GUEST_PROFILE_FILE = `${PROFILES_FOLDER}\\guest\\profile.json`;
 // for the grand return (in the Profile store's local time format).
 const SEEDED_PLAYS = Object.fromEntries(TABLES.filter(table => !table.isHidden).map(table =>
     [table.configId, { count: table.playCount, seconds: table.playTime, lastPlayed: "2024-09-01T20:00:00" }]));
-// Seven manufacturers outside the collection already played today: any
+// Nine manufacturers outside the collection already played today: any
 // manufacturer played next unlocks the last multi-manufacturer Achievement.
-const SEEDED_DAY_MANUFACTURERS = ["A", "B", "C", "D", "E", "F", "G"];
+const SEEDED_DAY_MANUFACTURERS = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
 const SEEDED_SESSIONS = {
     longestSeconds: 0, shortestSeconds: 0, rageQuit: false, grandReturn: false,
-    dayManufacturers: { day: "2026-09-23", list: SEEDED_DAY_MANUFACTURERS }, mostManufacturersInADay: 7,
+    dayManufacturers: { day: "2026-09-23", list: SEEDED_DAY_MANUFACTURERS }, mostManufacturersInADay: 9,
 };
 
 // One Period short of the longest Streak and Periods Played Achievements.

@@ -60,14 +60,14 @@ test("every Achievement has an Achievement Rank deduced from its ladder or group
     assert.deepEqual(ranksOf(["playTimeMilestone:1h", "playTimeMilestone:5h", "playTimeMilestone:10h",
         "playTimeMilestone:50h", "playTimeMilestone:100h"]), [BRONZE, SILVER, GOLD, GOLD, PLATINUM]);
     assert.deepEqual(ranksOf(["marathon:30", "marathon:60"]), [BRONZE, PLATINUM]);
-    // The middle step of three rounds up to Gold.
-    assert.deepEqual(ranksOf(["dayManufacturers:3", "dayManufacturers:5", "dayManufacturers:8"]), [BRONZE, GOLD, PLATINUM]);
+    assert.deepEqual(ranksOf(["dayManufacturers:3", "dayManufacturers:5", "dayManufacturers:8", "dayManufacturers:10"]),
+        [BRONZE, SILVER, GOLD, PLATINUM]);
     assert.deepEqual(ranksOf(["collectionMilestone:firstTable", "collectionMilestone:10percent",
         "collectionMilestone:25percent", "collectionMilestone:50percent", "collectionMilestone:75percent",
         "collectionMilestone:100percent"]), [BRONZE, SILVER, SILVER, GOLD, GOLD, PLATINUM]);
     // Each Period Tables series is its own ladder.
-    assert.deepEqual(ranksOf(["tableOfTheDayPeriodsPlayed:10", "tableOfTheDayPeriodsPlayed:50",
-        "tableOfTheDayPeriodsPlayed:100"]), [BRONZE, GOLD, PLATINUM]);
+    assert.deepEqual(ranksOf(["tableOfTheDayPeriodsPlayed:10", "tableOfTheDayPeriodsPlayed:25",
+        "tableOfTheDayPeriodsPlayed:50", "tableOfTheDayPeriodsPlayed:100"]), [BRONZE, SILVER, GOLD, PLATINUM]);
     assert.deepEqual(ranksOf(["tableOfTheWeekStreak:4", "tableOfTheWeekStreak:12"]), [BRONZE, PLATINUM]);
     assert.deepEqual(ranksOf(["challengesCompleted:1", "challengesCompleted:100"]), [BRONZE, PLATINUM]);
 

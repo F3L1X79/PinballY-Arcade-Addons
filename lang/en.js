@@ -113,11 +113,13 @@ export default {
         weeklyFirstPlayDescription: () => "Launch the table of the week for the first time.",
         dailyPeriodsPlayedTitles: {
             10: "Sunday Explorer",
+            25: "Curious Explorer",
             50: "Seasoned Explorer",
             100: "Indiana Flippers",
         },
         dailyPeriodsPlayedDescription: (days) => `Launch the table of the day on ${days} different days.`,
         weeklyPeriodsPlayedTitles: {
+            4: "A Month of Dates",
             10: "Weekly Regular",
             26: "Six Months of Loyalty",
             52: "A Year Without a Wrinkle",
@@ -126,6 +128,7 @@ export default {
         dailyStreakTitles: {
             3: "Third Time's the Charm",
             7: "Perfect Week",
+            14: "Iron Fortnight",
             30: "Pinball Monk",
         },
         dailyStreakDescription: (days) => `Launch the table of the day ${days} days in a row.`,
@@ -169,6 +172,7 @@ export default {
         grandReturnDescription: (days) => `Replay a table after ${days} or more days away.`,
         randomGamesTitles: {
             10: "Why Not?",
+            25: "Heads or Tails",
             50: "Dice Roller",
             100: "I Looooove Chance",
         },
@@ -186,6 +190,7 @@ export default {
             3: "Express World Tour",
             5: "Pinball Butterfly",
             8: "Serial Unfaithful",
+            10: "Pinball Casanova",
         },
         dayManufacturersDescription: (count) => `Play tables from ${count} different manufacturers on the same day.`,
         // Header of the Achievement Toast card.

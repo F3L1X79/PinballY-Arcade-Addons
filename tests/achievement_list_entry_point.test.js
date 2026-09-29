@@ -102,9 +102,9 @@ test("the Achievement List entry follows Play and lists the real Achievements by
     assert.deepEqual(openFamily("periodTables"), [
         `  ${ACHIEVEMENT.dailyFirstPlayTitle()}`,
         `  ${ACHIEVEMENT.weeklyFirstPlayTitle()}`,
-        ...[10, 50, 100].map(days => `  ${withProgress(ACHIEVEMENT.dailyPeriodsPlayedTitles[days], "daysPlayed", 0, days)}`),
-        ...[10, 26, 52].map(weeks => `  ${withProgress(ACHIEVEMENT.weeklyPeriodsPlayedTitles[weeks], "weeksPlayed", 0, weeks)}`),
-        ...[3, 7, 30].map(days => `  ${withProgress(ACHIEVEMENT.dailyStreakTitles[days], "daysInARow", 0, days)}`),
+        ...[10, 25, 50, 100].map(days => `  ${withProgress(ACHIEVEMENT.dailyPeriodsPlayedTitles[days], "daysPlayed", 0, days)}`),
+        ...[4, 10, 26, 52].map(weeks => `  ${withProgress(ACHIEVEMENT.weeklyPeriodsPlayedTitles[weeks], "weeksPlayed", 0, weeks)}`),
+        ...[3, 7, 14, 30].map(days => `  ${withProgress(ACHIEVEMENT.dailyStreakTitles[days], "daysInARow", 0, days)}`),
         ...[4, 12].map(weeks => `  ${withProgress(ACHIEVEMENT.weeklyStreakTitles[weeks], "weeksInARow", 0, weeks)}`),
     ]);
     assert.deepEqual(openFamily("sessions"), [
@@ -113,11 +113,11 @@ test("the Achievement List entry follows Play and lists the real Achievements by
         `  ${ACHIEVEMENT.grandReturnTitle()}`,
     ]);
     assert.deepEqual(openFamily("randomGame"), [
-        ...[10, 50, 100].map(count => `  ${withProgress(ACHIEVEMENT.randomGamesTitles[count], "randomGames", 0, count)}`),
+        ...[10, 25, 50, 100].map(count => `  ${withProgress(ACHIEVEMENT.randomGamesTitles[count], "randomGames", 0, count)}`),
     ]);
     assert.deepEqual(openFamily("manufacturers"), [
         ...["Gottlieb", "Stern", "Williams"].map(name => `✓ ${ACHIEVEMENT.manufacturerCompletionTitle(name)}`),
-        ...[3, 5, 8].map(count => `  ${withProgress(ACHIEVEMENT.dayManufacturersTitles[count], "manufacturers", 0, count)}`),
+        ...[3, 5, 8, 10].map(count => `  ${withProgress(ACHIEVEMENT.dayManufacturersTitles[count], "manufacturers", 0, count)}`),
         ...["Bally", "Zaccaria"].map(name => `  ${ACHIEVEMENT.manufacturerCompletionTitle(name)}`),
     ]);
     assert.deepEqual(openFamily("decades"), [

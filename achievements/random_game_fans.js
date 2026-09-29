@@ -1,5 +1,5 @@
 // ============================================================
-// Random Game family: Achievements for playing 10, 50 and 100 Random Games.
+// Random Game family: Achievements for playing 10, 25, 50 and 100 Random Games.
 // Reads the count kept by common/random_game.js, also shown as Achievement
 // Progress; writes nothing. None when both Add-ons that offer a Random Game
 // are disabled.
@@ -13,7 +13,7 @@ import config from "../common/config.js";
 // Each value is part of an Achievement ID: changing one would announce the
 // Achievement again to players who already earned it. Each one also needs
 // its title in every lang/ file.
-const RANDOM_GAME_THRESHOLDS = [10, 50, 100];
+const RANDOM_GAME_THRESHOLDS = [10, 25, 50, 100];
 
 export function buildRandomGameFanAchievements() {
     // No Random Game can be launched then, so the family would stay locked
