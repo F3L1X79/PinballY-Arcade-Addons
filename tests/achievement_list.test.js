@@ -9,7 +9,8 @@
 // open, Exit and attract mode closing it, the rank emblems and the
 // Achievement Progress bars on the rows, the header's counts per rank, the
 // Unlock Rate (the other Profiles' Avatars) and the missing section's
-// order by Unlock Rate, then Achievement Progress, PinballY's navigation
+// order by Unlock Rate, then Achievement Progress, the owner's emblem
+// images (and the drawn emblem for a missing file), PinballY's navigation
 // sound on each move, and the drawing ahead: everything drawn while idle
 // (never within 400 ms of a button press nor during a game), kept, and
 // redrawn only when what it shows changed.
@@ -25,7 +26,8 @@ import { ACHIEVEMENT_FAMILY, ACHIEVEMENT_RANK, PROGRESS_UNIT } from "../common/a
 import { RANK_COLORS, STEAMBALL_COLORS } from "../common/steamball_palette.js";
 import lang from "../common/i18n.js";
 import {
-    press, pressAndGlide, chromeTexts, headerRankCounts, isListOpen, shownItems, highlightedTexts, readSections, readRows,
+    press, pressAndGlide, chromeTexts, headerRankCounts, headerEmblemImages, isListOpen, shownItems, highlightedTexts, readSections,
+    readRows, readWholeList,
 } from "./achievement_list_reader.js";
 
 const TEXT = lang.achievementList;
@@ -60,16 +62,23 @@ function sampleAchievements() {
 }
 
 const avatarOf = name => `${PROFILES}\\${name}\\avatar.png`;
+const ASSETS = "C:\\PinballY\\Scripts\\assets";
+// With a halo for an Unlocked row, greyed for a missing one, small for the header.
+const emblemOf = (rank, variant = "") => `${ASSETS}\\rank_${rank}${variant}.png`;
+const EMBLEM_IMAGES = Object.values(ACHIEVEMENT_RANK).flatMap(rank => ["", "_missing", "_small"].map(variant => emblemOf(rank, variant)));
 const NAVIGATION_SOUND = "C:\\PinballY\\Assets\\Button Sounds\\Next_.wav";
 
 // Alice is active. She was Notified of gamma, then alpha, then delta; the
 // toast of beta still waits. household: the other Profiles' notified
-// lists, by name, each Profile with its own Avatar.
+// lists, by name, each Profile with its own Avatar. emblemImages: the
+// emblem image files installed, none by default (the emblems are drawn).
 function setUp({
     achievements = sampleAchievements(), notified = ["gamma", "alpha", "delta"], household = {}, withNavigationSound = true, opened = true,
+    emblemImages = [],
 } = {}) {
     const fake = createFakePinballYHost();
     if (withNavigationSound) fake.addFile(NAVIGATION_SOUND);
+    for (const path of emblemImages) fake.addFile(path, "PNG");
     fake.addFile(`${PROFILES}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
     for (const [name, profileNotified] of Object.entries({ Alice: notified, ...household })) {
         fake.addFile(`${PROFILES}\\${name}\\profile.json`, JSON.stringify({ version: 1, notified: profileNotified }));
@@ -87,9 +96,9 @@ function setUp({
     return { fake, list, achievements, profileStore, exits, open };
 }
 
-const LIST_Z_INDEXES = [ACHIEVEMENT_LIST_Z_INDEX.items, ACHIEVEMENT_LIST_Z_INDEX.owners, ACHIEVEMENT_LIST_Z_INDEX.mask];
-// Every draw of the list's rows, section headers, Unlock Rates, header and
-// footer so far, as the texts drawn.
+const LIST_Z_INDEXES = Object.values(ACHIEVEMENT_LIST_Z_INDEX).filter(zIndex => zIndex !== ACHIEVEMENT_LIST_Z_INDEX.backdrop);
+// Every draw of the list's rows, section headers, emblems, Unlock Rates,
+// header and footer so far, as the texts and images drawn.
 const listDrawings = fake => fake.drawings().filter(drawing => LIST_Z_INDEXES.includes(drawing.zIndex));
 const IDLE_ENOUGH_MS = 60 * 1000;
 
@@ -365,7 +374,83 @@ test("an Achievement without an Achievement Rank is an error, not a blank emblem
     assert.throws(() => list.open(), /mithril/);
 });
 
-const ownersByTitle = fake => Object.fromEntries(readRows(fake, TEXT).map(row => [row.title.replace(" title", ""), row.owners]));
+// Every rank, Unlocked and missing, with the Unlocked first in rank order.
+function oneOfEachRank() {
+    const ranks = Object.values(ACHIEVEMENT_RANK);
+    return {
+        achievements: ranks.flatMap(rank => [fakeAchievement(`${rank}+`, true, undefined, rank), fakeAchievement(`${rank}-`, false, undefined, rank)]),
+        notified: ranks.map(rank => `${rank}+`).reverse(),
+    };
+}
+
+const titleOf = row => row.title.replace(" title", "");
+const hasHalo = row => row.fills.some(fill => fill >>> 24 < 0xFF);
+// The colours of the header and footer, where a drawn header emblem shows.
+const maskFills = fake => fake.drawingLayers().filter(layer => layer.zIndex === ACHIEVEMENT_LIST_Z_INDEX.mask).flatMap(layer => layer.fills());
+
+test("with the emblem images installed, rows and header show the images, not the drawn emblems", () => {
+    const { fake } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES });
+
+    for (const row of readRows(fake, TEXT)) {
+        const [rank, state] = [titleOf(row).slice(0, -1), titleOf(row).at(-1)];
+        assert.equal(row.emblem, emblemOf(rank, state === "+" ? "" : "_missing"), `${titleOf(row)} shows its image`);
+        // Only the Unlocked row's left edge is in the rank's colour.
+        assert.equal(row.fills.filter(fill => fill === RANK_COLORS[rank]).length, state === "+" ? 1 : 0, `${titleOf(row)} draws no emblem`);
+        assert.ok(!hasHalo(row), `${titleOf(row)} draws no halo`);
+    }
+    assert.deepEqual(headerEmblemImages(fake), Object.values(ACHIEVEMENT_RANK).map(rank => emblemOf(rank, "_small")));
+    for (const color of Object.values(RANK_COLORS)) assert.ok(!maskFills(fake).includes(color), "the header draws no emblem");
+    assert.equal(chromeTexts(fake).filter(text => text === "1").length, 4, "each rank's count is still shown");
+});
+
+test("with one emblem image missing, only the emblems using it are drawn, and it is logged once", () => {
+    const { GOLD } = ACHIEVEMENT_RANK;
+    const { fake, list } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES.filter(path => path !== emblemOf(GOLD)) });
+    pressAndGlide(fake, "Exit");
+    list.open();
+
+    for (const row of readRows(fake, TEXT)) {
+        const isFallback = titleOf(row) === `${GOLD}+`;
+        assert.equal(row.emblem === null, isFallback, `${titleOf(row)}'s emblem is ${isFallback ? "drawn" : "an image"}`);
+    }
+    const gold = readRows(fake, TEXT).find(row => titleOf(row) === `${GOLD}+`);
+    assert.ok(hasHalo(gold), "the drawn emblem keeps its halo");
+    assert.equal(headerEmblemImages(fake).length, 4, "the header's small Gold image is still there");
+    const logged = fake.logLines().filter(line => line.includes(emblemOf(GOLD)));
+    assert.equal(logged.length, 1, JSON.stringify(fake.logLines()));
+    assert.match(logged[0], /^\[AchievementList\] /);
+});
+
+test("without a rank's greyed and small images, its missing row and its header count get the drawn emblem", () => {
+    const { SILVER } = ACHIEVEMENT_RANK;
+    const absent = [emblemOf(SILVER, "_missing"), emblemOf(SILVER, "_small")];
+    const { fake } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES.filter(path => !absent.includes(path)) });
+
+    for (const row of readRows(fake, TEXT)) {
+        const isFallback = titleOf(row) === `${SILVER}-`;
+        assert.equal(row.emblem === null, isFallback, `${titleOf(row)}'s emblem is ${isFallback ? "drawn" : "an image"}`);
+    }
+    assert.deepEqual(headerEmblemImages(fake), Object.values(ACHIEVEMENT_RANK).filter(rank => rank !== SILVER).map(rank => emblemOf(rank, "_small")));
+    for (const [rank, color] of Object.entries(RANK_COLORS)) {
+        assert.equal(maskFills(fake).includes(color), rank === SILVER, `the header draws ${rank === SILVER ? "" : "no "}${rank} emblem`);
+    }
+    for (const path of absent) assert.equal(fake.logLines().filter(line => line.includes(path)).length, 1, `${path} is logged once`);
+});
+
+test("with the emblem images installed, moving the highlight draws no image", () => {
+    const { fake, open } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES, opened: false });
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    const drawnImages = () => listDrawings(fake).flatMap(drawing => drawing.images);
+    const drawnAhead = drawnImages().length;
+    assert.ok(drawnImages().includes(emblemOf(ACHIEVEMENT_RANK.PLATINUM)), "the emblems were drawn ahead");
+
+    open();
+    readWholeList(fake);
+
+    assert.equal(drawnImages().length, drawnAhead);
+});
+
+const ownersByTitle = fake => Object.fromEntries(readRows(fake, TEXT).map(row => [titleOf(row), row.owners]));
 const avatarsOnly = (...names) => ({ avatars: names.map(avatarOf), more: null });
 
 test("a row shows the Avatars of the other Profiles Notified of it, never the active Profile's nor Guest's", () => {

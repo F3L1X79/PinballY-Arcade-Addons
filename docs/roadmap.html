@@ -218,10 +218,10 @@
 
   <!-- ===== In progress ===== -->
   <section>
-    <p class="eyebrow">En cours <span class="count">(1)</span></p>
+    <p class="eyebrow">En cours <span class="count">(0)</span></p>
     <div class="panel now" id="now">
-      <p><strong>Achievement List dessinée</strong> : spec <a href="https://github.com/F3L1X79/PinballY-Arcade-Addons/issues/78">#78</a> découpée en 9 tickets (#79 à #87). La vitrine des README (spec #88) est terminée.</p>
-      <span class="next">Ensuite : <code>/implement</code> #80 · tes blasons : #87</span>
+      <p><strong>Achievement List dessinée</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Arcade-Addons/issues/78">#78</a>, avec tes blasons) : à essayer sur la borne, puis refaire les captures des README (<code>docs/images/</code>).</p>
+      <span class="next">Ensuite : <code>/diagnosing-bugs</code> pour le picker fluide</span>
     </div>
   </section>
 
@@ -285,7 +285,6 @@
             <a class="chip tr-share" href="#nested-install"><b></b>Install non invasive</a>
           </div>
           <div class="cell">
-            <a class="chip tr-play" href="#popup"><b></b>Achievement List</a>
             <a class="chip tr-profiles" href="#ratings"><b></b>Notes et favoris</a>
           </div>
 
@@ -325,32 +324,6 @@
 
     <ol class="queue">
 
-      <li draggable="true" tabindex="0" class="item tr-play current" id="popup" data-track="play" data-rank="gold">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Achievement List dessinée</h3>
-            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen-gros</span><span class="tag">UI</span></div>
-          </div>
-          <p>Remplacer les menus natifs de la liste des succès par une liste défilante dessinée sur des calques, style « Steamball » (ADR 0005).</p>
-          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span>prototype</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span class="here">implement</span></div>
-          <div class="links">Spec <a href="https://github.com/F3L1X79/PinballY-Arcade-Addons/issues/78">#78</a> · ouvre la voie au <a href="#picker-smooth">picker fluide (n° <span data-ref="picker-smooth"></span>)</a> et aux <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
-          <details open>
-            <summary>Contexte</summary>
-            <p class="ctx">Prototype validé le 27/09/2026 (branche <code>prototype/achievement-list</code>, verdict dans son dernier commit ; ADR 0005). Spec #78 publiée le même jour : Achievement Rank déduit du palier (premier Bronze, dernier Platinum ; isolés Gold ; complétions de groupe selon la taille du groupe), dessin d'avance gardé d'une ouverture à l'autre, palette commune avec le toast et la Challenge Card. Une fois livrée, refaire les captures des README (<code>docs/images/</code>).</p>
-          </details>
-          <details>
-            <summary>Blasons (2)</summary>
-            <ul>
-              <li>Planche Photoshop livrée (avec halo, grisés, petits sans halo) : à exporter en 12 PNG séparés, canevas carré identique, halos non coupés, franges du détourage nettoyées.</li>
-              <li>12 images retenues (avec halo, grisés, petits sans halo pour l'en-tête) : ticket #87 pour toi, intégration #86.</li>
-            </ul>
-            <p class="ctx">Silhouettes proches des emblèmes de League of Legends : sans souci sur ta borne, à éloigner du modèle avant la Distribution.</p>
-          </details>
-        </div>
-      </li>
-
       <li draggable="true" tabindex="0" class="item tr-profiles" id="picker-smooth" data-track="profiles" data-rank="bronze">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>
@@ -361,7 +334,7 @@
           </div>
           <p>Le carrousel des Profiles saccade un peu à chaque déplacement : lui appliquer les leçons du prototype de l'Achievement List.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>diagnose</span><i>›</i><span>implement</span></div>
-          <div class="links">Après l'<a href="#popup">Achievement List (n° <span data-ref="popup"></span>)</a>, dont il réutilise le module de dessin d'avance</div>
+          <div class="links">Réutilise le dessin d'avance de l'Achievement List (<code>common/drawing_ahead.js</code>)</div>
           <details>
             <summary>Pistes, non mesurées (3)</summary>
             <ul>
@@ -499,7 +472,7 @@
           </div>
           <p>Passer les Profile Stats et leur liste de tables des menus natifs à un écran dessiné, avec la palette commune.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Après l'<a href="#popup">Achievement List (n° <span data-ref="popup"></span>)</a>, dont il reprend la surface et la palette ; avant les <a href="#stats">Stats des autres (n° <span data-ref="stats"></span>)</a></div>
+          <div class="links">Reprend la surface et la palette de l'Achievement List ; avant les <a href="#stats">Stats des autres (n° <span data-ref="stats"></span>)</a></div>
           <details>
             <summary>Contexte</summary>
             <p class="ctx">Reporté pendant le grilling de l'Achievement List dessinée (27/09/2026) : si le rendu plaît, l'étendre aux Profile Stats.</p>
@@ -520,7 +493,7 @@
           <div class="links">Sur l'écran des <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
           <details>
             <summary>Contexte</summary>
-            <p class="ctx">Reporté pendant le grilling des Profile Stats : la première version ne montre que le Profile actif. Les données de chaque Profile sont déjà dans son <code>profile.json</code>. Un classement des Challenges réussis pourrait s'y ajouter. L'Unlock Rate (Avatars des autres Profiles sur chaque Achievement) arrive déjà avec l'<a href="#popup">Achievement List dessinée</a>.</p>
+            <p class="ctx">Reporté pendant le grilling des Profile Stats : la première version ne montre que le Profile actif. Les données de chaque Profile sont déjà dans son <code>profile.json</code>. Un classement des Challenges réussis pourrait s'y ajouter. L'Unlock Rate (Avatars des autres Profiles sur chaque Achievement) est déjà dans l'Achievement List dessinée.</p>
           </details>
         </div>
       </li>
@@ -555,7 +528,7 @@
           <div class="links">Réécrit la section Install des README</div>
           <details>
             <summary>Contexte</summary>
-            <p class="ctx">Research : installation chez les utilisateurs de pincab, SmartScreen, GitHub Releases. Piste légère avant un vrai .exe : un zip dans GitHub Releases et un script PowerShell qui installe, écrit les <code>ADD_ON_*</code> cochés dans <code>.env.local</code> et vérifie la dernière version. Un .exe non signé déclenche SmartScreen, et une étape de build demande ton accord.</p>
+            <p class="ctx">Research : installation chez les utilisateurs de pincab, SmartScreen, GitHub Releases. Piste légère avant un vrai .exe : un zip dans GitHub Releases et un script PowerShell qui installe, écrit les <code>ADD_ON_*</code> cochés dans <code>.env.local</code> et vérifie la dernière version. Un .exe non signé déclenche SmartScreen, et une étape de build demande ton accord. Avant de diffuser, éloigner les blasons de rang (<code>assets/rank_*.png</code>) des emblèmes de League of Legends.</p>
           </details>
         </div>
       </li>

@@ -1,9 +1,10 @@
 ﻿// ============================================================
 // Achievement List painter: draws the pieces of the drawn Achievement List
 // (the dimmed backdrop and panel, the header and footer, a section header,
-// an Achievement row, a rank emblem, a row's Unlock Rate) into a drawing
-// layer's context, in the Steamball look validated with the prototype. It
-// only draws what it is given: it holds no state, reads no Achievement and
+// an Achievement row, a rank emblem, a row's Unlock Rate, an emblem image)
+// into a drawing layer's context, in the Steamball look validated with the
+// prototype, and says where the pieces on layers of their own sit. It only
+// draws what it is given: it holds no state, reads no Achievement and
 // listens to no event. Sizes are in layout pixels, fonts in points.
 // ============================================================
 
@@ -40,8 +41,12 @@ export const LIST_LOOK = Object.freeze({
     gaugeTipRadius: 10,
     rankEdgeWidth: 4,
     emblemCenterX: 52,
+    // The square canvas of an emblem image, halo included: its emblem is
+    // about as tall as the drawn one.
+    emblemImageSize: 96,
     // The header's small emblems, next to their count.
     headerEmblemScale: 0.45,
+    headerEmblemImageSize: 44,
     // A rank's small emblem and its count, side by side.
     rankCountWidth: 76,
     rankCountTextLeft: 38,
@@ -197,25 +202,56 @@ export function drawBackdrop(dc, g) {
     dc.frameRect(g.x, g.y, g.panelWidth, g.panelHeight, 1, COLORS.border);
 }
 
+// Where the header's Avatar and texts sit, and where its rank counts start.
+function headerLayout(g, rankCountsLength) {
+    const look = LIST_LOOK;
+    const avatarX = g.x + look.padding;
+    const avatarY = g.y + (look.headerHeight - look.avatarSize) / 2;
+    const textX = avatarX + look.avatarSize + 28;
+    const textWidth = g.panelWidth - (textX - g.x) - look.padding - 8;
+    const rankCountsWidth = rankCountsLength * look.rankCountWidth;
+    return { avatarX, avatarY, textX, textWidth, rankCountsWidth, rankCountsX: textX + textWidth - rankCountsWidth };
+}
+
+// Where the index-th rank count starts: its emblem, then its count.
+const rankCountLeft = (layout, index) => layout.rankCountsX + index * LIST_LOOK.rankCountWidth;
+
+// Centred on the Profile name's line, left of the rank's count.
+const headerEmblemCenter = (layout, index) => ({
+    x: rankCountLeft(layout, index) + LIST_LOOK.rankCountTextLeft / 2,
+    y: layout.avatarY + 36,
+});
+
+// The header's emblem images, each on a layer of its own over the mask:
+// for each rank count with an image ({ rank, imagePath }), its box in the
+// window.
+export function layoutHeaderEmblems(g, rankCounts) {
+    const layout = headerLayout(g, rankCounts.length);
+    const size = LIST_LOOK.headerEmblemImageSize;
+    return rankCounts.flatMap(({ rank, imagePath }, index) => {
+        if (!imagePath) return [];
+        const center = headerEmblemCenter(layout, index);
+        return [{ rank, imagePath, x: center.x - size / 2, y: center.y - size / 2, width: size, height: size }];
+    });
+}
+
 // The Avatar in a double gold frame, the title, the Profile's name, the
 // total line and its gauge, with a diamond at the gauge's tip; on the
 // name's line, right-aligned, the count of Unlocked Achievements of each
-// rank after its small emblem.
+// rank after its small emblem, drawn here only for a rank without an
+// emblem image.
 function drawHeader(host, dc, g, header) {
     const look = LIST_LOOK;
     const { x, y, panelWidth: width } = g;
     fillGradient(dc, x, y, width, look.headerHeight, COLORS.panelTop, HEADER_BOTTOM_COLOR);
     const avatar = look.avatarSize;
-    const avatarX = x + look.padding;
-    const avatarY = y + (look.headerHeight - avatar) / 2;
+    const layout = headerLayout(g, header.rankCounts.length);
+    const { avatarX, avatarY, textX, textWidth, rankCountsWidth } = layout;
     dc.fillRect(avatarX - 7, avatarY - 7, avatar + 14, avatar + 14, COLORS.gold);
     dc.fillRect(avatarX - 4, avatarY - 4, avatar + 8, avatar + 8, COLORS.tile);
     dc.frameRect(avatarX - 2, avatarY - 2, avatar + 4, avatar + 4, 1, COLORS.gold);
     dc.drawImage(header.avatarPath, avatarX, avatarY, avatar, avatar);
 
-    const textX = avatarX + avatar + 28;
-    const textWidth = width - (textX - x) - look.padding - 8;
-    const rankCountsWidth = header.rankCounts.length * look.rankCountWidth;
     // Only the title and the name share their width with the rank counts.
     const nameSize = drawText(host, dc, [
         { size: 11, weight: 600, color: COLORS.gold, text: `${header.title}\n` },
@@ -223,16 +259,14 @@ function drawHeader(host, dc, g, header) {
     ], { x: textX, y: avatarY + 2, width: textWidth - rankCountsWidth, size: 12, color: COLORS.description });
     drawText(host, dc, [header.totalLine], { x: textX, y: avatarY + 2 + nameSize.height, width: textWidth, size: 12, color: COLORS.description });
 
-    let rankX = textX + textWidth - rankCountsWidth;
-    for (const { rank, count } of header.rankCounts) {
-        // Centred on the Profile name's line.
-        drawRankEmblem(dc, rankX + look.rankCountTextLeft / 2, avatarY + 36, { rank, unlocked: true, halo: false, scale: look.headerEmblemScale });
+    header.rankCounts.forEach(({ rank, count, imagePath }, index) => {
+        const center = headerEmblemCenter(layout, index);
+        if (!imagePath) drawRankEmblem(dc, center.x, center.y, { rank, unlocked: true, halo: false, scale: look.headerEmblemScale });
         drawText(host, dc, [count], {
-            x: rankX + look.rankCountTextLeft, y: avatarY + 24, width: look.rankCountWidth - look.rankCountTextLeft,
-            size: 13, weight: 600, color: COLORS.title,
+            x: rankCountLeft(layout, index) + look.rankCountTextLeft, y: avatarY + 24,
+            width: look.rankCountWidth - look.rankCountTextLeft, size: 13, weight: 600, color: COLORS.title,
         });
-        rankX += look.rankCountWidth;
-    }
+    });
 
     // The empty part as tall as the filled one, so the gauge reads as one bar.
     const gaugeY = avatarY + avatar - 10;
@@ -301,15 +335,16 @@ export function drawSectionHeader(host, dc, width, { title, count }) {
     dc.fillRect(ruleX, textY + titleSize.height / 2, Math.max(0, width - ruleX - 6), 1, COLORS.border);
 }
 
-// An Achievement's row: its background, its rank emblem, its rank's colour
-// on the left edge when Unlocked, its title and description, and when it
-// has an Achievement Progress ({ text, ratio }) a gold bar with its short
-// text.
-export function drawRow(host, dc, width, { title, description, rank, unlocked, progress }) {
+// An Achievement's row: its background, its rank emblem unless it has an
+// emblem image (on a layer of its own, see layoutRowEmblem()), its rank's
+// colour on the left edge when Unlocked, its title and description, and
+// when it has an Achievement Progress ({ text, ratio }) a gold bar with its
+// short text.
+export function drawRow(host, dc, width, { title, description, rank, unlocked, hasEmblemImage, progress }) {
     const look = LIST_LOOK;
     dc.fillRect(0, 0, width, look.rowHeight, unlocked ? COLORS.rowUnlocked : COLORS.rowMissing);
     if (unlocked) dc.fillRect(0, 0, look.rankEdgeWidth, look.rowHeight, RANK_COLORS[rank]);
-    drawRankEmblem(dc, look.emblemCenterX, look.rowHeight / 2, { rank, unlocked });
+    if (!hasEmblemImage) drawRankEmblem(dc, look.emblemCenterX, look.rowHeight / 2, { rank, unlocked });
     const textWidth = width - look.textLeft - look.ownersWidth;
     const reserved = progress ? 14 : 0;
     const text = host.createStyledText({ textStyle: { font: FONTS.body, size: 11, color: unlocked ? COLORS.description : COLORS.dim } });
@@ -361,9 +396,20 @@ function pillText(host, moreText) {
     return text;
 }
 
-// One piece of layoutOwners() on its own layer, at the piece's size: an
-// Avatar in its thin frame, or the "+N" pill.
-export function drawOwnersPiece(host, dc, { avatarPath, moreText, width, height }) {
+// A row's emblem image, in place of the drawn emblem: its box in the row.
+export function layoutRowEmblem(imagePath) {
+    const size = LIST_LOOK.emblemImageSize;
+    return { imagePath, x: LIST_LOOK.emblemCenterX - size / 2, y: (LIST_LOOK.rowHeight - size) / 2, width: size, height: size };
+}
+
+// A piece on its own layer, at the piece's size: an emblem image (from
+// layoutRowEmblem() or layoutHeaderEmblems()), or one of layoutOwners():
+// an Avatar in its thin frame, or the "+N" pill.
+export function drawPiece(host, dc, { imagePath, avatarPath, moreText, width, height }) {
+    if (imagePath !== undefined) {
+        dc.drawImage(imagePath, 0, 0, width, height);
+        return;
+    }
     if (moreText !== undefined) {
         pillText(host, moreText).draw(dc, { x: 0, y: 0, width, height });
         return;

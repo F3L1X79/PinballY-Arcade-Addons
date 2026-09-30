@@ -92,7 +92,7 @@ export function createFakePinballYHost({
     let nowMs = now.getTime();
     let currentLayoutSize = { ...layoutSize };
     const layers = [];
-    // Every layer draw, in order: { zIndex, texts }.
+    // Every layer draw, in order: { zIndex, texts, images }.
     const drawingList = [];
     // Every sound played, in order: { filePath, playerId }.
     const sounds = [];
@@ -277,7 +277,7 @@ export function createFakePinballYHost({
                 strokes = [];
                 canvasSize = width === undefined ? { ...currentLayoutSize } : { width, height };
                 drawFunction(dc);
-                drawingList.push({ zIndex, texts: [...texts] });
+                drawingList.push({ zIndex, texts: [...texts], images: [...images] });
             },
             clear() {
                 texts = [];
@@ -561,7 +561,7 @@ export function createFakePinballYHost({
         advanceTime,
         setLayoutSize(size) { currentLayoutSize = { ...size }; },
         drawingLayers: () => [...layers],
-        drawings: () => drawingList.map(drawing => ({ ...drawing, texts: [...drawing.texts] })),
+        drawings: () => drawingList.map(drawing => ({ ...drawing, texts: [...drawing.texts], images: [...drawing.images] })),
         soundsPlayed: () => sounds.map(sound => sound.filePath),
         // The id of the player each sound played on, in the same order.
         soundPlayers: () => sounds.map(sound => sound.playerId),

@@ -6,10 +6,11 @@
 // then the Unlocked Achievements (a toast still waiting first, then the
 // most recently Notified) and the missing ones (the highest Unlock Rate
 // first, then the furthest Achievement Progress), each part under its
-// section header. Each row shows its rank emblem, when missing its
-// Achievement Progress, and its Unlock Rate: the Avatars of the other
-// Profiles Notified of it, once the household has two Profiles besides
-// Guest.
+// section header. Each row shows its rank emblem (the owner's image, with
+// a halo when Unlocked and greyed when missing; drawn when its file is
+// missing, logged once per file), when missing its Achievement Progress,
+// and its Unlock Rate: the Avatars of the other Profiles Notified of it,
+// once the household has two Profiles besides Guest.
 // Next / Prev glide the highlighted line from one Achievement to the next,
 // wrapping, with PinballY's navigation sound; the other lines are dimmed.
 // Exit closes the list and calls the return given to open(); attract mode
@@ -17,8 +18,9 @@
 // "commandbuttondown".
 // Each item (a row or a section header) has its own layer, only moved and
 // faded while the list is open; the header and footer sit on a mask layer
-// above the rows. Each Avatar and "+N" pill of the Unlock Rates sits on a
-// small layer of its own, one set per on-screen slot, moved with the rows.
+// above the rows, the header's small emblem images on layers above it. Each
+// emblem image, Avatar and "+N" pill of the rows sits on a small layer of
+// its own, one set per on-screen slot, moved with the rows.
 // Every layer is drawn ahead from startup through the shared drawing
 // ahead, nearest the highlighted line first, kept from one opening to the
 // next and redrawn only when what it shows or the window size changed.
@@ -34,14 +36,15 @@ import { safeHandler } from "./safe_handler.js";
 import { displayNameOf } from "./profile_name.js";
 import { RANKS_IN_ORDER } from "./achievements.js";
 import {
-    LIST_LOOK, computeGeometry, drawBackdrop, drawMask, drawSectionHeader, drawRow, layoutOwners, drawOwnersPiece,
+    LIST_LOOK, computeGeometry, drawBackdrop, drawMask, drawSectionHeader, drawRow, layoutOwners, layoutRowEmblem, layoutHeaderEmblems,
+    drawPiece,
 } from "./achievement_list_painter.js";
 
 const SCRIPT_NAME = "AchievementList";
 
 // Above PinballY's menus (custom layers 6000 and above), under the
 // Achievement Toast and the Profile picker. Exported for the tests' reader.
-export const ACHIEVEMENT_LIST_Z_INDEX = Object.freeze({ backdrop: 6000, items: 6001, owners: 6002, mask: 6003 });
+export const ACHIEVEMENT_LIST_Z_INDEX = Object.freeze({ backdrop: 6000, items: 6001, emblems: 6002, owners: 6003, mask: 6004, headerEmblems: 6005 });
 
 const ITEM_KIND = Object.freeze({ SECTION: "section", ROW: "row" });
 // The lines around the highlighted one, dimmed through their layer's alpha
@@ -59,6 +62,8 @@ const MAX_OWNER_AVATARS = 4;
 const NAVIGATION_SOUND = "Assets\\Button Sounds\\Next_.wav";
 // Enough for a held button: a player is still playing when asked again.
 const NAVIGATION_SOUND_PLAYERS = 3;
+// The file name's ending of each rank's emblem image, by where it shows.
+const EMBLEM_VARIANT = Object.freeze({ UNLOCKED: "", MISSING: "_missing", HEADER: "_small" });
 
 // drawingAhead: the shared drawing ahead (common/drawing_ahead.js).
 export function createAchievementList(host, { getAchievements, profileStore, drawingAhead }) {
@@ -70,13 +75,19 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     };
     const backdropLayer = hiddenLayer(ACHIEVEMENT_LIST_Z_INDEX.backdrop);
     const mask = { layer: hiddenLayer(ACHIEVEMENT_LIST_Z_INDEX.mask), signature: null };
+    // The header's emblem images, by rank.
+    const headerEmblemLayers = new Map();
     // By item key, each with the signature of what it was drawn with.
     const itemLayers = new Map();
-    // The Unlock Rate's pieces, by slot and piece: item i uses slot i
-    // modulo the slot count, so the items shown at once never share one.
-    // An Avatar is drawn once per slot, not per row: PinballY rereads an
-    // image file on every draw, most of a row's cost.
+    // The rows' emblem images and Unlock Rates, by slot and piece: item i
+    // uses slot i modulo the slot count, so the items shown at once never
+    // share one. An image is drawn once per slot, not per row: PinballY
+    // rereads an image file on every draw, most of a row's cost.
     const pieceLayers = new Map();
+    const assetsFolder = `${host.getProgramFolder().replace(/\\+$/, "")}\\Scripts\\assets`;
+    // Each emblem image's path, or null when its file is missing: checked
+    // once per session.
+    const emblemImagePaths = new Map();
 
     // The window's geometry, measured on each opening and before drawing ahead.
     let geometry = null;
@@ -119,6 +130,18 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
             throw new Error(`Achievement "${achievement.id}" has an unknown progress unit "${progress.unit}".`);
         }
         return { text: unitTexts.short(progress.current, progress.target), ratio: progress.current / progress.target };
+    }
+
+    // The rank's emblem image for where it shows, or null when its file is
+    // missing: that emblem is drawn instead.
+    function emblemImageOf(rank, variant) {
+        const path = `${assetsFolder}\\rank_${rank}${variant}.png`;
+        if (!emblemImagePaths.has(path)) {
+            const exists = host.files.fileExists(path);
+            if (!exists) host.log(`[${SCRIPT_NAME}] Emblem image not found, drawing the emblem instead: ${path}`);
+            emblemImagePaths.set(path, exists ? path : null);
+        }
+        return emblemImagePaths.get(path);
     }
 
     // The Profiles other than Guest, each with the Achievements it was
@@ -184,7 +207,9 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     }
 
     // The list's items, each with its key, its top in pixels from the
-    // list's start, what its layer shows and the pieces of its Unlock Rate.
+    // list's start, what its layer shows and its pieces on layers of their
+    // own (its emblem image and its Unlock Rate), each with its z-index and
+    // whether its box is from the row's left or from its Unlock Rate's part.
     function buildItems(entries) {
         const members = readHousehold();
         const { unlocked, missing } = orderEntries(describeEntries(entries, members));
@@ -203,10 +228,16 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
                 kind: ITEM_KIND.SECTION,
                 height: LIST_LOOK.sectionHeight,
                 look: { title: title.toLocaleUpperCase(), count: TEXT.sectionCount(sectionEntries.length) },
-                ownersPieces: [],
+                pieces: [],
             });
             for (const { achievement, unlocked: isUnlocked, progress, owners } of sectionEntries) {
                 const shownOwners = showsUnlockRate ? describeOwners(owners) : null;
+                const emblemImage = emblemImageOf(achievement.rank, isUnlocked ? EMBLEM_VARIANT.UNLOCKED : EMBLEM_VARIANT.MISSING);
+                const pieces = [
+                    ...(emblemImage ? [{ ...layoutRowEmblem(emblemImage), zIndex: ACHIEVEMENT_LIST_Z_INDEX.emblems, inOwners: false }] : []),
+                    ...(shownOwners ? layoutOwners(host, shownOwners) : [])
+                        .map(piece => ({ ...piece, zIndex: ACHIEVEMENT_LIST_Z_INDEX.owners, inOwners: true })),
+                ];
                 push({
                     key: `row:${achievement.id}`,
                     kind: ITEM_KIND.ROW,
@@ -216,9 +247,10 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
                         description: achievement.getDescription(),
                         rank: achievement.rank,
                         unlocked: isUnlocked,
+                        hasEmblemImage: emblemImage !== null,
                         progress,
                     },
-                    ownersPieces: shownOwners ? layoutOwners(host, shownOwners) : [],
+                    pieces,
                 });
             }
         }
@@ -244,6 +276,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
             rankCounts: RANKS_IN_ORDER.map(rank => ({
                 rank,
                 count: String(entries.filter(entry => entry.unlocked && entry.achievement.rank === rank).length),
+                imagePath: emblemImageOf(rank, EMBLEM_VARIANT.HEADER),
             })),
         };
     }
@@ -312,15 +345,23 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         });
     }
 
-    const pieceKey = (index, piece) => `${index % slotCount()}|${piece.avatarPath || `+${piece.moreText}`}`;
-    // Not its place in the row: the same Avatar serves every row of its slot.
-    const pieceLook = ({ avatarPath, moreText }) => ({ avatarPath, moreText });
+    const pieceKey = (index, piece) => `${index % slotCount()}|${piece.imagePath || piece.avatarPath || `+${piece.moreText}`}`;
+    // Not its place in the row: the same image serves every row of its slot.
+    const pieceLook = ({ imagePath, avatarPath, moreText }) => ({ imagePath, avatarPath, moreText });
 
     const isPieceDrawn = (index, piece) => isDrawn(pieceLayers, pieceKey(index, piece), pieceLook(piece), piece.width, piece.height);
 
     function pieceLayer(index, piece) {
-        return signedLayer(pieceLayers, pieceKey(index, piece), ACHIEVEMENT_LIST_Z_INDEX.owners, pieceLook(piece), piece.width, piece.height,
-            dc => drawOwnersPiece(host, dc, piece));
+        return signedLayer(pieceLayers, pieceKey(index, piece), piece.zIndex, pieceLook(piece), piece.width, piece.height,
+            dc => drawPiece(host, dc, piece));
+    }
+
+    const headerEmblems = () => layoutHeaderEmblems(geometry, content.header.rankCounts);
+    const isHeaderEmblemDrawn = emblem => isDrawn(headerEmblemLayers, emblem.rank, pieceLook(emblem), emblem.width, emblem.height);
+
+    function headerEmblemLayer(emblem) {
+        return signedLayer(headerEmblemLayers, emblem.rank, ACHIEVEMENT_LIST_Z_INDEX.headerEmblems, pieceLook(emblem), emblem.width, emblem.height,
+            dc => drawPiece(host, dc, emblem));
     }
 
     function maskSignature() {
@@ -334,11 +375,13 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     }
 
     // The next layer to draw ahead, as a function drawing it, or null once
-    // everything is drawn: the header and footer, then the items from the
-    // highlighted one outwards, wrapping (a wrap reaches the other end),
-    // each followed by its Unlock Rate.
+    // everything is drawn: the header and footer, the header's emblems,
+    // then the items from the highlighted one outwards, wrapping (a wrap
+    // reaches the other end), each followed by its emblem and Unlock Rate.
     function nextDrawing() {
         if (mask.signature !== maskSignature()) return drawMaskLayer;
+        const headerEmblem = headerEmblems().find(emblem => !isHeaderEmblemDrawn(emblem));
+        if (headerEmblem) return () => headerEmblemLayer(headerEmblem);
         const { items } = content;
         const around = shown ? shown.highlighted : Math.max(0, items.findIndex(item => item.kind === ITEM_KIND.ROW));
         const distance = index => Math.min(Math.abs(index - around), items.length - Math.abs(index - around));
@@ -346,7 +389,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         for (const index of order) {
             const item = items[index];
             if (!isItemDrawn(item)) return () => itemLayer(item);
-            const piece = item.ownersPieces.find(candidate => !isPieceDrawn(index, candidate));
+            const piece = item.pieces.find(candidate => !isPieceDrawn(index, candidate));
             if (piece) return () => pieceLayer(index, piece);
         }
         return null;
@@ -381,9 +424,10 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     };
 
     // Shows the items overlapping the rows area at their place with their
-    // Unlock Rate, each dimmed by its distance to the highlighted line, and
-    // hides the others. An item sliding out hides under the header or the
-    // footer. Anything not drawn ahead yet is drawn on the spot.
+    // emblem image and Unlock Rate, each dimmed by its distance to the
+    // highlighted line, and hides the others. An item sliding out hides
+    // under the header or the footer. Anything not drawn ahead yet is drawn
+    // on the spot.
     function placeItems() {
         const g = geometry;
         const toX = x => x / g.width - 0.5;
@@ -401,14 +445,14 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
             const distance = item.kind === ITEM_KIND.SECTION ? 1 : Math.min(1, Math.abs(item.top - glide.highlightTop) / ROW_PITCH);
             layer.alpha = 1 - (1 - DIMMED_ALPHA) * distance;
             shownLayers.add(layer);
-            for (const piece of item.ownersPieces) {
-                const ownersLayer = pieceLayer(index, piece);
+            for (const piece of item.pieces) {
+                const placedLayer = pieceLayer(index, piece);
                 // From the row's centre, so a piece centred on the row sits
                 // exactly at its height.
-                ownersLayer.setPos(toX(ownersLeft + piece.x + piece.width / 2),
+                placedLayer.setPos(toX((piece.inOwners ? ownersLeft : g.rowX) + piece.x + piece.width / 2),
                     centerY - (piece.y + piece.height / 2 - item.height / 2) / g.height);
-                ownersLayer.alpha = layer.alpha;
-                shownLayers.add(ownersLayer);
+                placedLayer.alpha = layer.alpha;
+                shownLayers.add(placedLayer);
             }
         });
         hideAllExcept(itemLayers, shownLayers);
@@ -508,6 +552,18 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         }
     }
 
+    // Over the mask at their place; drawn on the spot if not drawn ahead.
+    function showHeaderEmblems() {
+        const shownLayers = new Set();
+        for (const emblem of headerEmblems()) {
+            const layer = headerEmblemLayer(emblem);
+            layer.setPos((emblem.x + emblem.width / 2) / geometry.width - 0.5, 0.5 - (emblem.y + emblem.height / 2) / geometry.height);
+            layer.alpha = 1;
+            shownLayers.add(layer);
+        }
+        hideAllExcept(headerEmblemLayers, shownLayers);
+    }
+
     // onExit: what Exit returns to, called once the list is closed.
     function open(onExit = () => {}) {
         // A native menu left open would sit over or under the list.
@@ -521,6 +577,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         backdropLayer.alpha = 1;
         if (mask.signature !== maskSignature()) drawMaskLayer();
         mask.layer.alpha = 1;
+        showHeaderEmblems();
         shown = { onExit, scroll: 0, highlighted: content.items.findIndex(item => item.kind === ITEM_KIND.ROW) };
         jumpToTarget();
     }
@@ -530,8 +587,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         stopGlide();
         shown = null;
         for (const layer of [backdropLayer, mask.layer]) layer.alpha = 0;
-        hideAllExcept(itemLayers, new Set());
-        hideAllExcept(pieceLayers, new Set());
+        for (const layers of [itemLayers, pieceLayers, headerEmblemLayers]) hideAllExcept(layers, new Set());
         // What changed while it was open is read again once it is closed.
         wakeDrawingAhead();
     }
