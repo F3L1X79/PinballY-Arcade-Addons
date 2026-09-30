@@ -60,7 +60,7 @@ Each Profile's progress is saved in the `profiles` folder, which project updates
 
 ### Admin Profile
 
-To keep the setup entries for yourself, add `"isAdmin": true` at the top level of your Profile's `profiles\<name>\profile.json`, PinballY closed. Once at least one Profile is marked, the other Profiles (Guest included) no longer see "Table Setup" in the main menu nor "Operator Menu" in the Exit menu; the Admin Profiles still see both, and the coin door service button still opens the Operator Menu for anyone. Several Profiles can be marked. Guest is never an Admin Profile, and a mark that is not `true` or `false` is ignored and logged in `PinballY.log`.
+To keep the setup entries for yourself, add `"isAdmin": true` at the top level of your Profile's `profiles\<name>\profile.json`, PinballY closed. Once at least one Profile is marked, the other Profiles (Guest included) no longer see "Table Setup" in the main menu nor "Operator Menu" in the Exit menu; the Admin Profiles still see both, and the coin door service button still opens the Operator Menu for anyone. Several Profiles can be marked. Guest is never an Admin Profile, and a mark that is not `true` or `false`, or whose key is misspelt (`"isAdmin "`, `"IsAdmin"`), is ignored and logged in `PinballY.log`.
 
 ## Contributing
 

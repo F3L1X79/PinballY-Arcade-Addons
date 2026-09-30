@@ -226,21 +226,30 @@ export function createProfileStore(host) {
         }
     }
 
+    function logMarkProblemOnce(problemLine) {
+        if (loggedMarkProblems.has(problemLine)) return;
+        loggedMarkProblems.add(problemLine);
+        log(problemLine);
+    }
+
     // A mark set by hand (ADR 0006) counts only when it is true on a Profile
     // other than Guest; any other value is logged and read as false, but kept
-    // in the file for the player to fix.
+    // in the file for the player to fix. A key that differs from the mark by
+    // its letter case or spaces only is a typo: logged too, never read.
     function markOf(profile, data, markName) {
+        const looseName = markName.toLowerCase();
+        for (const key of Object.keys(data)) {
+            if (key !== markName && key.replace(/\s/g, "").toLowerCase() === looseName) {
+                logMarkProblemOnce(`${profile.name}\\profile.json: ${JSON.stringify(key)} is ignored; did you mean "${markName}"?`);
+            }
+        }
         const value = data[markName];
         if (value === undefined || value === false) return false;
         let problem = null;
         if (profile.isGuest) problem = `Guest is never marked "${markName}"`;
         else if (typeof value !== "boolean") problem = `"${markName}" must be true or false, not ${JSON.stringify(value)}`;
         if (!problem) return true;
-        const problemLine = `${profile.name}\\profile.json: ${problem}; read as false.`;
-        if (!loggedMarkProblems.has(problemLine)) {
-            loggedMarkProblems.add(problemLine);
-            log(problemLine);
-        }
+        logMarkProblemOnce(`${profile.name}\\profile.json: ${problem}; read as false.`);
         return false;
     }
 

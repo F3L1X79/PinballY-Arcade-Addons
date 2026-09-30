@@ -263,3 +263,19 @@ test("a mark that is not a boolean, or a mark on Guest, is logged once and read 
     assert.ok(markLines.some(line => line.includes("guest\\profile.json")));
     assert.ok(markLines.some(line => line.includes("Alice\\profile.json")));
 });
+
+test("a key that is a mark but for its letter case or spaces is logged once and ignored", () => {
+    const fake = createFake();
+    fake.addFile(`${PROFILES}\\Alice\\profile.json`, JSON.stringify({ version: 1, "isAdmin ": true }));
+    fake.addFile(`${PROFILES}\\Bob\\profile.json`, JSON.stringify({ version: 1, IsAdmin: true, isAdmin: false }));
+    const store = createProfileStore(fake);
+
+    assert.equal(store.isAdmin("Alice"), false);
+    assert.equal(store.isAdmin("Bob"), false);
+    assert.equal(store.hasAdminProfile(), false);
+
+    const misspeltLines = fake.logLines().filter(line => line.includes("did you mean"));
+    assert.equal(misspeltLines.length, 2, misspeltLines.join("\n"));
+    assert.ok(misspeltLines.some(line => line.includes("Alice\\profile.json") && line.includes('"isAdmin "')));
+    assert.ok(misspeltLines.some(line => line.includes("Bob\\profile.json") && line.includes('"IsAdmin"')));
+});
