@@ -6,7 +6,7 @@ Before using a PinballY API, read `.claude/reference/pinbally-help.md` (digest o
 
 ### Issue tracker
 
-Issues are tracked in GitHub Issues (`F3L1X79/PinballY-Arcade-Addons`) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues are tracked in GitHub Issues (`F3L1X79/PinballY-Expansion-Pack`) via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
