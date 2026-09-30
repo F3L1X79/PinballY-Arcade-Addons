@@ -7,9 +7,12 @@
 // to the highlighted Profile, Exit closes it; while it is open every
 // button is swallowed through "commandbuttondown", so the wheel never moves
 // under it; attract mode closes it too. The Avatars glide to their new
-// places on each move, and the name shows once they arrive. Each Avatar has
-// its own layer, drawn once and then only moved, scaled and dimmed, so a
-// glide redraws nothing. The Profiles are read again each time it opens.
+// places on each move, and the name shows once they arrive. The background,
+// each Avatar, each name and the gold frame have their own layer, drawn
+// ahead (common/drawing_ahead.js) and kept for the whole session, so opening
+// and moving only show, move, scale and dim layers: on the cabinet each draw
+// blocks PinballY for 20 to 45 ms. The Profiles are read again each time it
+// opens, and anything not drawn ahead yet is drawn on the spot.
 // A badge at the top right of the wheel screen shows the active Profile's
 // Avatar and name; it is redrawn on every switch, hidden on "gamestarted"
 // and shown again on "wheelmode".
@@ -30,14 +33,16 @@ import { getMainMenu, MAIN_MENU_POSITION } from "../common/main_menu.js";
 import { getWheelDialogs } from "../common/wheel_dialog.js";
 import { registerChangePlayer } from "../common/change_player.js";
 import { drawShadowedText } from "../common/shadowed_text.js";
+import { getDrawingAhead } from "../common/drawing_ahead.js";
 import config from "../common/config.js";
 
 const SCRIPT_NAME = "ProfilePicker";
 
 // Above PinballY's menus and popups; the Avatars above the carousel's
-// background.
+// background, the gold frame and the names above the Avatars.
 const PICKER_Z_INDEX = 6500;
 const AVATAR_Z_INDEX = 6501;
+const TOP_Z_INDEX = 6502;
 // Above the wheel and the game info box, under popups and menus.
 const BADGE_Z_INDEX = 4500;
 const COLORS = Object.freeze({
@@ -63,13 +68,18 @@ const OFF_STAGE_SLOT = Object.freeze({ size: 40, centerOffset: 420, dim: 0xFF000
 const GLIDE_TIME_CONSTANT_MS = 50;
 const GLIDE_SNAP = 0.02;
 // An Avatar layer's canvas: the image at the greeting's grown size, so it
-// is only ever scaled down, and its frame, gold for the highlighted one.
+// is only ever scaled down, in its plain frame. The gold frame is a ring on
+// a layer of its own, wide enough to cover the highlighted one's plain frame.
 const AVATAR_ART = Object.freeze({ image: 260, goldFrame: 5, plainFrame: 2 });
+const AVATAR_SIDE = AVATAR_ART.image + 2 * AVATAR_ART.plainFrame;
+const GOLD_FRAME_SIDE = AVATAR_ART.image + 2 * AVATAR_ART.goldFrame;
 // The Avatars' row sits at this fraction of the height; the texts are
 // placed from it.
 const ROW_HEIGHT_RATIO = 0.4;
 const TITLE = Object.freeze({ size: 26, weight: 700, top: -250 });
 const NAME = Object.freeze({ size: 24, weight: 700, top: 130 });
+// A name layer's height: the text and its shadow.
+const NAME_LAYER_HEIGHT = 48;
 const HINT = Object.freeze({ size: 12, weight: 400, top: 180 });
 // The badge has its own canvas, pinned to the window's top right corner:
 // PinballY stretches a canvas to the window, and at startup the window is
@@ -91,8 +101,17 @@ export default function init() {
     const { profiles: TEXT } = lang;
     const host = createPinballYHost();
     const profileStore = getProfileStore();
-    // Overlay and texts, for the carousel and the greeting alike.
-    const backLayer = host.createDrawingLayer(PICKER_Z_INDEX);
+    const hiddenLayer = zIndex => {
+        const layer = host.createDrawingLayer(zIndex);
+        layer.alpha = 0;
+        return layer;
+    };
+    // The carousel's overlay, title and hint, drawn ahead; the greeting's
+    // overlay and text, drawn when it starts.
+    const backLayer = hiddenLayer(PICKER_Z_INDEX);
+    const greetingLayer = hiddenLayer(PICKER_Z_INDEX);
+    const goldFrameLayer = hiddenLayer(TOP_Z_INDEX);
+    let isGoldFrameDrawn = false;
     const badgeLayer = host.createDrawingLayer(BADGE_Z_INDEX);
     badgeLayer.setScale({ ySpan: BADGE.height / BADGE_REFERENCE_HEIGHT });
     badgeLayer.setPos(0, 0, "top right");
@@ -101,12 +120,15 @@ export default function init() {
     let profiles = null;
     let highlighted = 0;
     // The window's layout size, taken from the background layer, which
-    // spans the whole window: the Avatar layers are placed in its pixels.
+    // spans the whole window: the other layers are placed in its pixels.
     let layout = null;
-    // Avatar layers shown, by Profile name, each with what it holds; and
-    // the spare ones, kept for later rather than created again.
+    // By Profile name, each with the signature of what it was drawn with.
     const avatarLayers = new Map();
-    const spareAvatarLayers = [];
+    const nameLayers = new Map();
+    // The Profiles to draw ahead, and whether the window must be measured
+    // and the Profiles read again first.
+    let aheadProfiles = [];
+    let isAheadStale = true;
     // How far, in slots, the Avatars still sit from their places while they
     // glide (positive: to the right); 0 at rest.
     let glide = 0;
@@ -164,84 +186,164 @@ export default function init() {
         return offsets;
     }
 
-    // Draws the Avatar and its frame on its own layer, only when that layer
-    // doesn't hold them already: PinballY reads the image file again on
-    // every draw, far too slow for every frame of a glide.
-    function showAvatar(profile, gold) {
-        let shown = avatarLayers.get(profile.name);
-        if (!shown) {
-            shown = { layer: spareAvatarLayers.pop() || host.createDrawingLayer(AVATAR_Z_INDEX) };
-            avatarLayers.set(profile.name, shown);
+    // The layer kept for key in layers, drawn again only when its signature
+    // changed.
+    function signedLayer(layers, key, zIndex, signature, width, height, draw) {
+        let record = layers.get(key);
+        if (!record) {
+            record = { layer: hiddenLayer(zIndex), signature: null };
+            layers.set(key, record);
         }
-        if (shown.avatarPath === profile.avatarPath && shown.gold === gold) return shown;
-        const frame = gold ? AVATAR_ART.goldFrame : AVATAR_ART.plainFrame;
-        const side = AVATAR_ART.image + 2 * frame;
-        shown.layer.clear(COLORS.transparent);
-        shown.layer.draw(dc => {
-            dc.fillRect(0, 0, side, side, gold ? COLORS.gold : COLORS.neighbourFrame);
-            dc.drawImage(profile.avatarPath, frame, frame, AVATAR_ART.image, AVATAR_ART.image);
+        if (record.signature !== signature) {
+            record.layer.clear(COLORS.transparent);
+            record.layer.draw(draw, width, height);
+            record.signature = signature;
+        }
+        return record.layer;
+    }
+
+    const isDrawn = (layers, key, signature) => layers.has(key) && layers.get(key).signature === signature;
+    const avatarSignature = profile => String(profile.avatarPath);
+    const isActive = profile => profile.name === profileStore.getActiveProfile().name;
+    // The canvas spans the window's width.
+    const nameSignature = profile => JSON.stringify([displayNameOf(profile), isActive(profile), layout.width, layout.height]);
+
+    function avatarLayer(profile) {
+        return signedLayer(avatarLayers, profile.name, AVATAR_Z_INDEX, avatarSignature(profile), AVATAR_SIDE, AVATAR_SIDE, dc => {
+            dc.fillRect(0, 0, AVATAR_SIDE, AVATAR_SIDE, COLORS.neighbourFrame);
+            dc.drawImage(profile.avatarPath, AVATAR_ART.plainFrame, AVATAR_ART.plainFrame, AVATAR_ART.image, AVATAR_ART.image);
+        });
+    }
+
+    function nameLayer(profile) {
+        return signedLayer(nameLayers, profile.name, TOP_Z_INDEX, nameSignature(profile), layout.width, NAME_LAYER_HEIGHT, dc => {
+            drawShadowedText(host, dc, NAME, isActive(profile) ? COLORS.gold : COLORS.text, displayNameOf(profile), 0);
+        });
+    }
+
+    function drawGoldFrame() {
+        const side = GOLD_FRAME_SIDE;
+        const band = AVATAR_ART.goldFrame;
+        goldFrameLayer.clear(COLORS.transparent);
+        goldFrameLayer.draw(dc => {
+            dc.fillRect(0, 0, side, band, COLORS.gold);
+            dc.fillRect(0, side - band, side, band, COLORS.gold);
+            dc.fillRect(0, band, band, side - 2 * band, COLORS.gold);
+            dc.fillRect(side - band, band, band, side - 2 * band, COLORS.gold);
         }, side, side);
-        Object.assign(shown, { avatarPath: profile.avatarPath, gold, frame });
-        return shown;
+        isGoldFrameDrawn = true;
     }
 
-    // Centres the Avatar on (x, y), in layout pixels, its image size pixels wide.
-    function placeAvatar(shown, x, y, size, opacity) {
-        const side = size * (AVATAR_ART.image + 2 * shown.frame) / AVATAR_ART.image;
-        shown.layer.setScale({ ySpan: side / layout.height });
-        shown.layer.setPos(x / layout.width - 0.5, 0.5 - y / layout.height);
-        shown.layer.alpha = opacity;
+    // Centres a layer drawn around an Avatar's image on (x, y), in layout
+    // pixels, the image size pixels wide.
+    function placeAroundImage(layer, canvasSide, x, y, size, opacity) {
+        const side = size * canvasSide / AVATAR_ART.image;
+        layer.setScale({ ySpan: side / layout.height });
+        layer.setPos(x / layout.width - 0.5, 0.5 - y / layout.height);
+        layer.alpha = opacity;
     }
 
-    function hideAvatar(name) {
-        const { layer } = avatarLayers.get(name);
-        layer.clear(COLORS.transparent);
-        layer.alpha = 0;
-        spareAvatarLayers.push(layer);
-        avatarLayers.delete(name);
+    function placeAvatar(profile, x, y, size, opacity, gold) {
+        placeAroundImage(avatarLayer(profile), AVATAR_SIDE, x, y, size, opacity);
+        if (!gold) return;
+        if (!isGoldFrameDrawn) drawGoldFrame();
+        placeAroundImage(goldFrameLayer, GOLD_FRAME_SIDE, x, y, size, opacity);
     }
 
-    function hideAllAvatars() {
-        for (const name of [...avatarLayers.keys()]) hideAvatar(name);
+    const hideAll = records => {
+        for (const { layer } of records.values()) {
+            if (layer.alpha !== 0) layer.alpha = 0;
+        }
+    };
+
+    function hideCarousel() {
+        backLayer.alpha = 0;
+        goldFrameLayer.alpha = 0;
+        hideAll(avatarLayers);
+        hideAll(nameLayers);
     }
 
-    // Runs on every frame of a glide: moves the Avatar layers, drawing only
-    // the one entering and the two whose frame colour changes on a move.
+    // The highlighted name, once the Avatars are at rest.
+    function placeName() {
+        const current = glide === 0 ? profiles[highlighted] : null;
+        for (const [name, { layer }] of nameLayers) {
+            if ((!current || name !== current.name) && layer.alpha !== 0) layer.alpha = 0;
+        }
+        if (!current) return;
+        const layer = nameLayer(current);
+        const top = layout.height * ROW_HEIGHT_RATIO + NAME.top;
+        layer.setScale({ ySpan: NAME_LAYER_HEIGHT / layout.height });
+        layer.setPos(0, 0.5 - (top + NAME_LAYER_HEIGHT / 2) / layout.height);
+        layer.alpha = 1;
+    }
+
+    // Runs on every frame of a glide: shows, moves and hides layers only.
     function placeCarousel() {
         const count = profiles.length;
         const centerY = layout.height * ROW_HEIGHT_RATIO;
         const shownProfiles = new Map(shownOffsets(count)
             .map(offset => [profiles[((highlighted + offset) % count + count) % count], offset]));
         const shownNames = new Set([...shownProfiles.keys()].map(profile => profile.name));
-        for (const name of [...avatarLayers.keys()]) if (!shownNames.has(name)) hideAvatar(name);
+        for (const [name, { layer }] of avatarLayers) {
+            if (!shownNames.has(name) && layer.alpha !== 0) layer.alpha = 0;
+        }
         for (const [profile, offset] of shownProfiles) {
             const slot = slotAt(offset + glide);
-            const shown = showAvatar(profile, offset === 0);
-            placeAvatar(shown, layout.width / 2 + slot.centerOffset, centerY, slot.size, slot.opacity);
+            placeAvatar(profile, layout.width / 2 + slot.centerOffset, centerY, slot.size, slot.opacity, offset === 0);
         }
+        placeName();
     }
 
-    // The carousel's background: overlay, title, hint, and the highlighted
-    // name once the Avatars are at rest.
-    function drawCarouselBack() {
+    // Draws the carousel's background, which also measures the window.
+    function measure() {
         backLayer.clear(COLORS.transparent);
         backLayer.draw(dc => {
             layout = dc.getSize();
             dc.fillRect(0, 0, layout.width, layout.height, COLORS.overlay);
             const centerY = layout.height * ROW_HEIGHT_RATIO;
             drawShadowedText(host, dc, TITLE, COLORS.text, TEXT.pickerTitle, centerY + TITLE.top);
-            if (glide === 0) {
-                const current = profiles[highlighted];
-                const isActive = current.name === profileStore.getActiveProfile().name;
-                drawShadowedText(host, dc, NAME, isActive ? COLORS.gold : COLORS.text, displayNameOf(current), centerY + NAME.top);
-            }
             drawShadowedText(host, dc, HINT, COLORS.hint, TEXT.pickerHint, centerY + HINT.top);
         });
     }
 
-    function drawCarousel() {
-        drawCarouselBack();
-        placeCarousel();
+    const isShowing = () => profiles !== null || greetingDelayTimer !== null || greetingTimer !== null;
+
+    // One step of the drawing ahead, only while nothing is shown, so it
+    // never makes the carousel or the greeting stutter: the background
+    // (which measures the window, then the Profiles are read again), the
+    // gold frame, then each Profile's Avatar and name.
+    function drawAheadStep() {
+        if (isShowing()) return false;
+        if (isAheadStale) {
+            measure();
+            aheadProfiles = profileStore.listProfiles();
+            isAheadStale = false;
+            return true;
+        }
+        if (!isGoldFrameDrawn) {
+            drawGoldFrame();
+            return true;
+        }
+        for (const profile of aheadProfiles) {
+            if (!isDrawn(avatarLayers, profile.name, avatarSignature(profile))) {
+                avatarLayer(profile);
+                return true;
+            }
+            if (!isDrawn(nameLayers, profile.name, nameSignature(profile))) {
+                nameLayer(profile);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    const wakeDrawingAhead = getDrawingAhead().add(drawAheadStep);
+
+    // The window may have been resized, and Profiles or their Avatars
+    // changed, since the last drawing ahead.
+    function markAheadStale() {
+        isAheadStale = true;
+        wakeDrawingAhead();
     }
 
     function drawBadge() {
@@ -259,8 +361,9 @@ export default function init() {
     // The greeting's background: overlay and greeting text, placed under
     // the Avatar at its grown size.
     function drawGreetingBack(profile) {
-        backLayer.clear(COLORS.transparent);
-        backLayer.draw(dc => {
+        greetingLayer.clear(COLORS.transparent);
+        greetingLayer.alpha = 1;
+        greetingLayer.draw(dc => {
             layout = dc.getSize();
             dc.fillRect(0, 0, layout.width, layout.height, COLORS.overlay);
             const textTop = layout.height * ROW_HEIGHT_RATIO + GREETING.grownSize / 2 + GREETING_TEXT.gap;
@@ -268,16 +371,16 @@ export default function init() {
         });
     }
 
-    // Stops the pause or the greeting, and clears what the greeting shares
-    // with the carousel.
+    // Stops the pause or the greeting, and hides it with the carousel,
+    // whose Avatar and gold frame it shares.
     function stopGreeting() {
         host.clearTimeout(greetingDelayTimer);
         greetingDelayTimer = null;
         host.clearInterval(greetingTimer);
         greetingTimer = null;
-        backLayer.clear(COLORS.transparent);
-        backLayer.alpha = 1;
-        hideAllAvatars();
+        greetingLayer.alpha = 0;
+        hideCarousel();
+        wakeDrawingAhead();
     }
 
     // The Avatar grows and everything fades by moving, scaling and fading
@@ -287,10 +390,9 @@ export default function init() {
         const startSize = SLOTS[0].size;
         const { grownSize, growMs, holdMs, fadeMs } = GREETING;
         drawGreetingBack(profile);
-        const avatar = showAvatar(profile, true);
         const centerX = layout.width / 2;
         const centerY = layout.height * ROW_HEIGHT_RATIO;
-        placeAvatar(avatar, centerX, centerY, startSize, 1);
+        placeAvatar(profile, centerX, centerY, startSize, 1, true);
         // Timed on the clock: Windows timers fire late, so counting frames
         // would stretch the greeting.
         const startMs = host.now().getTime();
@@ -302,8 +404,8 @@ export default function init() {
             }
             const size = startSize + (grownSize - startSize) * Math.min(1, elapsed / growMs);
             const opacity = 1 - Math.max(0, elapsed - growMs - holdMs) / fadeMs;
-            placeAvatar(avatar, centerX, centerY, size, opacity);
-            backLayer.alpha = opacity;
+            placeAvatar(profile, centerX, centerY, size, opacity, true);
+            greetingLayer.alpha = opacity;
         }), FRAME_MS);
         playGreetingSound();
     }
@@ -346,26 +448,20 @@ export default function init() {
         const nowMs = host.now().getTime();
         glide *= Math.exp(-(nowMs - glideLastMs) / GLIDE_TIME_CONSTANT_MS);
         glideLastMs = nowMs;
-        if (Math.abs(glide) < GLIDE_SNAP) {
-            stopGlide();
-            // Arrived: the name shows.
-            drawCarouselBack();
-        }
+        // Arrived: placeCarousel() shows the name.
+        if (Math.abs(glide) < GLIDE_SNAP) stopGlide();
         placeCarousel();
     }
 
     // direction: 1 for Next, -1 for Prev. A press during a glide carries on
     // from where the Avatars are.
     function move(direction) {
-        const wasAtRest = glide === 0;
         highlighted = (highlighted + direction + profiles.length) % profiles.length;
         glide += direction;
         if (glideTimer === null) {
             glideLastMs = host.now().getTime();
             glideTimer = host.setInterval(safeHandler(SCRIPT_NAME, glideStep), FRAME_MS);
         }
-        // The name leaves while the Avatars glide.
-        if (wasAtRest) drawCarouselBack();
         placeCarousel();
     }
 
@@ -379,13 +475,16 @@ export default function init() {
         profiles = profileStore.listProfiles();
         const activeName = profileStore.getActiveProfile().name;
         highlighted = Math.max(0, profiles.findIndex(profile => profile.name === activeName));
-        drawCarousel();
+        if (!layout) measure();
+        backLayer.alpha = 1;
+        placeCarousel();
     }
 
     function close() {
         stopGlide();
-        stopGreeting();
         profiles = null;
+        stopGreeting();
+        markAheadStale();
     }
 
     getMainMenu().add({ name: "profilePicker", label: TEXT.menuEntry, position: MAIN_MENU_POSITION.PROFILE_PICKER, action: open });
@@ -416,7 +515,7 @@ export default function init() {
             const chosen = profiles[highlighted];
             // The carousel stays drawn, at rest, until the greeting replaces it.
             stopGlide();
-            drawCarousel();
+            placeCarousel();
             profiles = null;
             profileStore.switchTo(chosen.name);
             greetAfterPause();
@@ -425,7 +524,11 @@ export default function init() {
         }
     }));
 
-    profileStore.onSwitch(safeHandler(SCRIPT_NAME, drawBadge));
+    // Fires on every switch: the names' colours change.
+    profileStore.onSwitch(safeHandler(SCRIPT_NAME, () => {
+        drawBadge();
+        markAheadStale();
+    }));
 
     // The badge and the greeting must never cover a game; a player who
     // started one from the startup prompt was greeted by it already.

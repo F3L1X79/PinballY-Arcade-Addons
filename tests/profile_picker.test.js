@@ -4,7 +4,7 @@
 // after "Quit" in the exit menu, closes that menu and opens the drawn
 // carousel on the active Profile; the flipper buttons move through the
 // Profiles and wrap (the name shows once the Avatars have glided into
-// place, without redrawing them), every button is swallowed while it is open, Select or Launch
+// place, without redrawing anything), every button is swallowed while it is open, Select or Launch
 // switches to the highlighted Profile and leaves the carousel still until
 // the greeting replaces it, and Exit or attract mode close it without
 // switching. Folders added while PinballY runs show up on
@@ -18,7 +18,8 @@ import config from "../common/config.js";
 
 const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
 const CABINET_FILE = `${PROFILES_FOLDER}\\cabinet.json`;
-const PICKER_Z = 6500;
+// The carousel's background, its Avatars, then the gold frame and names.
+const PICKER_Z_RANGE = [6500, 6502];
 // Past the ~200 ms glide, past the pause before the greeting, and past the
 // whole greeting.
 const GLIDE_OVER_MS = 500;
@@ -46,9 +47,9 @@ async function start({ enabled = true, activeProfile = "Bob" } = {}) {
     return { fake, lang, store: getProfileStore(), openMainMenu };
 }
 
-// What the picker layer shows now; empty when the carousel is closed.
+// What the picker's layers show now; empty when the carousel is closed.
 const pickerTexts = fake => fake.drawingLayers()
-    .filter(layer => layer.zIndex === PICKER_Z)
+    .filter(layer => layer.zIndex >= PICKER_Z_RANGE[0] && layer.zIndex <= PICKER_Z_RANGE[1] && layer.alpha > 0)
     .flatMap(layer => layer.texts());
 
 // The one Profile name shown (only the highlighted Avatar is named).
@@ -78,7 +79,7 @@ test("the Profile picker moves, wraps, switches, cancels and sees new folders", 
     assert.deepEqual(names.filter(name => pickerTexts(fake).includes(name)), [], "no name while the Avatars glide");
     const drawingsBefore = fake.drawings().length;
     fake.advanceTime(GLIDE_OVER_MS);
-    assert.equal(fake.drawings().length, drawingsBefore + 1, "the Avatars glide without redraws; only the name comes back");
+    assert.equal(fake.drawings().length, drawingsBefore, "the Avatars glide and the name comes back without redraws");
     assert.equal(highlightedName(fake, names), guest, "Next wraps from the last Profile to Guest");
     press(fake, "Prev");
     press(fake, "Prev");

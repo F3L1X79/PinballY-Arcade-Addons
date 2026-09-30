@@ -265,7 +265,9 @@
           <div></div><div class="ax">Petit</div><div class="ax">Moyen</div><div class="ax">Gros</div>
 
           <div class="ax row">Fort</div>
-          <div class="cell sweet"></div>
+          <div class="cell sweet">
+            <a class="chip tr-play" href="#list-missing-texts"><b></b>Textes manquants</a>
+          </div>
           <div class="cell">
             <a class="chip tr-profiles" href="#marked-profiles"><b></b>Profiles marqués</a>
           </div>
@@ -275,7 +277,6 @@
 
           <div class="ax row">Moyen</div>
           <div class="cell sweet">
-            <a class="chip tr-profiles" href="#picker-smooth"><b></b>Picker fluide</a>
             <a class="chip tr-play" href="#world-tour"><b></b>Tour du monde</a>
             <a class="chip tr-play" href="#table-fan"><b></b>Féru d'une table</a>
           </div>
@@ -323,29 +324,6 @@
     </div>
 
     <ol class="queue">
-
-      <li draggable="true" tabindex="0" class="item tr-profiles" id="picker-smooth" data-track="profiles" data-rank="bronze">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Profile picker plus fluide</h3>
-            <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span><span class="tag">perf</span></div>
-          </div>
-          <p>Le carrousel des Profiles saccade un peu à chaque déplacement : lui appliquer les leçons du prototype de l'Achievement List.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>diagnose</span><i>›</i><span>implement</span></div>
-          <div class="links">Réutilise le dessin d'avance de l'Achievement List (<code>common/drawing_ahead.js</code>)</div>
-          <details>
-            <summary>Pistes, non mesurées (3)</summary>
-            <ul>
-              <li>Chaque pas redessine 3 Avatars (celui qui entre, et les deux dont le cadre passe au doré ou le perd) ; un Avatar qui sort est effacé puis relu. Cadre doré sur un calque à part, Avatars gardés et dessinés d'avance.</li>
-              <li>Le fond plein écran est redessiné deux fois par pas pour cacher puis montrer le nom (la surface B rejetée par le prototype). Fond dessiné une fois, nom sur un petit calque par Profile.</li>
-              <li>L'ouverture dessine tout sur le moment : avec le dessin d'avance, elle ne ferait plus que déplacer des calques.</li>
-            </ul>
-            <p class="ctx">D'abord mesurer avec <code>/diagnosing-bugs</code> (temps de dessin dans <code>logfile.log</code> sur la borne), puis corriger. Le dessin d'avance : tranches de 12 ms, pause de 400 ms après un bouton, rien pendant une partie.</p>
-          </details>
-        </div>
-      </li>
 
       <li draggable="true" tabindex="0" class="item tr-share" id="nested-install" data-track="share" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
@@ -569,6 +547,24 @@
         </div>
       </li>
 
+
+      <li draggable="true" tabindex="0" class="item tr-play" id="list-missing-texts" data-track="play" data-rank="bronze">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Achievement List : textes des en-têtes de section manquants</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span><span class="tag">bug</span></div>
+          </div>
+          <p>Sur la borne, les en-têtes de section de l'Achievement List n'affichent que des accents isolés (<code>` ´ ´</code>) au lieu de leur texte, et <code>logfile.log</code> se remplit de « Error creating styled text layout (CreateTextFormat, HRESULT=80070057) », au démarrage (dessin d'avance) comme à l'ouverture.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>diagnose</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/diagnosing-bugs</code>, puis <code>/implement</code></div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">Vu le 30/09/2026 pendant la mesure du Profile picker (capture et log de la session). <code>80070057</code> est <code>E_INVALIDARG</code> : un argument de <code>CreateTextFormat</code> (police, taille, graisse ou style) refusé par DirectWrite. Les lignes et le bandeau s'affichent bien, seuls les en-têtes de section sont touchés.</p>
+          </details>
+        </div>
+      </li>
 
     </ol>
   </section>

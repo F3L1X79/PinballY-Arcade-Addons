@@ -22,14 +22,11 @@ const AVATAR_Z = 6501;
 const PAUSE_OVER_MS = 600;
 const GREETING_OVER_MS = 2500;
 
-// The picker layer, which the greeting shares with the carousel.
-function pickerLayer(fake) {
-    const layers = fake.drawingLayers().filter(layer => layer.zIndex === PICKER_Z);
-    assert.equal(layers.length, 1, "one picker layer");
-    return layers[0];
-}
-
-const visibleTexts = fake => (pickerLayer(fake).alpha > 0 ? pickerLayer(fake).texts() : []);
+// The texts shown on the picker's background layers: the carousel's and
+// the greeting's.
+const visibleTexts = fake => fake.drawingLayers()
+    .filter(layer => layer.zIndex === PICKER_Z && layer.alpha > 0)
+    .flatMap(layer => layer.texts());
 
 // The Avatars shown, each on its own layer above the picker layer.
 const visibleAvatars = fake => fake.drawingLayers()

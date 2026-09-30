@@ -11,11 +11,12 @@ import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
 const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
-const PICKER_Z = 6500;
+// The carousel's background, its Avatars, then the gold frame and names.
+const PICKER_Z_RANGE = [6500, 6502];
 const GLIDE_OVER_MS = 500;
 
 const pickerTexts = fake => fake.drawingLayers()
-    .filter(layer => layer.zIndex === PICKER_Z)
+    .filter(layer => layer.zIndex >= PICKER_Z_RANGE[0] && layer.zIndex <= PICKER_Z_RANGE[1] && layer.alpha > 0)
     .flatMap(layer => layer.texts());
 const press = (fake, buttonCommand) => fake.fire("commandbuttondown", { command: buttonCommand, repeat: false });
 
