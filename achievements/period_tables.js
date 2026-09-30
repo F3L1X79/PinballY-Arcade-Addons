@@ -1,8 +1,8 @@
 ﻿// ============================================================
 // Period Tables family: Achievements for playing the Table of the Day / the
-// Table of the Week. First play (once during its Period), Periods Played
-// (10, 25, 50 and 100 days; 4, 10, 26 and 52 weeks, consecutive or not)
-// and Streaks (3, 7, 14 and 30 consecutive days; 4 and 12 consecutive
+// Table of the Week. First play (once during its Period, Bronze as the
+// family's easiest step), Periods Played (10, 25, 50 and 100 days; 4, 10,
+// 26 and 52 weeks, consecutive or not) and Streaks (3, 7, 14 and 30 consecutive days; 4 and 12 consecutive
 // weeks).
 // Periods Played and Streaks show those counters as Achievement Progress,
 // the current Streak for a Streak; a Streak Achievement is unlocked by the
@@ -10,7 +10,7 @@
 // counters kept by common/period_table.js; writes nothing.
 // ============================================================
 
-import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT, standaloneAchievement } from "../common/achievements.js";
+import { ACHIEVEMENT_FAMILY, ACHIEVEMENT_RANK, countedAchievement, PROGRESS_UNIT, standaloneAchievement } from "../common/achievements.js";
 import lang from "../common/i18n.js";
 import { getTableOfTheDay, getTableOfTheWeek } from "../common/period_table.js";
 
@@ -30,6 +30,7 @@ export function buildPeriodTableAchievements() {
         standaloneAchievement({
             id: "tableOfTheDayFirstPlay",
             family: ACHIEVEMENT_FAMILY.PERIOD_TABLES,
+            rank: ACHIEVEMENT_RANK.BRONZE,
             getTitle: () => TEXT.dailyFirstPlayTitle(),
             getDescription: () => TEXT.dailyFirstPlayDescription(),
             checkUnlocked: () => tableOfTheDay.getLongestStreak() >= 1,
@@ -37,6 +38,7 @@ export function buildPeriodTableAchievements() {
         standaloneAchievement({
             id: "tableOfTheWeekFirstPlay",
             family: ACHIEVEMENT_FAMILY.PERIOD_TABLES,
+            rank: ACHIEVEMENT_RANK.BRONZE,
             getTitle: () => TEXT.weeklyFirstPlayTitle(),
             getDescription: () => TEXT.weeklyFirstPlayDescription(),
             checkUnlocked: () => tableOfTheWeek.getLongestStreak() >= 1,

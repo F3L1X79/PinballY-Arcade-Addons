@@ -1,7 +1,8 @@
 // ============================================================
 // Achievement Rank of every Achievement, through main.js on the fake
 // PinballY globals: a ladder's steps go from Bronze to Platinum, a
-// standalone Achievement is Gold, and a group completion takes its rank
+// standalone Achievement is Gold unless it states its rank (a Period
+// Table's first play is Bronze), and a group completion takes its rank
 // from the size of its group.
 // ============================================================
 
@@ -71,8 +72,9 @@ test("every Achievement has an Achievement Rank deduced from its ladder or group
     assert.deepEqual(ranksOf(["tableOfTheWeekStreak:4", "tableOfTheWeekStreak:12"]), [BRONZE, PLATINUM]);
     assert.deepEqual(ranksOf(["challengesCompleted:1", "challengesCompleted:100"]), [BRONZE, PLATINUM]);
 
-    assert.deepEqual(ranksOf(["rageQuit", "grandReturn", "tableOfTheDayFirstPlay", "tableOfTheWeekFirstPlay"]),
-        [GOLD, GOLD, GOLD, GOLD]);
+    assert.deepEqual(ranksOf(["rageQuit", "grandReturn"]), [GOLD, GOLD]);
+    // A Period Table's first play is the easiest step of its family.
+    assert.deepEqual(ranksOf(["tableOfTheDayFirstPlay", "tableOfTheWeekFirstPlay"]), [BRONZE, BRONZE]);
 
     const EXPECTED_GROUP_RANKS = [BRONZE, SILVER, GOLD, PLATINUM];
     assert.deepEqual(ranksOf(GROUP_SIZES.map(group => `manufacturerCompletion:${group.manufacturer}`)), EXPECTED_GROUP_RANKS);

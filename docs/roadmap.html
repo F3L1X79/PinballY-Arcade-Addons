@@ -230,6 +230,11 @@
     <div>
       <p class="eyebrow">Décisions</p>
       <div class="panel decisions">
+        <h4>30/09</h4>
+        <ol>
+          <li><strong>Premières parties des Period Tables en Bronze</strong>
+            <span>Un Achievement isolé reste Gold par défaut, mais sa définition peut donner un autre rang : la première partie sur la Table of the Day ou of the Week est le palier le plus facile de sa famille.</span></li>
+        </ol>
         <h4>28/09</h4>
         <ol>
           <li><strong>Le README passe avant tout le reste</strong>
@@ -542,6 +547,29 @@
           <details>
             <summary>Contexte</summary>
             <p class="ctx">On ne modifie jamais <code>System\</code> (<code>.claude/rules/conventions.md</code>) : la revue ne produit que des constats, et d'éventuels changements de notre côté. Utile aussi pour la <a href="#nested-install">installation non invasive (n° <span data-ref="nested-install"></span>)</a>, qui doit décider où <code>System\</code> se trouve par rapport au dépôt.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-share" id="language-menu" data-track="share" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Choix de la langue dans un menu</h3>
+            <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen</span></div>
+          </div>
+          <p>Choisir la langue de l'interface depuis un menu du cabinet, sans éditer <code>.env.local</code> ni <code>common/config.js</code>. Aujourd'hui, <code>common/i18n.js</code> fige la langue au chargement, à partir de <code>config.language</code>.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/grill-with-docs</code> → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code></div>
+          <details>
+            <summary>Questions ouvertes (4)</summary>
+            <ul>
+              <li>Où placer l'entrée : menu principal via <code>getMainMenu().add(...)</code>, ou un futur menu admin (<a href="#marked-profiles">Profiles marqués (n° <span data-ref="marked-profiles"></span>)</a>) ?</li>
+              <li>Où l'enregistrer : dans <code>optionSettings</code> (sans <code>save()</code>), ou dans <code>profile.json</code>, ce qui donne une langue par Profile ?</li>
+              <li>Changement immédiat, qui oblige les Add-ons à relire leurs textes au lieu de les capturer au démarrage, ou appliqué au prochain lancement de PinballY ?</li>
+              <li>Le menu liste-t-il les six langues, alors que de, es, it et pt attendent la <a href="#translations">passe de traduction (n° <span data-ref="translations"></span>)</a> ?</li>
+            </ul>
           </details>
         </div>
       </li>
