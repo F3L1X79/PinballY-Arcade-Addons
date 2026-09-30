@@ -6,9 +6,10 @@
 // then the Unlocked Achievements (a toast still waiting first, then the
 // most recently Notified) and the missing ones (the highest Unlock Rate
 // first, then the furthest Achievement Progress), each part under its
-// section header. Each row shows its rank emblem (the owner's image, with
-// a halo when Unlocked and greyed when missing; drawn when its file is
-// missing, logged once per file), when missing its Achievement Progress,
+// section header. Each row shows its rank emblem (the owner's image,
+// without its halo since the colour and the rank edge already tell an
+// Unlocked row; greyed when missing; drawn when its file is missing,
+// logged once per file), when missing its Achievement Progress,
 // and its Unlock Rate: the Avatars of the other Profiles Notified of it,
 // once the household has two Profiles besides Guest.
 // Next / Prev glide the highlighted line from one Achievement to the next,
@@ -60,7 +61,7 @@ const ROW_PITCH = LIST_LOOK.rowHeight + LIST_LOOK.itemGap;
 // Then a "+N" pill for the others.
 const MAX_OWNER_AVATARS = 4;
 // The file name's ending of each rank's emblem image, by where it shows.
-const EMBLEM_VARIANT = Object.freeze({ UNLOCKED: "", MISSING: "_missing", HEADER: "_small" });
+const EMBLEM_VARIANT = Object.freeze({ UNLOCKED: "_plain", MISSING: "_missing", HEADER: "_plain" });
 
 // drawingAhead: the shared drawing ahead (common/drawing_ahead.js).
 export function createAchievementList(host, { getAchievements, profileStore, drawingAhead }) {

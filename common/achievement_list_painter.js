@@ -41,8 +41,8 @@ export const LIST_LOOK = Object.freeze({
     gaugeTipRadius: 10,
     rankEdgeWidth: 4,
     emblemCenterX: 52,
-    // The square canvas of an emblem image, halo included: its emblem is
-    // about as tall as the drawn one.
+    // The square canvas of an emblem image: its emblem is about as tall as
+    // the drawn one.
     emblemImageSize: 96,
     // The header's small emblems, next to their count.
     headerEmblemScale: 0.45,
@@ -110,8 +110,8 @@ function fillDisc(dc, centerX, centerY, radius, color) {
 // shield with a gem and a crest, and wings growing with the rank. Unlocked,
 // it is in the rank's colour, and with a halo it gets a glow growing with
 // the rank, plus sparkles for Platinum; missing, it is muted and never has
-// a halo.
-export function drawRankEmblem(dc, centerX, centerY, { rank, unlocked, halo = unlocked, scale = 1 }) {
+// a halo. The list's rows and header draw it without its halo.
+export function drawRankEmblem(dc, centerX, centerY, { rank, unlocked, halo = false, scale = 1 }) {
     const px = value => Math.round(value * scale);
     const rankIndex = RANKS_IN_ORDER.indexOf(rank);
     const rankColor = RANK_COLORS[rank];
@@ -261,7 +261,7 @@ function drawHeader(host, dc, g, header) {
 
     header.rankCounts.forEach(({ rank, count, imagePath }, index) => {
         const center = headerEmblemCenter(layout, index);
-        if (!imagePath) drawRankEmblem(dc, center.x, center.y, { rank, unlocked: true, halo: false, scale: look.headerEmblemScale });
+        if (!imagePath) drawRankEmblem(dc, center.x, center.y, { rank, unlocked: true, scale: look.headerEmblemScale });
         drawText(host, dc, [count], {
             x: rankCountLeft(layout, index) + look.rankCountTextLeft, y: avatarY + 24,
             width: look.rankCountWidth - look.rankCountTextLeft, size: 13, weight: 600, color: COLORS.title,

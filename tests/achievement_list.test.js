@@ -63,9 +63,9 @@ function sampleAchievements() {
 
 const avatarOf = name => `${PROFILES}\\${name}\\avatar.png`;
 const ASSETS = "C:\\PinballY\\Scripts\\assets";
-// With a halo for an Unlocked row, greyed for a missing one, small for the header.
+// Plain (without its halo) for an Unlocked row and the header, greyed for a missing one.
 const emblemOf = (rank, variant = "") => `${ASSETS}\\rank_${rank}${variant}.png`;
-const EMBLEM_IMAGES = Object.values(ACHIEVEMENT_RANK).flatMap(rank => ["", "_missing", "_small"].map(variant => emblemOf(rank, variant)));
+const EMBLEM_IMAGES = Object.values(ACHIEVEMENT_RANK).flatMap(rank => ["_plain", "_missing"].map(variant => emblemOf(rank, variant)));
 const NAVIGATION_SOUND = "C:\\PinballY\\Assets\\Button Sounds\\Next.wav";
 
 // Alice is active. She was Notified of gamma, then alpha, then delta; the
@@ -336,7 +336,7 @@ test("an Achievement Progress in an unknown unit is an error, not a blank", () =
 
 const isHalo = (fill, color) => fill >>> 24 < 0xFF && fill % 0x1000000 === color % 0x1000000;
 
-test("an Unlocked row shows its rank's emblem in full with a halo, a missing one of the same rank a muted one without", () => {
+test("an Unlocked row shows its rank's emblem in full, a missing one of the same rank a muted one, neither with a halo", () => {
     const { PLATINUM } = ACHIEVEMENT_RANK;
     const { fake } = setUp({
         achievements: [fakeAchievement("shiny", true, undefined, PLATINUM), fakeAchievement("far", false, undefined, PLATINUM)],
@@ -347,7 +347,7 @@ test("an Unlocked row shows its rank's emblem in full with a halo, a missing one
     assert.equal(shiny.title, "shiny title");
     const inRankColor = row => row.fills.filter(fill => fill === RANK_COLORS[PLATINUM]).length;
     assert.ok(inRankColor(shiny) > 1, "the Unlocked emblem is in the rank's colour, not only the left edge");
-    assert.ok(shiny.fills.some(fill => isHalo(fill, RANK_COLORS[PLATINUM])), "the Unlocked emblem has its halo");
+    assert.ok(!shiny.fills.some(fill => isHalo(fill, RANK_COLORS[PLATINUM])), "the Unlocked emblem has no halo: the colour and the edge already tell it");
     assert.ok(!far.fills.includes(RANK_COLORS[PLATINUM]), "the missing emblem is muted");
     assert.ok(!far.fills.some(fill => fill >>> 24 < 0xFF), "the missing emblem has no halo");
 });
@@ -410,19 +410,19 @@ test("with the emblem images installed, rows and header show the images, not the
 
     for (const row of readRows(fake, TEXT)) {
         const [rank, state] = [titleOf(row).slice(0, -1), titleOf(row).at(-1)];
-        assert.equal(row.emblem, emblemOf(rank, state === "+" ? "" : "_missing"), `${titleOf(row)} shows its image`);
+        assert.equal(row.emblem, emblemOf(rank, state === "+" ? "_plain" : "_missing"), `${titleOf(row)} shows its image`);
         // Only the Unlocked row's left edge is in the rank's colour.
         assert.equal(row.fills.filter(fill => fill === RANK_COLORS[rank]).length, state === "+" ? 1 : 0, `${titleOf(row)} draws no emblem`);
         assert.ok(!hasHalo(row), `${titleOf(row)} draws no halo`);
     }
-    assert.deepEqual(headerEmblemImages(fake), Object.values(ACHIEVEMENT_RANK).map(rank => emblemOf(rank, "_small")));
+    assert.deepEqual(headerEmblemImages(fake), Object.values(ACHIEVEMENT_RANK).map(rank => emblemOf(rank, "_plain")));
     for (const color of Object.values(RANK_COLORS)) assert.ok(!maskFills(fake).includes(color), "the header draws no emblem");
     assert.equal(chromeTexts(fake).filter(text => text === "1").length, 4, "each rank's count is still shown");
 });
 
 test("with one emblem image missing, only the emblems using it are drawn, and it is logged once", () => {
     const { GOLD } = ACHIEVEMENT_RANK;
-    const { fake, list } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES.filter(path => path !== emblemOf(GOLD)) });
+    const { fake, list } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES.filter(path => path !== emblemOf(GOLD, "_plain")) });
     pressAndGlide(fake, "Exit");
     list.open();
 
@@ -431,27 +431,26 @@ test("with one emblem image missing, only the emblems using it are drawn, and it
         assert.equal(row.emblem === null, isFallback, `${titleOf(row)}'s emblem is ${isFallback ? "drawn" : "an image"}`);
     }
     const gold = readRows(fake, TEXT).find(row => titleOf(row) === `${GOLD}+`);
-    assert.ok(hasHalo(gold), "the drawn emblem keeps its halo");
-    assert.equal(headerEmblemImages(fake).length, 4, "the header's small Gold image is still there");
-    const logged = fake.logLines().filter(line => line.includes(emblemOf(GOLD)));
+    assert.ok(!hasHalo(gold), "the drawn emblem has no halo either");
+    const ranksButGold = Object.values(ACHIEVEMENT_RANK).filter(rank => rank !== GOLD);
+    assert.deepEqual(headerEmblemImages(fake), ranksButGold.map(rank => emblemOf(rank, "_plain")), "the header draws its Gold emblem too");
+        const logged = fake.logLines().filter(line => line.includes(emblemOf(GOLD, "_plain")));
     assert.equal(logged.length, 1, JSON.stringify(fake.logLines()));
     assert.match(logged[0], /^\[AchievementList\] /);
 });
 
-test("without a rank's greyed and small images, its missing row and its header count get the drawn emblem", () => {
+test("without a rank's greyed image, only its missing row gets the drawn emblem", () => {
     const { SILVER } = ACHIEVEMENT_RANK;
-    const absent = [emblemOf(SILVER, "_missing"), emblemOf(SILVER, "_small")];
-    const { fake } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES.filter(path => !absent.includes(path)) });
+    const absent = emblemOf(SILVER, "_missing");
+    const { fake } = setUp({ ...oneOfEachRank(), emblemImages: EMBLEM_IMAGES.filter(path => path !== absent) });
 
     for (const row of readRows(fake, TEXT)) {
         const isFallback = titleOf(row) === `${SILVER}-`;
         assert.equal(row.emblem === null, isFallback, `${titleOf(row)}'s emblem is ${isFallback ? "drawn" : "an image"}`);
     }
-    assert.deepEqual(headerEmblemImages(fake), Object.values(ACHIEVEMENT_RANK).filter(rank => rank !== SILVER).map(rank => emblemOf(rank, "_small")));
-    for (const [rank, color] of Object.entries(RANK_COLORS)) {
-        assert.equal(maskFills(fake).includes(color), rank === SILVER, `the header draws ${rank === SILVER ? "" : "no "}${rank} emblem`);
-    }
-    for (const path of absent) assert.equal(fake.logLines().filter(line => line.includes(path)).length, 1, `${path} is logged once`);
+    assert.deepEqual(headerEmblemImages(fake), Object.values(ACHIEVEMENT_RANK).map(rank => emblemOf(rank, "_plain")));
+    for (const color of Object.values(RANK_COLORS)) assert.ok(!maskFills(fake).includes(color), "the header draws no emblem");
+    assert.equal(fake.logLines().filter(line => line.includes(absent)).length, 1, `${absent} is logged once`);
 });
 
 test("with the emblem images installed, moving the highlight draws no image", () => {
@@ -459,7 +458,7 @@ test("with the emblem images installed, moving the highlight draws no image", ()
     fake.advanceTime(IDLE_ENOUGH_MS);
     const drawnImages = () => listDrawings(fake).flatMap(drawing => drawing.images);
     const drawnAhead = drawnImages().length;
-    assert.ok(drawnImages().includes(emblemOf(ACHIEVEMENT_RANK.PLATINUM)), "the emblems were drawn ahead");
+    assert.ok(drawnImages().includes(emblemOf(ACHIEVEMENT_RANK.PLATINUM, "_plain")), "the emblems were drawn ahead");
 
     open();
     readWholeList(fake);
