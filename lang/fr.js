@@ -32,7 +32,7 @@ export default {
         "Enable Videos": "Activer les vidéos",
         "Exit": "Quitter",
         "Exit PinballY": "Quitter",
-        "Favorites": "Favoris",
+        "Favorites": "Tables favorites",
         "Filter by Category": "Filtrer par catégorie",
         "Filter by Date Added": "Filtrer par date d'ajout",
         "Filter by Era": "Filtrer par époque",
@@ -285,7 +285,7 @@ export default {
     },
 
     achievementList: {
-        menuEntry: "Succès personnels",
+        menuEntry: "Voir vos succès",
         // The header's title, the section titles, the key caps and the
         // footer's hints are shown in capitals.
         title: "Succès personnels",
@@ -336,7 +336,7 @@ export default {
     },
 
     profileStats: {
-        menuEntry: "Statistiques",
+        menuEntry: "Vos statistiques",
         title: (name) => `Statistiques de ${name}`,
         gamesPlayed: (count) => `Parties jouées : ${count}`,
         // Minutes on two digits: "42 h 05".

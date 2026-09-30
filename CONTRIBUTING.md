@@ -58,7 +58,7 @@ Run from the project root with Node.js 22 or later; nothing to install. PinballY
 
 Translations live in `lang/<code>.js`. English is the fallback, and missing keys are listed in `PinballY.log`.
 
-1. Copy `lang/fr.js` to `lang/<code>.js`. Not `en.js`: PinballY's own menus are already in English, so its sections for them are empty.
+1. Copy `lang/fr.js` to `lang/<code>.js`. Not `en.js`: PinballY's own menus are already in English, so its sections for them are empty or nearly so.
 2. Translate the texts, keeping the keys, the `[Game.Xxx]` markers and the `${...}` parameters unchanged.
 3. Register it in `common/i18n.js`: one `import` and one entry in `AVAILABLE_LANGUAGES`, then add its code to `LANGUAGE_CODES` in `tests/lang_keys.test.js`.
 4. Save the file as UTF-8 with BOM, like the other language files, and run `node --test`.

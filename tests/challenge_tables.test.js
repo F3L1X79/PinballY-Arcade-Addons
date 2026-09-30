@@ -163,15 +163,15 @@ test("Guest, no Challenge and a completed Challenge offer no table", () => {
     assert.ok(offersNothing(fake), "completed");
 });
 
-// PinballY's "All Tables" has sort key "3000", "Favorites" "7000" and the
-// Hall of Fame "7500" in the [Top] group.
+// PinballY's "All Tables" has sort key "3000", the Hall of Fame "6000" and
+// "Favorites" "7000" in the [Top] group.
 test("the Challenge Tables filter sits in the main menu right under All Tables", () => {
     const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
 
     assert.equal(fake.scriptFilters().length, 1);
     const [filter] = fake.scriptFilters();
     assert.equal(filter.group, "[Top]");
-    assert.ok(filter.sortKey > "3000" && filter.sortKey < "7000", filter.sortKey);
+    assert.ok(filter.sortKey > "3000" && filter.sortKey < "6000", filter.sortKey);
 });
 
 // Back on the wheel with the Challenge Tables shown: the list is selected

@@ -11,8 +11,11 @@ const formatPlayTime = (hours, minutes) => (hours > 0
 const formatHours = hours => hours.toFixed(1);
 
 export default {
-    // Already in English natively.
-    nativeMenuLabels: {},
+    // PinballY's native menu titles are already in English; only the ones
+    // renamed by this project are listed.
+    nativeMenuLabels: {
+        "Favorites": "Favorite Tables",
+    },
     mediaCaptureItemLabels: {},
     mediaCaptureActionLabels: {},
 
@@ -199,7 +202,7 @@ export default {
 
     // The Achievement List screen (see common/achievement_list.js).
     achievementList: {
-        menuEntry: "Achievement List",
+        menuEntry: "Your Achievements",
         // The header's title, the section titles, the key caps and the
         // footer's hints are shown in capitals.
         title: "Achievement List",
@@ -250,7 +253,7 @@ export default {
     },
 
     profileStats: {
-        menuEntry: "Statistics",
+        menuEntry: "Your Stats",
         title: (name) => `${name}'s stats`,
         gamesPlayed: (count) => `Games played: ${count}`,
         // Minutes on two digits: "42 h 05".
