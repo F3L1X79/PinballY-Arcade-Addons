@@ -9,13 +9,17 @@
 // open, Exit and attract mode closing it, the rank emblems and the
 // Achievement Progress bars on the rows, the header's counts per rank, the
 // Unlock Rate (the other Profiles' Avatars) and the missing section's
-// order by Unlock Rate, then Achievement Progress.
+// order by Unlock Rate, then Achievement Progress, PinballY's navigation
+// sound on each move, and the drawing ahead: everything drawn while idle
+// (never within 400 ms of a button press nor during a game), kept, and
+// redrawn only when what it shows changed.
 // ============================================================
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost } from "./fake_pinbally_host.js";
-import { createAchievementList } from "../common/achievement_list.js";
+import { createAchievementList, ACHIEVEMENT_LIST_Z_INDEX } from "../common/achievement_list.js";
+import { createDrawingAhead } from "../common/drawing_ahead.js";
 import { createProfileStore } from "../common/profile_store.js";
 import { ACHIEVEMENT_FAMILY, ACHIEVEMENT_RANK, PROGRESS_UNIT } from "../common/achievements.js";
 import { RANK_COLORS, STEAMBALL_COLORS } from "../common/steamball_palette.js";
@@ -56,25 +60,38 @@ function sampleAchievements() {
 }
 
 const avatarOf = name => `${PROFILES}\\${name}\\avatar.png`;
+const NAVIGATION_SOUND = "C:\\PinballY\\Assets\\Button Sounds\\Next_.wav";
 
 // Alice is active. She was Notified of gamma, then alpha, then delta; the
 // toast of beta still waits. household: the other Profiles' notified
 // lists, by name, each Profile with its own Avatar.
-function setUp({ achievements = sampleAchievements(), notified = ["gamma", "alpha", "delta"], household = {} } = {}) {
+function setUp({
+    achievements = sampleAchievements(), notified = ["gamma", "alpha", "delta"], household = {}, withNavigationSound = true, opened = true,
+} = {}) {
     const fake = createFakePinballYHost();
+    if (withNavigationSound) fake.addFile(NAVIGATION_SOUND);
     fake.addFile(`${PROFILES}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
     for (const [name, profileNotified] of Object.entries({ Alice: notified, ...household })) {
         fake.addFile(`${PROFILES}\\${name}\\profile.json`, JSON.stringify({ version: 1, notified: profileNotified }));
         fake.addFile(avatarOf(name), "PNG");
     }
     const profileStore = createProfileStore(fake);
-    const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore });
-    // Opened from the main menu, as the player does.
-    fake.openMenu("main", [{ title: "Play", cmd: fake.getBuiltInCommand("PlayGame") }]);
+    const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore, drawingAhead: createDrawingAhead(fake) });
     const exits = [];
-    list.open(() => exits.push("exit"));
-    return { fake, list, achievements, profileStore, exits };
+    const open = () => {
+        // Opened from the main menu, as the player does.
+        fake.openMenu("main", [{ title: "Play", cmd: fake.getBuiltInCommand("PlayGame") }]);
+        list.open(() => exits.push("exit"));
+    };
+    if (opened) open();
+    return { fake, list, achievements, profileStore, exits, open };
 }
+
+const LIST_Z_INDEXES = [ACHIEVEMENT_LIST_Z_INDEX.items, ACHIEVEMENT_LIST_Z_INDEX.owners, ACHIEVEMENT_LIST_Z_INDEX.mask];
+// Every draw of the list's rows, section headers, Unlock Rates, header and
+// footer so far, as the texts drawn.
+const listDrawings = fake => fake.drawings().filter(drawing => LIST_Z_INDEXES.includes(drawing.zIndex));
+const IDLE_ENOUGH_MS = 60 * 1000;
 
 const rowTexts = id => [`${id} title`, `${id} description`];
 
@@ -128,6 +145,30 @@ test("Next and Prev move the highlight one Achievement at a time, skip the secti
     assert.equal(highlightedTitle(), "epsilon title");
     pressAndGlide(fake, "Prev");
     assert.equal(highlightedTitle(), "gamma title", "the missing section's header is skipped");
+});
+
+test("each Next / Prev plays PinballY's navigation sound once, quick presses on three players in turn", () => {
+    const { fake } = setUp();
+    assert.deepEqual(fake.soundsPlayed(), [], "opening plays nothing");
+
+    for (const button of ["Next", "Next", "Prev", "Next"]) press(fake, button);
+
+    assert.deepEqual(fake.soundsPlayed(), Array(4).fill(NAVIGATION_SOUND));
+    const [first, second, third, fourth] = fake.soundPlayers();
+    assert.equal(new Set([first, second, third]).size, 3, "three different players");
+    assert.equal(fourth, first);
+});
+
+test("a missing navigation sound is logged once and the highlight still moves", () => {
+    const { fake } = setUp({ withNavigationSound: false });
+
+    pressAndGlide(fake, "Next");
+    pressAndGlide(fake, "Next");
+
+    assert.equal(highlightedTexts(fake)[0], "alpha title");
+    assert.deepEqual(fake.soundsPlayed(), []);
+    const soundLines = fake.logLines().filter(line => line.startsWith("[AchievementList]") && line.includes("Next_.wav"));
+    assert.equal(soundLines.length, 1);
 });
 
 test("the other lines are dimmed, and the highlight glides to its next line", () => {
@@ -186,7 +227,9 @@ test("attract mode closes the list without going back anywhere", () => {
 
 test("the list shows no native menu", () => {
     const fake = createFakePinballYHost();
-    const list = createAchievementList(fake, { getAchievements: sampleAchievements, profileStore: createProfileStore(fake) });
+    const list = createAchievementList(fake, {
+        getAchievements: sampleAchievements, profileStore: createProfileStore(fake), drawingAhead: createDrawingAhead(fake),
+    });
 
     list.open();
     pressAndGlide(fake, "Next");
@@ -258,7 +301,9 @@ test("a missing Achievement shows its Achievement Progress with a gold bar; an U
 test("an Achievement Progress in an unknown unit is an error, not a blank", () => {
     const fake = createFakePinballYHost();
     const achievements = [fakeAchievement("odd", false, { current: 1, target: 2, unit: "parsecs" })];
-    const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore: createProfileStore(fake) });
+    const list = createAchievementList(fake, {
+        getAchievements: () => achievements, profileStore: createProfileStore(fake), drawingAhead: createDrawingAhead(fake),
+    });
 
     assert.throws(() => list.open(), /parsecs/);
 });
@@ -313,7 +358,9 @@ test("the header counts the Unlocked Achievements of each rank next to its emble
 test("an Achievement without an Achievement Rank is an error, not a blank emblem", () => {
     const fake = createFakePinballYHost();
     const achievements = [fakeAchievement("odd", false, undefined, "mithril")];
-    const list = createAchievementList(fake, { getAchievements: () => achievements, profileStore: createProfileStore(fake) });
+    const list = createAchievementList(fake, {
+        getAchievements: () => achievements, profileStore: createProfileStore(fake), drawingAhead: createDrawingAhead(fake),
+    });
 
     assert.throws(() => list.open(), /mithril/);
 });
@@ -365,6 +412,18 @@ test("Guest viewing the list sees the other Profiles' Avatars", () => {
     assert.deepEqual(owners.epsilon, avatarsOnly());
 });
 
+test("a missing Achievement the active Profile was once Notified of does not rise above one another Profile has", () => {
+    const { fake } = setUp({
+        achievements: [fakeAchievement("lost", false), fakeAchievement("bobs", false), fakeAchievement("nobody", false)],
+        // Unlocked once, missing again since the collection changed.
+        notified: ["lost"],
+        household: { Bob: ["bobs"] },
+    });
+
+    const [, missing] = readSections(fake, TEXT);
+    assert.deepEqual(missing.rows.map(texts => texts[0].replace(" title", "")), ["bobs", "lost", "nobody"]);
+});
+
 test("the missing section puts the highest Unlock Rate first, then the furthest Achievement Progress, then the definitions' order", () => {
     const tables = (current, target) => ({ current, target, unit: PROGRESS_UNIT.TABLES });
     const achievements = [
@@ -386,4 +445,98 @@ test("the missing section puts the highest Unlock Rate first, then the furthest 
 
     const [, missing] = readSections(fake, TEXT);
     assert.deepEqual(missing.rows.map(texts => texts[0].replace(" title", "")), ["d", "g", "c", "h", "e", "f", "b", "a"]);
+});
+
+test("after startup and enough idle time, opening the list draws nothing new: every item was drawn ahead", () => {
+    const { fake, open } = setUp({ opened: false, household: { Bob: ["alpha", "epsilon"], Carol: ["alpha"] } });
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    const drawnAhead = listDrawings(fake).length;
+    assert.ok(drawnAhead > 0, "the list was drawn ahead while closed");
+    assert.deepEqual(shownItems(fake), [], "nothing drawn ahead shows while the list is closed");
+
+    open();
+
+    assert.equal(listDrawings(fake).length, drawnAhead);
+    assert.equal(highlightedTexts(fake)[0], "beta title");
+    assert.deepEqual(ownersByTitle(fake).alpha, avatarsOnly("Bob", "Carol"));
+    assert.equal(listDrawings(fake).length, drawnAhead, "browsing the whole list draws nothing either");
+});
+
+test("nothing is drawn ahead within 400 ms of a button press, nor while a game runs", () => {
+    const { fake } = setUp({ opened: false });
+    const table = { configId: "mm", title: "Medieval Madness" };
+    fake.setTables([table]);
+
+    for (let presses = 0; presses < 5; presses++) {
+        fake.advanceTime(300);
+        press(fake, "Next");
+    }
+    fake.advanceTime(399);
+    assert.deepEqual(listDrawings(fake), [], "the wheel was browsed with less than 400 ms between presses");
+
+    fake.playGame(table);
+    fake.gameStarted(table);
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    assert.deepEqual(listDrawings(fake), [], "nothing while the game runs");
+
+    fake.gameOver(table);
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    assert.ok(listDrawings(fake).length > 0, "drawn ahead once back on the wheel");
+});
+
+test("after a new unlock and after a Profile switch, the next opening shows the new state and redraws only what changed", () => {
+    const { fake, list, achievements, profileStore, open } = setUp({ opened: false, household: { Bob: ["alpha"] } });
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    const drawnTitles = () => listDrawings(fake).map(drawing => drawing.texts[0]);
+    const drawCountOf = title => drawnTitles().filter(text => text === title).length;
+
+    achievements.find(achievement => achievement.id === "zeta").unlocked = true;
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    open();
+    // Its toast still waits: after beta, in the definitions' order.
+    assert.deepEqual(readSections(fake, TEXT)[0].rows.map(texts => texts[0]), ["beta title", "zeta title", "delta title", "alpha title", "gamma title"]);
+    for (const title of ["alpha title", "beta title", "epsilon title"]) assert.equal(drawCountOf(title), 1, `${title} is not redrawn`);
+    assert.equal(drawCountOf("zeta title"), 2, "zeta is redrawn Unlocked");
+    pressAndGlide(fake, "Exit");
+
+    profileStore.switchTo("Bob");
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    const drawnBeforeOpening = listDrawings(fake).length;
+    list.open();
+    assert.equal(listDrawings(fake).length, drawnBeforeOpening, "the switch was drawn ahead");
+    assert.ok(chromeTexts(fake).includes("Bob"));
+    assert.deepEqual(readSections(fake, TEXT)[0].rows.map(texts => texts[0]), ["beta title", "gamma title", "zeta title", "delta title", "alpha title"]);
+    assert.equal(drawCountOf("epsilon title"), 1, "a row showing the same is never redrawn");
+});
+
+test("the other Profiles' files are read again only once their Notified Achievements may have changed", () => {
+    const { fake, list, profileStore } = setUp({ household: { Bob: ["alpha"] } });
+    const bobReads = () => fake.fileReads().filter(path => path.startsWith(`${PROFILES}\\Bob\\`)).length;
+    assert.ok(bobReads() > 0);
+    pressAndGlide(fake, "Exit");
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    const readsBefore = bobReads();
+    list.open();
+    pressAndGlide(fake, "Exit");
+    assert.equal(bobReads(), readsBefore, "neither drawing ahead nor opening again reads Bob's file");
+
+    profileStore.updateProfileData(data => { data.notified.push("epsilon"); }, "Bob");
+    list.open();
+
+    assert.deepEqual(ownersByTitle(fake).epsilon, avatarsOnly("Bob"));
+});
+
+test("an unlock after a game is drawn ahead: the next opening draws nothing new", () => {
+    const { fake, achievements, profileStore, open } = setUp({ opened: false });
+    fake.advanceTime(IDLE_ENOUGH_MS);
+
+    // Unlocked by the plays a finished game saves.
+    achievements.find(achievement => achievement.id === "zeta").unlocked = true;
+    profileStore.updateProfileData(data => { data.plays.mm = { count: 1, seconds: 60, lastPlayed: "" }; });
+    fake.advanceTime(IDLE_ENOUGH_MS);
+    const drawnAhead = listDrawings(fake).length;
+    open();
+
+    assert.equal(listDrawings(fake).length, drawnAhead);
+    assert.equal(readSections(fake, TEXT)[0].rows[1][0], "zeta title");
 });

@@ -18,6 +18,7 @@ import { createProfileStats } from "../common/profile_stats.js";
 import { createProfileStore } from "../common/profile_store.js";
 import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
 import { createAchievementList } from "../common/achievement_list.js";
+import { createDrawingAhead } from "../common/drawing_ahead.js";
 import { ACHIEVEMENT_FAMILY, ACHIEVEMENT_RANK } from "../common/achievements.js";
 import lang from "../common/i18n.js";
 import { chromeTexts, pressAndGlide } from "./achievement_list_reader.js";
@@ -66,7 +67,9 @@ function setUp({ guest = { plays: GUEST_PLAYS }, others = {}, tables = TABLES } 
     }
     const profileStore = createProfileStore(fake);
     const achievements = [fakeAchievement("a", true), fakeAchievement("b", false), fakeAchievement("c", true)];
-    const achievementList = createAchievementList(fake, { getAchievements: () => achievements, profileStore });
+    const achievementList = createAchievementList(fake, {
+        getAchievements: () => achievements, profileStore, drawingAhead: createDrawingAhead(fake),
+    });
     const profileStats = createProfileStats(fake, {
         profileStore,
         achievementList,

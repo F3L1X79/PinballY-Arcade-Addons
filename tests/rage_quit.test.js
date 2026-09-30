@@ -8,6 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 import { readRows } from "./achievement_list_reader.js";
 
@@ -51,7 +52,7 @@ test("only a session of 30 seconds to under a minute unlocks the rage quit for g
 
     // Returns whether this play announced the rage quit.
     async function play(sessionSeconds) {
-        const before = fake.drawings().length;
+        const before = toastDrawings(fake).length;
         fake.gameStarted(TABLE);
         await settle();
         fake.advanceTime(sessionSeconds * 1000);
@@ -59,11 +60,11 @@ test("only a session of 30 seconds to under a minute unlocks the rage quit for g
         await settle();
         // Toasts show one after the other: let every toast of this play show.
         for (let guard = 0; guard < 100; guard++) {
-            const shownCount = fake.drawings().length;
+            const shownCount = toastDrawings(fake).length;
             fake.advanceTime(TOAST_MS);
-            if (fake.drawings().length === shownCount) break;
+            if (toastDrawings(fake).length === shownCount) break;
         }
-        return fake.drawings().slice(before)
+        return toastDrawings(fake).slice(before)
             .some(drawing => drawing.texts.includes(TEXT.rageQuitTitle()));
     }
 

@@ -26,6 +26,7 @@ import { getAchievementToasts } from "../common/achievement_toast.js";
 import { getMainMenu, MAIN_MENU_POSITION } from "../common/main_menu.js";
 import { createAchievementList } from "../common/achievement_list.js";
 import { createProfileStats } from "../common/profile_stats.js";
+import { getDrawingAhead } from "../common/drawing_ahead.js";
 import { getTableOfTheDay, getTableOfTheWeek } from "../common/period_table.js";
 import { createPinballYHost } from "../common/pinbally_host.js";
 import { getProfileStore } from "../common/profile_store.js";
@@ -62,7 +63,9 @@ export default function init() {
     const achievementToasts = getAchievementToasts();
     const profileStore = getProfileStore();
 
-    const achievementList = createAchievementList(createPinballYHost(), { getAchievements: getAllAchievements, profileStore });
+    const achievementList = createAchievementList(createPinballYHost(), {
+        getAchievements: getAllAchievements, profileStore, drawingAhead: getDrawingAhead(),
+    });
     const mainMenu = getMainMenu();
     mainMenu.add({
         name: ACHIEVEMENT_LIST_ENTRY,

@@ -8,6 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -71,10 +72,10 @@ test("session stats and their Achievements belong to the active Profile", async 
         await settle();
         // Toasts show one after the other: let every toast of this play show.
         for (let guard = 0; guard < 100; guard++) {
-            const shownCount = fake.drawings().length;
+            const shownCount = toastDrawings(fake).length;
             fake.advanceTime(ONE_TOAST_MS);
             await settle();
-            if (fake.drawings().length === shownCount) break;
+            if (toastDrawings(fake).length === shownCount) break;
         }
     }
 

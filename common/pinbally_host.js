@@ -3,8 +3,9 @@
 // modules reach PinballY (settings, clock, timers, visible tables, wheel
 // selection and filter, main window menus / UI mode / events / drawing layers,
 // StyledText, commands and running them, table launch, program folder,
-// monitor count, backglass window, sound playback, logfile.log, and the few
-// file operations the Profile store needs).
+// monitor count, backglass window, sound playback (one-off or on players
+// in turn), logfile.log, and the few file operations the Profile store
+// needs).
 // Every call passes straight through to PinballY's globals; tests use the
 // in-memory fake host from tests/fake_pinbally_host.js instead. No side
 // effects on import.
@@ -94,6 +95,12 @@ function createFileSystem() {
     };
 }
 
+function requireSoundFile(filePath) {
+    if (!createAutomationObject("Scripting.FileSystemObject").FileExists(filePath)) {
+        throw new Error(`Sound file not found: ${filePath}`);
+    }
+}
+
 export function createPinballYHost() {
     // Created on the first sound played: most sessions never play one.
     let mediaPlayer = null;
@@ -161,15 +168,36 @@ export function createPinballYHost() {
         // sound; throws when it is unavailable or the file is missing
         // (Windows Media Player itself fails silently on a missing file).
         playSound: (filePath) => {
-            if (!createAutomationObject("Scripting.FileSystemObject").FileExists(filePath)) {
-                throw new Error(`Sound file not found: ${filePath}`);
-            }
+            requireSoundFile(filePath);
             if (!mediaPlayer) {
                 const player = createAutomationObject("WMPlayer.OCX.7");
                 player.settings.autoStart = true;
                 mediaPlayer = player;
             }
             mediaPlayer.URL = filePath;
+        },
+        // For a short sound played in quick succession: its players, loaded
+        // once, play it in turn. Restarting a player still playing blocks
+        // PinballY for 60 to 130 ms, while one at rest starts in a few.
+        // Throws like playSound().
+        createSoundRotation: (filePath, playerCount) => {
+            requireSoundFile(filePath);
+            const players = [];
+            for (let index = 0; index < playerCount; index++) {
+                const player = createAutomationObject("WMPlayer.OCX.7");
+                player.settings.autoStart = false;
+                player.URL = filePath;
+                players.push(player);
+            }
+            let next = 0;
+            return {
+                play: () => {
+                    const player = players[next];
+                    next = (next + 1) % players.length;
+                    player.controls.currentPosition = 0;
+                    player.controls.play();
+                },
+            };
         },
         files: createFileSystem(),
         log: (text) => { logfile.log(text); },

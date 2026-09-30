@@ -8,6 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -64,7 +65,7 @@ test("the grand return needs a 31-day break and says so", async () => {
         fake.gameOver(game);
         await settle();
         // The texts of every Achievement Toast so far.
-        return fake.drawings().map(drawing => drawing.texts);
+        return toastDrawings(fake).map(drawing => drawing.texts);
     }
 
     assert.deepEqual(await play(THIRTY_DAYS_AGO), [], "no Achievement after a 30-day break");

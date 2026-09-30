@@ -330,31 +330,44 @@ export function drawRow(host, dc, width, { title, description, rank, unlocked, p
     }
 }
 
-// A row's Unlock Rate, drawn on a layer of its own the size of the row's
-// right part (ownersWidth by rowHeight): the Avatars of the other Profiles
-// that have the Achievement, then the "+N" pill when there are more,
-// right-aligned. The pill is opaque: StyledText ignores a semi-transparent
-// background.
-export function drawOwners(host, dc, { avatarPaths, moreText }) {
+// A row's Unlock Rate, right-aligned in the row's right part (ownersWidth
+// by rowHeight): the Avatars of the other Profiles that have the
+// Achievement, then the "+N" pill when there are more. Each piece sits on
+// a small layer of its own, so an Avatar drawn once serves every row:
+// returns the pieces, each with its box in the row's right part.
+export function layoutOwners(host, { avatarPaths, moreText }) {
     const look = LIST_LOOK;
     const size = look.ownerAvatarSize;
-    let pill = null;
-    if (moreText !== null) {
-        const text = host.createStyledText({
-            backgroundColor: COLORS.keyCap, cornerRadius: 9, padding: 5,
-            textStyle: { font: FONTS.display, size: 11, weight: 700, color: COLORS.title },
-        });
-        text.add(moreText);
-        pill = { text, ...text.measure(look.ownersWidth) };
-    }
-    const avatarsWidth = avatarPaths.length * (size + look.ownerGap);
-    let x = look.ownersWidth - look.ownersInset - avatarsWidth - (pill ? pill.width : 0);
-    const y = (look.rowHeight - size) / 2;
-    for (const path of avatarPaths) {
-        dc.fillRect(x - 1, y - 1, size + 2, size + 2, COLORS.border);
-        dc.drawImage(path, x, y, size, size);
-        x += size + look.ownerGap;
-    }
+    const pill = moreText === null ? null : { moreText, ...pillText(host, moreText).measure(look.ownersWidth) };
     // A little wider than measured, so the last digit never wraps.
-    if (pill) pill.text.draw(dc, { x, y: (look.rowHeight - pill.height) / 2, width: pill.width + 2, height: pill.height });
+    const pillWidth = pill ? pill.width + 2 : 0;
+    let x = look.ownersWidth - look.ownersInset - avatarPaths.length * (size + look.ownerGap) - pillWidth;
+    const pieces = avatarPaths.map(avatarPath => {
+        const piece = { avatarPath, x: x - 1, y: (look.rowHeight - size) / 2 - 1, width: size + 2, height: size + 2 };
+        x += size + look.ownerGap;
+        return piece;
+    });
+    if (pill) pieces.push({ moreText, x, y: (look.rowHeight - pill.height) / 2, width: pillWidth, height: pill.height });
+    return pieces;
+}
+
+// The pill is opaque: StyledText ignores a semi-transparent background.
+function pillText(host, moreText) {
+    const text = host.createStyledText({
+        backgroundColor: COLORS.keyCap, cornerRadius: 9, padding: 5,
+        textStyle: { font: FONTS.display, size: 11, weight: 700, color: COLORS.title },
+    });
+    text.add(moreText);
+    return text;
+}
+
+// One piece of layoutOwners() on its own layer, at the piece's size: an
+// Avatar in its thin frame, or the "+N" pill.
+export function drawOwnersPiece(host, dc, { avatarPath, moreText, width, height }) {
+    if (moreText !== undefined) {
+        pillText(host, moreText).draw(dc, { x: 0, y: 0, width, height });
+        return;
+    }
+    dc.fillRect(0, 0, width, height, COLORS.border);
+    dc.drawImage(avatarPath, 1, 1, width - 2, height - 2);
 }

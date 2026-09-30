@@ -7,6 +7,7 @@
 // ============================================================
 
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 
@@ -42,10 +43,10 @@ export async function startScenario({ now, tables, files = {}, folders = [] }) {
     // Lets every waiting toast show, so the wheel is free again.
     async function showEveryToast() {
         for (let guard = 0; guard < 100; guard++) {
-            const shownCount = fake.drawings().length;
+            const shownCount = toastDrawings(fake).length;
             fake.advanceTime(ONE_TOAST_MS);
             await settle();
-            if (fake.drawings().length === shownCount) break;
+            if (toastDrawings(fake).length === shownCount) break;
         }
     }
 

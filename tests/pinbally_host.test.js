@@ -262,6 +262,19 @@ for (const { name, createHost, usesGlobals } of ADAPTERS) {
             assert.deepEqual(fake.soundsPlayed(), ["C:\\Sounds\\achievement.mp3"]);
         });
 
+        test("plays a sound on several players in turn, and only an existing file", () => {
+            const filePath = "C:\\PinballY\\Assets\\Button Sounds\\Next_.wav";
+            fake.addFile(filePath);
+            const rotation = host.createSoundRotation(filePath, 3);
+            for (let press = 0; press < 4; press++) rotation.play();
+
+            assert.deepEqual(fake.soundsPlayed(), [filePath, filePath, filePath, filePath]);
+            const [first, second, third, fourth] = fake.soundPlayers();
+            assert.equal(new Set([first, second, third]).size, 3, "three different players");
+            assert.equal(fourth, first, "then the first one again");
+            assert.throws(() => host.createSoundRotation("C:\\Sounds\\missing.wav", 3), /not found/);
+        });
+
         test("creates folders, lists sub-folders, and writes, reads, renames and deletes UTF-8 files", () => {
             const profiles = "C:\\PinballY\\Scripts\\profiles";
             assert.deepEqual(host.files.listFolders(profiles), []);

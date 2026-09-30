@@ -8,6 +8,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -42,7 +43,7 @@ test("a Streak never announced announces the first play once", async () => {
     await settle();
 
     // Whether each Achievement Toast so far announced the daily first play.
-    const announcements = () => fake.drawings().map(drawing => drawing.texts.includes(TEXT.dailyFirstPlayTitle()));
+    const announcements = () => toastDrawings(fake).map(drawing => drawing.texts.includes(TEXT.dailyFirstPlayTitle()));
     assert.deepEqual(announcements(), [true]);
     fake.advanceTime(TOAST_MS);
 

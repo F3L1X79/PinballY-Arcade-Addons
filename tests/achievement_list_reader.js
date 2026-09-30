@@ -4,7 +4,7 @@
 // the rows area from top to bottom, the highlighted one (the only one not
 // dimmed), the whole list, walked with Next as a player would, with the
 // colours each row is drawn in and its Unlock Rate (the Avatars and the
-// "+N" pill beside it), and the header's count per Achievement Rank.
+// "+N" pill beside it, from left to right), and the header's count per Achievement Rank.
 // Never loaded by PinballY.
 // ============================================================
 
@@ -69,8 +69,9 @@ export const highlightedTexts = fake => highlightedLayer(fake).texts();
 // The Unlock Rate shown beside an item's layer: the Avatars and the "+N"
 // pill of the shown layers sitting at the same height.
 function ownersBeside(fake, itemLayer) {
-    const beside = fake.drawingLayers().filter(layer => layer.zIndex === ACHIEVEMENT_LIST_Z_INDEX.owners
-        && layer.alpha > 0 && layer.position().y === itemLayer.position().y);
+    const beside = fake.drawingLayers()
+        .filter(layer => layer.zIndex === ACHIEVEMENT_LIST_Z_INDEX.owners && layer.alpha > 0 && layer.position().y === itemLayer.position().y)
+        .sort((a, b) => a.position().x - b.position().x);
     return {
         avatars: beside.flatMap(layer => layer.images()),
         more: beside.flatMap(layer => layer.texts())[0] || null,

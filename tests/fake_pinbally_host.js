@@ -5,13 +5,13 @@
 // count, the table list, the wheel selection (and its filter) and the
 // layout size, seed settings, fire PinballY events, pick menu items, play
 // launched games, and inspect shown menus, launches, written settings keys,
-// drawing layers, what was drawn, sounds played, the backglass window
-// shown or hidden, and the lower status line (which can start with the
-// player's own messages, and get a temporary one as PinballY's show() puts
-// it); script filters are shown with selectFilter().
+// drawing layers, what was drawn, sounds played (and on which player), the
+// backglass window shown or hidden, and the lower status line (which can
+// start with the player's own messages, and get a temporary one as
+// PinballY's show() puts it); script filters are shown with selectFilter().
 // Its in-memory file system is seeded with files and folders (and
-// unreadable images) and inspected (file contents, writes, renames and
-// deletes).
+// unreadable images) and inspected (file contents, reads, writes, renames
+// and deletes).
 // installGlobals() also exposes it as PinballY's globals (and the global
 // Date and timers, and the COM file objects over the same file system), so
 // code not yet on the host runs too. settle() waits on a real timer for
@@ -94,7 +94,12 @@ export function createFakePinballYHost({
     const layers = [];
     // Every layer draw, in order: { zIndex, texts }.
     const drawingList = [];
+    // Every sound played, in order: { filePath, playerId }.
     const sounds = [];
+    // Each Windows Media Player gets the next id when created.
+    let nextSoundPlayerId = 1;
+    // The single player behind playSound(), created on its first sound.
+    let oneOffSoundPlayerId = null;
     // In-memory file system: folder paths, and file contents by path. The
     // program folder and its Scripts folder exist, as in PinballY.
     const folders = new Set();
@@ -103,6 +108,8 @@ export function createFakePinballYHost({
     const unreadableImages = new Set();
     // Every write, rename and delete, in order: { operation, path, to? }.
     const fileOperationList = [];
+    // Every file read, in order, by path.
+    const fileReadList = [];
     addFolder(`${withoutTrailingSlash(programFolder)}\\Scripts`);
     // Pending timers, run in due order by advanceTime(): { id, dueMs, callback, intervalMs }.
     let timers = [];
@@ -301,10 +308,49 @@ export function createFakePinballYHost({
 
     const isImageReadable = path => files.has(path) && !unreadableImages.has(path);
 
-    // Like the production host: a file never added by addFile() is missing.
-    function playSound(filePath) {
+    // Like the production host: a file never added by addFile() is missing,
+    // and a single player plays every sound.
+    function requireSoundFile(filePath) {
         if (!files.has(filePath)) throw new Error(`Sound file not found: ${filePath}`);
-        sounds.push(filePath);
+    }
+
+    function playSound(filePath) {
+        requireSoundFile(filePath);
+        if (oneOffSoundPlayerId === null) oneOffSoundPlayerId = nextSoundPlayerId++;
+        sounds.push({ filePath, playerId: oneOffSoundPlayerId });
+    }
+
+    function createSoundRotation(filePath, playerCount) {
+        requireSoundFile(filePath);
+        const playerIds = Array.from({ length: playerCount }, () => nextSoundPlayerId++);
+        let next = 0;
+        return {
+            play() {
+                sounds.push({ filePath, playerId: playerIds[next] });
+                next = (next + 1) % playerIds.length;
+            },
+        };
+    }
+
+    // A Windows Media Player COM object: it plays its URL when set with
+    // autoStart on, or on controls.play(); a missing file plays nothing,
+    // without an error, as in Windows.
+    function createComMediaPlayer() {
+        const playerId = nextSoundPlayerId++;
+        let url = "";
+        const playUrl = () => {
+            if (files.has(url)) sounds.push({ filePath: url, playerId });
+        };
+        const player = {
+            settings: { autoStart: true },
+            get URL() { return url; },
+            set URL(filePath) {
+                url = filePath;
+                if (player.settings.autoStart) playUrl();
+            },
+            controls: { currentPosition: 0, play: playUrl },
+        };
+        return player;
     }
 
     // Creates the folder and every missing parent folder.
@@ -332,6 +378,7 @@ export function createFakePinballYHost({
         fileExists: (path) => files.has(path),
         readText(path) {
             requireFile(path);
+            fileReadList.push(path);
             return files.get(path);
         },
         writeText(path, text) {
@@ -505,6 +552,7 @@ export function createFakePinballYHost({
         countMonitors: () => monitorCount,
         showBackglass: (visible) => { backglassShowCalls.push(visible); },
         playSound,
+        createSoundRotation,
         files: fileSystem,
         log: (text) => { logLines.push(text); },
 
@@ -514,7 +562,9 @@ export function createFakePinballYHost({
         setLayoutSize(size) { currentLayoutSize = { ...size }; },
         drawingLayers: () => [...layers],
         drawings: () => drawingList.map(drawing => ({ ...drawing, texts: [...drawing.texts] })),
-        soundsPlayed: () => [...sounds],
+        soundsPlayed: () => sounds.map(sound => sound.filePath),
+        // The id of the player each sound played on, in the same order.
+        soundPlayers: () => sounds.map(sound => sound.playerId),
         // Seeds a file (and its folders) without recording a write.
         addFile(filePath, content = "") {
             addFolder(parentFolder(filePath));
@@ -536,6 +586,7 @@ export function createFakePinballYHost({
         // The file's text, or undefined when it doesn't exist.
         readFile: (filePath) => files.get(filePath),
         fileOperations: () => fileOperationList.map(operation => ({ ...operation })),
+        fileReads: () => [...fileReadList],
         setTables(newTables) { allTables = newTables.map(table => ({ ...table })); },
         // The current wheel selection, in wheel order (index 0 is the current
         // table), optionally under a filter id such as "Favorites".
@@ -704,15 +755,12 @@ export function createFakePinballYHost({
                         return { GetSystemMetrics: (index) => (index === 80 ? monitorCount : 0) };
                     },
                 },
-                // Only Windows Media Player, where setting the URL plays the
-                // file, and the file objects over the in-memory file system
-                // (no .env.local unless a test adds one, so common/config.js
-                // imported after this keeps its defaults). Any other COM
-                // object throws.
+                // Only Windows Media Player, and the file objects over the
+                // in-memory file system (no .env.local unless a test adds
+                // one, so common/config.js imported after this keeps its
+                // defaults). Any other COM object throws.
                 createAutomationObject: (progId) => {
-                    if (progId === "WMPlayer.OCX.7") {
-                        return { settings: {}, set URL(filePath) { playSound(filePath); } };
-                    }
+                    if (progId === "WMPlayer.OCX.7") return createComMediaPlayer();
                     if (progId === "Scripting.FileSystemObject") return createComFileSystem();
                     if (progId === "ADODB.Stream") return createComTextStream();
                     throw new Error(`The fake host has no COM object "${progId}".`);

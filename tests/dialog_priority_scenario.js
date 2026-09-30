@@ -8,6 +8,7 @@
 
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -58,7 +59,7 @@ export async function runDialogPriorityScenario(initOrder) {
 
     const shownIds = () => fake.shownMenus().map(menu => menu.id);
 
-    const toastCount = () => fake.drawings().length;
+    const toastCount = () => toastDrawings(fake).length;
 
     // Startup: the prompt is the only dialog; the Achievements unlocked at
     // startup are announced by toasts over it.

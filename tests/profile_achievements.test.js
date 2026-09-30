@@ -11,6 +11,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 import { readRows } from "./achievement_list_reader.js";
 
@@ -58,10 +59,10 @@ async function play(fake, game, seconds) {
 // Lets every waiting toast show, one after the other.
 async function showEveryToast(fake) {
     for (let guard = 0; guard < 100; guard++) {
-        const shownCount = fake.drawings().length;
+        const shownCount = toastDrawings(fake).length;
         fake.advanceTime(ONE_TOAST_MS);
         await settle();
-        if (fake.drawings().length === shownCount) break;
+        if (toastDrawings(fake).length === shownCount) break;
     }
 }
 
@@ -85,18 +86,18 @@ test("each Profile unlocks and is announced its own Achievements", async () => {
     await import("../main.js");
     await settle();
     await showEveryToast(fake);
-    assert.deepEqual(fake.drawings(), [], "PinballY's own play stats unlock nothing");
+    assert.deepEqual(toastDrawings(fake), [], "PinballY's own play stats unlock nothing");
 
     const store = getProfileStore();
     store.switchTo("Alice");
     await settle();
     await showEveryToast(fake);
-    assert.deepEqual(fake.drawings(), [], "Alice has nothing to announce yet");
+    assert.deepEqual(toastDrawings(fake), [], "Alice has nothing to announce yet");
 
     // Alice plays Medieval Madness: its toasts start, and she switches to
     // Bob while most of them still wait.
     await play(fake, MEDIEVAL, 90);
-    assert.equal(fake.drawings().length, 1, "the first toast shows on the return to the wheel");
+    assert.equal(toastDrawings(fake).length, 1, "the first toast shows on the return to the wheel");
     store.switchTo("Bob");
     await settle();
     await showEveryToast(fake);
@@ -114,7 +115,7 @@ test("each Profile unlocks and is announced its own Achievements", async () => {
         "playTimeMilestone:1h",
     ];
     assert.deepEqual(notifiedOf(fake, "Bob"), bobIds, "Bob is announced what Alice already had, and his own");
-    assert.equal(fake.drawings().length, allNotifiedOf(fake, "Alice").length + allNotifiedOf(fake, "Bob").length,
+    assert.equal(toastDrawings(fake).length, allNotifiedOf(fake, "Alice").length + allNotifiedOf(fake, "Bob").length,
         "one toast per Achievement and Profile");
     assert.deepEqual(notifiedOf(fake, "guest"), []);
 

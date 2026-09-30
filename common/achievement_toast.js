@@ -20,8 +20,8 @@ import { STEAMBALL_COLORS, STEAMBALL_FONTS } from "./steamball_palette.js";
 
 const SCRIPT_NAME = "AchievementToast";
 
-// Above PinballY's menus and popups.
-const TOAST_Z_INDEX = 6500;
+// Above PinballY's menus and popups. Exported for the tests' reader.
+export const ACHIEVEMENT_TOAST_Z_INDEX = 6500;
 const FRAME_MS = 16;
 const DEFAULT_TOAST_SECONDS = 4;
 const MAX_TOAST_SECONDS = 60;
@@ -244,7 +244,7 @@ export function createAchievementToasts(host, {
         if (host.getFullUIMode().runMode !== undefined) return;
 
         const toast = waiting.shift();
-        const layer = freeLayers.pop() || host.createDrawingLayer(TOAST_Z_INDEX);
+        const layer = freeLayers.pop() || host.createDrawingLayer(ACHIEVEMENT_TOAST_Z_INDEX);
         let drawn = null;
         layer.draw(dc => { drawn = drawCard(host, dc, look, toast, programFolder); });
         // Starts just below the bottom edge, then rises into place.

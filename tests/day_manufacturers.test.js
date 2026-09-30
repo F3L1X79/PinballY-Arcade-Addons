@@ -10,6 +10,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 import { readRows } from "./achievement_list_reader.js";
 
@@ -64,7 +65,7 @@ test("three manufacturers in one calendar day unlock the first multi-manufacture
 
     const dayManufacturersTitles = Object.values(TEXT.dayManufacturersTitles);
     // The texts of every Achievement Toast so far.
-    const announcements = () => fake.drawings().map(drawing => drawing.texts);
+    const announcements = () => toastDrawings(fake).map(drawing => drawing.texts);
 
     // Returns the titles of the multi-manufacturer Achievements announced
     // for this play; it may announce others too.

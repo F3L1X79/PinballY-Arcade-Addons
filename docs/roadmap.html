@@ -212,7 +212,7 @@
         <span class="recap" id="recap" aria-label="Chantiers par effort"></span>
       </div>
       <div class="gauge" aria-hidden="true"><i id="hero-gauge" style="width:0"></i></div>
-      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 29.09.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
+      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 30.09.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
     </div>
   </header>
 
@@ -574,6 +574,24 @@
           <details>
             <summary>Contexte</summary>
             <p class="ctx">En attendant, <code>tests/lang_keys.test.js</code> exige chaque clé dans chaque langue : les nouvelles clés y reçoivent le texte anglais, marqué <code>// TODO: translation pass</code>, faciles à retrouver. Les titres des paliers ajoutés le 29/09/2026 (séries de 4 paliers) sont déjà traduits.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-share" id="system-review" data-track="share" data-rank="bronze">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Revue des scripts de <code>System\</code></h3>
+            <div class="tags"><span class="tag track">Diffusion</span><span class="tag">petit</span><span class="tag">lecture</span></div>
+          </div>
+          <p>Passer en revue les scripts fournis par PinballY dans <code>System\</code> pour savoir ce qu'ils font, ce qu'ils offrent qu'on pourrait réutiliser, et où ils pourraient entrer en conflit avec nos Add-ons.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>research</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span class="skip">implement</span></div>
+          <div class="links">Flow Matt : <code>/research</code> (constats dans un fichier Markdown du dépôt), puis <code>/grill-with-docs</code> seulement si un constat demande un changement</div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">On ne modifie jamais <code>System\</code> (<code>.claude/rules/conventions.md</code>) : la revue ne produit que des constats, et d'éventuels changements de notre côté. Utile aussi pour la <a href="#nested-install">installation non invasive (n° <span data-ref="nested-install"></span>)</a>, qui doit décider où <code>System\</code> se trouve par rapport au dépôt.</p>
           </details>
         </div>
       </li>

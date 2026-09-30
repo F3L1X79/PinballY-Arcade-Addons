@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Profile store: the only module that knows the Profiles folder
 // (Scripts\profiles). Each Profile is a sub-folder named after it, with its
 // Avatar and its profile.json; cabinet.json, next to them, holds what the
@@ -9,7 +9,9 @@
 // broken too; every such problem is logged to logfile.log.
 // Listens to "gamestarted" / "gameover" to record every finished game for
 // the Profile active when it started; at startup, creates the Guest folder
-// and writes cabinet.json when they are missing.
+// and writes cabinet.json when they are missing. Tells its listeners of
+// every switch (onSwitch) and every saved change of a Profile's data
+// (onUpdate).
 // ============================================================
 
 import { safeHandler, logHandlerError } from "./safe_handler.js";
@@ -62,6 +64,7 @@ export function createProfileStore(host) {
     const defaultAvatarPath = `${scriptsFolder}\\assets\\default_avatar.png`;
     const files = host.files;
     const switchListeners = [];
+    const updateListeners = [];
     const log = text => host.log(`[${SCRIPT_NAME}] ${text}`);
     // Logged once per session: the picker lists the Profiles on every opening.
     const loggedUnreadableAvatars = new Set();
@@ -208,6 +211,15 @@ export function createProfileStore(host) {
         const { profile, data } = profileWithData(profileName);
         change(data);
         saveProfileData(profile, data);
+        // Saved already: one failing listener must not keep the others
+        // from hearing of it.
+        for (const listener of updateListeners) {
+            try {
+                listener(profile.name);
+            } catch (error) {
+                logHandlerError(SCRIPT_NAME, error);
+            }
+        }
     }
 
     function switchTo(name) {
@@ -258,6 +270,8 @@ export function createProfileStore(host) {
 
     return {
         listProfiles: () => listProfileRecords().map(publicProfile),
+        // The same Profiles by name only, without checking their Avatars.
+        listProfileNames,
         getActiveProfile: () => ({ ...publicProfile(activeProfile), data: activeData }),
         switchTo,
         getProfileData: () => activeData,
@@ -275,6 +289,8 @@ export function createProfileStore(host) {
             saveCabinet();
         },
         onSwitch: (listener) => { switchListeners.push(listener); },
+        // listener(profileName): after any change of a Profile's data is saved.
+        onUpdate: (listener) => { updateListeners.push(listener); },
     };
 }
 

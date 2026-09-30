@@ -9,6 +9,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -44,7 +45,7 @@ function notifiedCount(fake) {
 }
 
 function toasts(fake) {
-    return fake.drawings().map(drawing => drawing.texts.join(" | "));
+    return toastDrawings(fake).map(drawing => drawing.texts.join(" | "));
 }
 
 test("Achievement Toasts wait for the end of the game, arrive staggered and never take over a menu", async () => {

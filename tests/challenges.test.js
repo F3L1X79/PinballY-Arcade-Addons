@@ -10,6 +10,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createFakePinballYHost } from "./fake_pinbally_host.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import { createProfileStore } from "../common/profile_store.js";
 import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../common/period_table.js";
 import { createRandomGame } from "../common/random_game.js";
@@ -83,8 +84,7 @@ const restingFrames = fake => {
 };
 
 // Every toast drawn so far, its texts joined: header | title | description.
-const toastsDrawn = fake => fake.drawings()
-    .filter(drawing => drawing.zIndex !== CHALLENGE_CARD_Z_INDEX)
+const toastsDrawn = fake => toastDrawings(fake)
     .map(drawing => drawing.texts.join(" | "));
 
 function play(fake, game, seconds) {
