@@ -4,7 +4,7 @@
 // the date (a manual clock that also runs the host's timers), the monitor
 // count, the table list, the wheel selection (and its filter) and the
 // layout size, seed settings, fire PinballY events, open the Exit menu
-// with its native items, pick menu items, play launched games, and inspect shown menus, launches, written settings keys,
+// or main menu with their native items, pick menu items, play launched games, and inspect shown menus, launches, written settings keys,
 // drawing layers, what was drawn, sounds played (and on which player), the
 // backglass window shown or hidden, and the lower status line (which can
 // start with the player's own messages, and get a temporary one as
@@ -29,8 +29,12 @@ export const settle = () => new Promise(resolve => realSetTimeout(resolve, 10));
 // PinballY's own commands used by the add-ons; custom ones start above them.
 const BUILT_IN_COMMANDS = {
     PlayGame: 1, ShowGameSetupMenu: 2, RateGame: 3, MenuReturn: 4, MenuPageUp: 5, MenuPageDown: 6, Quit: 7,
-    ShowMainMenu: 8, ShowOperatorMenu: 9, PowerOff: 10,
+    ShowMainMenu: 8, ShowOperatorMenu: 9, PowerOff: 10, GameInfo: 11, Flyer: 12, HighScores: 13,
+    Instructions: 14, AddFavorite: 15, Help: 16, AboutBox: 17,
 };
+// The [Top] filters' commands in the native main menu (any ids below the custom ones).
+const ALL_TABLES_FILTER_CMD = 900;
+const FAVORITES_FILTER_CMD = 901;
 const FIRST_CUSTOM_COMMAND = 1000;
 
 const TRUE_STRINGS = ["1", "true", "yes", "on"];
@@ -193,8 +197,9 @@ export function createFakePinballYHost({
             type,
             defaultPrevented: false,
             preventDefault() { this.defaultPrevented = true; },
-            ...properties,
         };
+        // Copies accessors as accessors, so a menu's items stay live.
+        Object.defineProperties(ev, Object.getOwnPropertyDescriptors(properties));
         for (const handler of [...(handlers.get(type) || [])]) handler(ev);
         return ev;
     }
@@ -630,6 +635,7 @@ export function createFakePinballYHost({
             const ev = fire("menuopen", {
                 id,
                 get items() { return menuItems; },
+                set items(newItems) { menuItems = newItems; },
                 addMenuItem(where, newItems) {
                     const toAdd = Array.isArray(newItems) ? newItems : [newItems];
                     const afterIndex = menuItems.findIndex(item => item.cmd === where.after);
@@ -639,9 +645,11 @@ export function createFakePinballYHost({
                     menuItems = menuItems.filter(item => item.cmd !== cmd);
                     this.menuUpdated = true;
                 },
-                // Like PinballY: each run of separators becomes a single one.
+                // Like PinballY: each run of separators becomes a single
+                // one, counting only those titled "" (an untitled one is not).
                 tidyMenu() {
-                    menuItems = menuItems.filter((item, index) => item.cmd !== -1 || menuItems[index - 1]?.cmd !== -1);
+                    const isSeparator = item => item?.cmd < 0 && item.title === "";
+                    menuItems = menuItems.filter((item, index) => !isSeparator(item) || !isSeparator(menuItems[index - 1]));
                     this.menuUpdated = true;
                 },
             });
@@ -649,15 +657,39 @@ export function createFakePinballYHost({
         },
 
         // The Exit menu as PinballY opens it on the Exit button, with its
-        // native items.
+        // native items; PinballY's own separators are titled "". Where Help
+        // and About sit is not documented: to be checked on the cabinet.
         openExitMenu() {
             host.openMenu("exit", [
                 { title: "Exit PinballY", cmd: BUILT_IN_COMMANDS.Quit },
                 { title: "Shut Down", cmd: BUILT_IN_COMMANDS.PowerOff },
-                { cmd: -1 },
+                { title: "", cmd: -1 },
                 { title: "Operator Menu", cmd: BUILT_IN_COMMANDS.ShowOperatorMenu },
-                { cmd: -1 },
+                { title: "", cmd: -1 },
+                { title: "Help", cmd: BUILT_IN_COMMANDS.Help },
+                { title: "About PinballY", cmd: BUILT_IN_COMMANDS.AboutBox },
+                { title: "", cmd: -1 },
                 { title: "Cancel", cmd: BUILT_IN_COMMANDS.MenuReturn },
+            ]);
+        },
+
+        // The main menu as PinballY opens it, with its native items: "Play",
+        // the information section, Rate Table / Add to Favorites, then the
+        // [Top] filters. Its separators are not documented: to be checked on
+        // the cabinet.
+        openMainMenu() {
+            host.openMenu("main", [
+                { title: "Play", cmd: BUILT_IN_COMMANDS.PlayGame },
+                { title: "Information", cmd: BUILT_IN_COMMANDS.GameInfo },
+                { title: "Flyer", cmd: BUILT_IN_COMMANDS.Flyer },
+                { title: "High Scores", cmd: BUILT_IN_COMMANDS.HighScores },
+                { title: "Instruction Card", cmd: BUILT_IN_COMMANDS.Instructions },
+                { title: "", cmd: -1 },
+                { title: "Rate Table", cmd: BUILT_IN_COMMANDS.RateGame },
+                { title: "Add to Favorites", cmd: BUILT_IN_COMMANDS.AddFavorite },
+                { title: "", cmd: -1 },
+                { title: "All Tables", cmd: ALL_TABLES_FILTER_CMD },
+                { title: "Favorites", cmd: FAVORITES_FILTER_CMD },
             ]);
         },
 

@@ -18,6 +18,7 @@ import * as statusLineInfo from "./addons/status_line_info.js";
 import * as customMenuCommands from "./addons/custom_menu_commands.js";
 import * as customFilter from "./addons/custom_filter.js";
 import * as hallOfFame from "./addons/hall_of_fame.js";
+import * as menuCleanup from "./addons/menu_cleanup.js";
 import * as profilePicker from "./addons/profile_picker.js";
 import * as clock from "./addons/clock.js";
 import * as seamlessLaunchOverlay from "./addons/seamless_launch_overlay.js";
@@ -45,13 +46,14 @@ import * as startupChoicePrompt from "./addons/startup_choice_prompt.js";
 // which shows them in a fixed priority order, and Achievements are announced
 // by non-blocking toasts.
 const SCRIPTS = [
-    // Interface: translations, status line, menus, filters, Profile picker,
-    // clock, launch overlay.
+    // Interface: translations, status line, menus, filters, menu cleanup,
+    // Profile picker, clock, launch overlay.
     { key: "uiTranslation", module: uiTranslation },
     { key: "statusLineInfo", module: statusLineInfo },
     { key: "customMenuCommands", module: customMenuCommands },
     { key: "customFilter", module: customFilter },
     { key: "hallOfFame", module: hallOfFame },
+    { key: "menuCleanup", module: menuCleanup },
     { key: "profilePicker", module: profilePicker },
     { key: "clock", module: clock },
     { key: "seamlessLaunchOverlay", module: seamlessLaunchOverlay },

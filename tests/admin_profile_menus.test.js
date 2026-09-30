@@ -17,8 +17,9 @@ const PROFILES = "C:\\PinballY\\Scripts\\profiles";
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 const markFile = (fake, name, isAdmin) => fake.addFile(profileFile(name), JSON.stringify({ version: 1, isAdmin }));
 
-const EXIT_MENU = ["Exit PinballY", "Shut Down", undefined, "Operator Menu", undefined, "Cancel"];
-const EXIT_MENU_WITHOUT_OPERATOR_MENU = ["Exit PinballY", "Shut Down", undefined, "Cancel"];
+// PinballY's own separators are titled "".
+const EXIT_MENU = ["Exit PinballY", "Shut Down", "", "Operator Menu", "", "Help", "About PinballY", "", "Cancel"];
+const EXIT_MENU_WITHOUT_OPERATOR_MENU = ["Exit PinballY", "Shut Down", "", "Help", "About PinballY", "", "Cancel"];
 
 test("only the Admin Profiles keep the setup entries, once the household has one", async () => {
     const fake = createFakePinballYHost({ now: NOW });

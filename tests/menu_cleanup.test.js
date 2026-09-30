@@ -1,0 +1,85 @@
+// ============================================================
+// Menu Cleanup, started through main.js on the fake PinballY globals: off
+// by default, PinballY's native menus keep Help, About and the information
+// entries; turned on, they are gone for every Profile, Admin Profiles
+// included, Rate Table and Add to Favorites stay, the Operator Menu rules
+// are unchanged, and no doubled, leading or trailing separator is left.
+// ============================================================
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { createFakePinballYHost } from "./fake_pinbally_host.js";
+import config from "../common/config.js";
+
+const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const markAdmin = (fake, name) =>
+    fake.addFile(`${PROFILES}\\${name}\\profile.json`, JSON.stringify({ version: 1, isAdmin: true }));
+
+// Separators, titled "" (PinballY's) or untitled (the main menu module's), read "---".
+const SEPARATOR = "---";
+const CLEANED_NATIVE_MAIN_MENU = [SEPARATOR, "Rate Table", "Add to Favorites", SEPARATOR, "All Tables", "Favorites"];
+const CLEANED_EXIT_MENU = ["Exit PinballY", "Shut Down", SEPARATOR, "Operator Menu", SEPARATOR, "Cancel"];
+const CLEANED_EXIT_MENU_WITHOUT_OPERATOR_MENU = ["Exit PinballY", "Shut Down", SEPARATOR, "Cancel"];
+
+const fake = createFakePinballYHost({ now: new Date(2026, 8, 30, 20, 0, 0) });
+
+function titlesOf(open) {
+    open();
+    const titles = fake.currentMenu().items.map(item => (item.cmd === -1 ? SEPARATOR : item.title));
+    fake.closeMenu();
+    return titles;
+}
+const mainMenuTitles = () => titlesOf(() => fake.openMainMenu());
+const exitMenuTitles = () => titlesOf(() => fake.openExitMenu());
+
+test("Menu Cleanup is the only Add-on off by default", () => {
+    const offByDefault = Object.entries(config.addOns).filter(([, isOn]) => !isOn).map(([key]) => key);
+    assert.deepEqual(offByDefault, ["menuCleanup"]);
+});
+
+test("turned on, Menu Cleanup lightens the menus for every Profile, Admin included", async () => {
+    fake.addFolder(`${PROFILES}\\Alice`);
+    fake.addFolder(`${PROFILES}\\Bob`);
+    // Never uninstalled: node --test runs each test file in its own process.
+    fake.installGlobals();
+    for (const key of Object.keys(config.addOns)) {
+        config.addOns[key] = key === "customMenuCommands" || key === "menuCleanup";
+    }
+    config.language = "en";
+
+    const { default: lang } = await import("../common/i18n.js");
+    const { getProfileStore } = await import("../common/profile_store.js");
+    const LABELS = lang.customMenuLabels;
+    await import("../main.js");
+    const store = getProfileStore();
+    markAdmin(fake, "Bob");
+
+    store.switchTo("Alice");
+    assert.deepEqual(mainMenuTitles(), [
+        "Play", LABELS.tableOfTheDay, LABELS.tableOfTheWeek, LABELS.randomGame, ...CLEANED_NATIVE_MAIN_MENU,
+    ]);
+    assert.deepEqual(exitMenuTitles(), CLEANED_EXIT_MENU_WITHOUT_OPERATOR_MENU);
+
+    store.switchTo("Bob");
+    assert.deepEqual(mainMenuTitles(), [
+        "Play", LABELS.tableSetup, LABELS.tableOfTheDay, LABELS.tableOfTheWeek, LABELS.randomGame, ...CLEANED_NATIVE_MAIN_MENU,
+    ]);
+    assert.deepEqual(exitMenuTitles(), CLEANED_EXIT_MENU);
+
+    assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
+});
+
+test("no doubled, leading or trailing separator is left, titled or not", () => {
+    const { Help, AboutBox, Quit } = globalThis.command;
+    fake.openMenu("exit", [
+        { title: "Help", cmd: Help },
+        { title: "", cmd: -1 },
+        { cmd: -1 },
+        { title: "Exit PinballY", cmd: Quit },
+        { cmd: -1 },
+        { title: "", cmd: -1 },
+        { title: "About PinballY", cmd: AboutBox },
+    ]);
+    assert.deepEqual(fake.currentMenu().items.map(item => item.title), ["Exit PinballY"]);
+    fake.closeMenu();
+});

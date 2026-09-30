@@ -35,7 +35,8 @@ const DEFAULTS = {
 
     // --- Add-ons ---
 
-    // Set any Add-on to false to keep it from starting.
+    // Set any Add-on to false to keep it from starting. Menu Cleanup is the
+    // only one off by default: it removes PinballY entries others may want.
     addOns: {
         uiTranslation: true,
         statusLineInfo: true,
@@ -52,6 +53,7 @@ const DEFAULTS = {
         profilePicker: true,
         clock: true,
         challenges: true,
+        menuCleanup: false,
     },
 };
 
