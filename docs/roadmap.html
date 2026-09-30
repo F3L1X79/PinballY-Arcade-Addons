@@ -416,6 +416,31 @@
         </div>
       </li>
 
+      <li draggable="true" tabindex="0" class="item tr-play" id="challenge-confetti" data-track="play" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Pluie de confettis pour un Challenge réussi</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span><span class="tag">UI</span></div>
+          </div>
+          <p>Au retour sur la roue après la partie qui réussit le Challenge de la semaine, une pluie de confettis tombe quelques secondes sur l'écran, avec un bruitage de fête. Le Challenge Toast reste : il dit quel Challenge est réussi, les confettis le fêtent.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Pourra resservir pour un titre de Grand Maître (<a href="#table-mastery">Maîtrise des tables, n° <span data-ref="table-mastery"></span></a>) ou le <a href="#year-in-pinball">Year in Pinball (n° <span data-ref="year-in-pinball"></span>)</a></div>
+          <details>
+            <summary>Questions ouvertes (5)</summary>
+            <ul>
+              <li>Performance sur la borne : des confettis dessinés d'avance sur des petits calques qu'on ne fait que déplacer (comme le carrousel du picker), jamais un plein écran redessiné à chaque image. Combien de confettis, combien d'images par seconde ?</li>
+              <li>Quel bruitage, et d'où vient-il : un son libre de droits livré dans <code>assets/</code> (licence à vérifier avant la Distribution), ou un son de PinballY ?</li>
+              <li>Réglable : confettis et son désactivables dans <code>.env.local</code>, comme le son des toasts (borne jouée la nuit) ?</li>
+              <li>Sur quel écran : la roue seulement, ou aussi le backglass ?</li>
+              <li>Rien pour les Achievements, pour garder la fête rare ? Et pour un Challenge réussi par Guest, une fois qu'il aura les siens ?</li>
+            </ul>
+            <p class="ctx">Idée du 30/09/2026. Le Challenge Toast (<code>common/achievement_toast.js</code>) attend déjà la fin de la partie et l'événement <code>wheelmode</code> ; les confettis partiraient avec lui. Les calques passent par le dessin d'avance (<code>common/drawing_ahead.js</code>).</p>
+          </details>
+        </div>
+      </li>
+
       <li draggable="true" tabindex="0" class="item tr-profiles" id="stats-drawn" data-track="profiles" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>
@@ -591,8 +616,10 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
-          <summary>30/09 <span class="count">(9)</span></summary>
+          <summary>30/09 <span class="count">(10)</span></summary>
           <ol>
+            <li><strong>Confettis en plus du Challenge Toast</strong>
+              <span>Le toast dit ce qui est réussi, les confettis le fêtent. Dessinés d'avance et seulement déplacés, pour ne pas ralentir la borne.</span></li>
             <li><strong>La Maîtrise des tables sans Achievement</strong>
               <span>Une progression à part : les Achievements doubleraient son toast, et Play Time récompense déjà le temps. Grillée avec la fiche joueur, juste après elle.</span></li>
             <li><strong>Guest aura les Challenges</strong>
@@ -670,6 +697,7 @@
           <div class="cell sweet">
             <a class="chip tr-play" href="#world-tour"><b></b>Tour du monde</a>
                         <a class="chip tr-play" href="#hidden-achievements"><b></b>Succès cachés</a>
+            <a class="chip tr-play" href="#challenge-confetti"><b></b>Confettis</a>
           </div>
           <div class="cell">
             <a class="chip tr-profiles" href="#table-mastery"><b></b>Maîtrise des tables</a>
