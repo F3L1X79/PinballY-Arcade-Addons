@@ -3,7 +3,8 @@
 // menu and right after "Quit" in the exit menu (and in the startup prompt,
 // through common/change_player.js), opens a drawn carousel of
 // the Profiles' Avatars above the menus, starting on the active Profile.
-// The flipper buttons move through it and wrap, Select or Launch switches
+// The flipper buttons move through it and wrap, with PinballY's navigation
+// sound (common/navigation_sound.js), Select or Launch switches
 // to the highlighted Profile, Exit closes it; while it is open every
 // button is swallowed through "commandbuttondown", so the wheel never moves
 // under it; attract mode closes it too. The Avatars glide to their new
@@ -34,6 +35,7 @@ import { getWheelDialogs } from "../common/wheel_dialog.js";
 import { registerChangePlayer } from "../common/change_player.js";
 import { drawShadowedText } from "../common/shadowed_text.js";
 import { getDrawingAhead } from "../common/drawing_ahead.js";
+import { createNavigationSound } from "../common/navigation_sound.js";
 import config from "../common/config.js";
 
 const SCRIPT_NAME = "ProfilePicker";
@@ -101,6 +103,7 @@ export default function init() {
     const { profiles: TEXT } = lang;
     const host = createPinballYHost();
     const profileStore = getProfileStore();
+    const navigationSound = createNavigationSound(host, SCRIPT_NAME);
     const hiddenLayer = zIndex => {
         const layer = host.createDrawingLayer(zIndex);
         layer.alpha = 0;
@@ -456,6 +459,7 @@ export default function init() {
     // direction: 1 for Next, -1 for Prev. A press during a glide carries on
     // from where the Avatars are.
     function move(direction) {
+        navigationSound.play();
         highlighted = (highlighted + direction + profiles.length) % profiles.length;
         glide += direction;
         if (glideTimer === null) {
@@ -476,6 +480,8 @@ export default function init() {
         const activeName = profileStore.getActiveProfile().name;
         highlighted = Math.max(0, profiles.findIndex(profile => profile.name === activeName));
         if (!layout) measure();
+        // Here rather than on the first move, which it would slow down.
+        navigationSound.load();
         backLayer.alpha = 1;
         placeCarousel();
     }

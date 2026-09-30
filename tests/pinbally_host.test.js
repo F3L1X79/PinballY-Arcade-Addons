@@ -263,7 +263,7 @@ for (const { name, createHost, usesGlobals } of ADAPTERS) {
         });
 
         test("plays a sound on several players in turn, and only an existing file", () => {
-            const filePath = "C:\\PinballY\\Assets\\Button Sounds\\Next_.wav";
+            const filePath = "C:\\PinballY\\Assets\\Button Sounds\\Next.wav";
             fake.addFile(filePath);
             const rotation = host.createSoundRotation(filePath, 3);
             for (let press = 0; press < 4; press++) rotation.play();

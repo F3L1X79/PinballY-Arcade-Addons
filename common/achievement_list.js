@@ -33,6 +33,7 @@
 
 import lang from "./i18n.js";
 import { safeHandler } from "./safe_handler.js";
+import { createNavigationSound } from "./navigation_sound.js";
 import { displayNameOf } from "./profile_name.js";
 import { RANKS_IN_ORDER } from "./achievements.js";
 import {
@@ -58,10 +59,6 @@ const TRANSPARENT = 0x00000000;
 const ROW_PITCH = LIST_LOOK.rowHeight + LIST_LOOK.itemGap;
 // Then a "+N" pill for the others.
 const MAX_OWNER_AVATARS = 4;
-// PinballY's own, relative to its program folder.
-const NAVIGATION_SOUND = "Assets\\Button Sounds\\Next_.wav";
-// Enough for a held button: a player is still playing when asked again.
-const NAVIGATION_SOUND_PLAYERS = 3;
 // The file name's ending of each rank's emblem image, by where it shows.
 const EMBLEM_VARIANT = Object.freeze({ UNLOCKED: "", MISSING: "_missing", HEADER: "_small" });
 
@@ -105,9 +102,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     let shown = null;
     // Where the list and the highlighted line are while gliding, in pixels.
     const glide = { scroll: 0, highlightTop: 0, timer: null, lastMs: 0 };
-    // Loaded on the first opening; false once it failed, so it is logged
-    // only once.
-    let navigationSound = null;
+    const navigationSound = createNavigationSound(host, SCRIPT_NAME);
 
     // The current Achievements with their live status.
     function readEntries() {
@@ -459,31 +454,6 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         hideAllExcept(pieceLayers, shownLayers);
     }
 
-    // A sound that cannot play never stops the navigation.
-    function disableNavigationSound(error) {
-        navigationSound = false;
-        host.log(`[${SCRIPT_NAME}] Navigation sound disabled: ${error.message}`);
-    }
-
-    function loadNavigationSound() {
-        if (navigationSound !== null) return;
-        try {
-            const filePath = `${host.getProgramFolder().replace(/\\+$/, "")}\\${NAVIGATION_SOUND}`;
-            navigationSound = host.createSoundRotation(filePath, NAVIGATION_SOUND_PLAYERS);
-        } catch (error) {
-            disableNavigationSound(error);
-        }
-    }
-
-    function playNavigationSound() {
-        if (!navigationSound) return;
-        try {
-            navigationSound.play();
-        } catch (error) {
-            disableNavigationSound(error);
-        }
-    }
-
     function stopGlide() {
         host.clearInterval(glide.timer);
         glide.timer = null;
@@ -534,7 +504,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     function move(direction) {
         const { items } = content;
         if (shown.highlighted === -1) return;
-        playNavigationSound();
+        navigationSound.play();
         let index = shown.highlighted;
         do {
             index = (index + direction + items.length) % items.length;
@@ -570,7 +540,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         if (host.getUIMode() === "menu") host.doCommand(host.getBuiltInCommand("MenuReturn"));
         stopGlide();
         // Here rather than on the first move, which it would slow down.
-        loadNavigationSound();
+        navigationSound.load();
         measure();
         content = readContent();
         isContentStale = false;

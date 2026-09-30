@@ -66,7 +66,7 @@ const ASSETS = "C:\\PinballY\\Scripts\\assets";
 // With a halo for an Unlocked row, greyed for a missing one, small for the header.
 const emblemOf = (rank, variant = "") => `${ASSETS}\\rank_${rank}${variant}.png`;
 const EMBLEM_IMAGES = Object.values(ACHIEVEMENT_RANK).flatMap(rank => ["", "_missing", "_small"].map(variant => emblemOf(rank, variant)));
-const NAVIGATION_SOUND = "C:\\PinballY\\Assets\\Button Sounds\\Next_.wav";
+const NAVIGATION_SOUND = "C:\\PinballY\\Assets\\Button Sounds\\Next.wav";
 
 // Alice is active. She was Notified of gamma, then alpha, then delta; the
 // toast of beta still waits. household: the other Profiles' notified
@@ -176,7 +176,7 @@ test("a missing navigation sound is logged once and the highlight still moves", 
 
     assert.equal(highlightedTexts(fake)[0], "alpha title");
     assert.deepEqual(fake.soundsPlayed(), []);
-    const soundLines = fake.logLines().filter(line => line.startsWith("[AchievementList]") && line.includes("Next_.wav"));
+    const soundLines = fake.logLines().filter(line => line.startsWith("[AchievementList]") && line.includes("Next.wav"));
     assert.equal(soundLines.length, 1);
 });
 
