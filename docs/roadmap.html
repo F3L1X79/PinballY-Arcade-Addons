@@ -311,7 +311,7 @@
           </div>
           <p>Guest suit lui aussi le Challenge de la semaine, avec sa Challenge Card et les Achievements de la famille Challenges. Sans Profile créé, Guest est le seul Profile : aujourd'hui, ce joueur ne voit jamais les Challenges. Guest reste hors de l'Unlock Rate, qui compare des personnes.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Première impression des nouveaux venus : tôt dans la file. Flow Matt : <code>/grill-with-docs</code> → <code>/to-tickets</code> → <code>/implement</code></div>
+          <div class="links">Première impression des nouveaux venus : tôt dans la file. À griller avec le <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a>. Flow Matt : <code>/grill-with-docs</code> → <code>/to-tickets</code> → <code>/implement</code></div>
           <details>
             <summary>Questions ouvertes (3)</summary>
             <ul>
@@ -320,6 +320,31 @@
               <li>Quand un vrai Profile est créé, la progression de Guest reste-t-elle à Guest (a priori oui, comme ses Achievements) ?</li>
             </ul>
             <p class="ctx">Aujourd'hui Guest a déjà ses Achievements, ses Profile Stats et ses Streaks ; il n'a ni Challenge, ni Challenge Card, ni place dans l'Unlock Rate, ni marque. Code concerné : <code>common/challenge.js</code>, <code>common/challenge_card.js</code>, <code>achievements/challenges.js</code>, et le glossaire (Challenge, Challenge Card).</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-play" id="challenge-balance" data-track="play" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Rééquilibrer la difficulté des Challenges</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span></div>
+          </div>
+          <p>« Jouer 2 tables différentes » en une semaine, c'est trop léger. Les objectifs sont tirés entre 2 et 5 (tables, parties, jours…), 15 à 30 min pour l'endurance et 40 à 80 min pour le marathon. Piste recommandée : un objectif adapté à l'activité récente de la maison plutôt que des plages simplement relevées.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">À griller avec les <a href="#guest-challenges">Challenges pour Guest (n° <span data-ref="guest-challenges"></span>)</a> : les deux touchent le tirage</div>
+          <details>
+            <summary>Questions ouvertes (5)</summary>
+            <ul>
+              <li>Le Challenge reste-t-il « un objectif facile » (glossaire) ? Sinon, quelle nouvelle définition ?</li>
+              <li>Plages relevées pour tous (par exemple 4 à 10), ou objectif calculé d'après les parties et les minutes des dernières semaines de la maison ?</li>
+              <li>Sans historique (installation neuve, maison qui joue peu) : quel plancher, pour ne jamais tirer un objectif impossible ?</li>
+              <li>Un même objectif pour tous les Profiles, comme aujourd'hui, ou ajusté à chacun ?</li>
+              <li>Les modèles « Table of the Day sur N jours » gardent leur plafond « jamais plus que les jours restants » ?</li>
+            </ul>
+            <p class="ctx">Constaté sur la borne le 30/09/2026. Plages dans <code>common/challenge.js</code> (<code>COUNT_RANGE</code>, <code>ENDURANCE_MINUTES</code>, <code>MARATHON_MINUTES</code>). Les Challenges déjà tirés gardent leur objectif, enregistré dans <code>cabinet.json</code> ; les Achievements de la famille Challenges comptent les Challenges réussis, sans dépendre de l'objectif.</p>
           </details>
         </div>
       </li>
@@ -616,8 +641,10 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
-          <summary>30/09 <span class="count">(10)</span></summary>
+          <summary>30/09 <span class="count">(11)</span></summary>
           <ol>
+            <li><strong>Challenges trop faciles : à rééquilibrer</strong>
+              <span>Deux tables en une semaine, c'est trop léger. Revient sur « un objectif facile » ; grillé avec les Challenges pour Guest, puisque les deux touchent le tirage.</span></li>
             <li><strong>Confettis en plus du Challenge Toast</strong>
               <span>Le toast dit ce qui est réussi, les confettis le fêtent. Dessinés d'avance et seulement déplacés, pour ne pas ralentir la borne.</span></li>
             <li><strong>La Maîtrise des tables sans Achievement</strong>
@@ -695,6 +722,7 @@
 
           <div class="ax row">Moyen</div>
           <div class="cell sweet">
+            <a class="chip tr-play" href="#challenge-balance"><b></b>Difficulté des Challenges</a>
             <a class="chip tr-play" href="#world-tour"><b></b>Tour du monde</a>
                         <a class="chip tr-play" href="#hidden-achievements"><b></b>Succès cachés</a>
             <a class="chip tr-play" href="#challenge-confetti"><b></b>Confettis</a>
