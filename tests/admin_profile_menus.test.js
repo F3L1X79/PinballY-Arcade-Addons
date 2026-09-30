@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // The Admin Profile's menus, started through main.js on the fake PinballY
 // globals: while no Profile is marked isAdmin in its profile.json, every
 // Profile sees "Table Setup" in the main menu and "Operator Menu" in the
@@ -33,7 +33,8 @@ test("only the Admin Profiles keep the setup entries, once the household has one
 
     const { default: lang } = await import("../common/i18n.js");
     const { getProfileStore } = await import("../common/profile_store.js");
-    const TABLE_SETUP = lang.customMenuLabels.tableSetup;
+    const LABELS = lang.customMenuLabels;
+    const TABLE_SETUP = LABELS.tableSetup;
     await import("../main.js");
     const store = getProfileStore();
 
@@ -61,7 +62,8 @@ test("only the Admin Profiles keep the setup entries, once the household has one
     assert.ok(fake.logLines().some(line => line.includes("Bob\\profile.json") && line.includes("isAdmin")));
 
     markFile(fake, "Bob", true);
-    assert.ok(!mainMenuTitles().includes(TABLE_SETUP), "a non-admin loses Table Setup");
+    assert.deepEqual(mainMenuTitles(), ["Play", LABELS.tableOfTheDay, LABELS.tableOfTheWeek, LABELS.randomGame],
+        "a non-admin loses Table Setup, the rest of the launch section stays");
     assert.deepEqual(exitMenuTitles(), EXIT_MENU_WITHOUT_OPERATOR_MENU, "and the Operator Menu, nothing else");
 
     store.switchTo("Bob");

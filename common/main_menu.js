@@ -1,12 +1,12 @@
 ﻿// ============================================================
 // Main menu module: Add-ons add their entries (label, action, position,
 // and optionally a "shown when" predicate checked on each opening) and it
-// inserts them into PinballY's main menu right after "Play", in a
-// fixed position order, so the Add-on order in main.js never decides where
-// an entry lands. It owns the entry commands and runs the matching action
-// when one is selected, and can reopen the main menu with the cursor on an
-// entry (a screen going back one level). Listens to "menuopen" and
-// "command".
+// inserts them into PinballY's main menu right after "Play", grouped in
+// sections (launch, then personal) split by separators, in a fixed position
+// order, so the Add-on order in main.js never decides where an entry lands.
+// It owns the entry commands and runs the matching action when one is
+// selected, and can reopen the main menu with the cursor on an entry (a
+// screen going back one level). Listens to "menuopen" and "command".
 // ============================================================
 
 import { safeHandler } from "./safe_handler.js";
@@ -14,16 +14,21 @@ import { createPinballYHost } from "./pinbally_host.js";
 
 const SCRIPT_NAME = "MainMenu";
 
-// Lower is closer to "Play".
-export const MAIN_MENU_POSITION = Object.freeze({
-    PROFILE_PICKER: 0,
-    ACHIEVEMENT_LIST: 1,
-    PROFILE_STATS: 2,
-    TABLE_SETUP: 3,
-    RANDOM_GAME: 4,
-    TABLE_OF_THE_DAY: 5,
-    TABLE_OF_THE_WEEK: 6,
-});
+// Sections from "Play" down, each listing its entries in menu order. A
+// section with no shown entry is left out with its separator.
+const SECTIONS = [
+    ["TABLE_SETUP", "TABLE_OF_THE_DAY", "TABLE_OF_THE_WEEK", "RANDOM_GAME"],
+    ["PROFILE_PICKER", "ACHIEVEMENT_LIST", "PROFILE_STATS"],
+];
+
+export const MAIN_MENU_POSITION = Object.freeze(Object.fromEntries(SECTIONS.flatMap((names, section) =>
+    names.map((name, order) => [name, Object.freeze({ section, order })]))));
+
+const SEPARATOR_CMD = -1;
+
+function comesAfter(position, other) {
+    return position.section > other.section || (position.section === other.section && position.order > other.order);
+}
 
 export function createMainMenu(host) {
     // Sorted by position.
@@ -35,7 +40,7 @@ export function createMainMenu(host) {
     // false. Guarded on its own, so a failing one hides only its own entry.
     function add({ name, label, position, action, shownWhen = () => true }) {
         const entry = { name, label, position, action, shownWhen: safeHandler(SCRIPT_NAME, shownWhen), cmd: host.allocateCommand(name) };
-        const insertAt = entries.findIndex(other => other.position > position);
+        const insertAt = entries.findIndex(other => comesAfter(other.position, position));
         if (insertAt === -1) entries.push(entry);
         else entries.splice(insertAt, 0, entry);
     }
@@ -48,10 +53,18 @@ export function createMainMenu(host) {
         const selected = shown.find(entry => entry.name === entryToSelect);
         entryToSelect = null;
         if (shown.length === 0) return;
-        ev.addMenuItem(
-            { after: host.getBuiltInCommand("PlayGame") },
-            shown.map(({ label, cmd }) => ({ title: label, cmd }))
-        );
+        const items = [];
+        shown.forEach(({ label, cmd, position }, index) => {
+            if (index > 0 && shown[index - 1].position.section !== position.section) items.push({ cmd: SEPARATOR_CMD });
+            items.push({ title: label, cmd });
+        });
+        const play = host.getBuiltInCommand("PlayGame");
+        const playIndex = ev.items.findIndex(item => item.cmd === play);
+        const afterPlay = playIndex === -1 ? undefined : ev.items[playIndex + 1];
+        // Native entries follow in their own section, unless PinballY already
+        // starts it with a separator.
+        if (afterPlay && afterPlay.cmd !== SEPARATOR_CMD) items.push({ cmd: SEPARATOR_CMD });
+        ev.addMenuItem({ after: play }, items);
         if (!selected) return;
         // PinballY ignores edits to ev.items unless menuUpdated is set.
         for (const item of ev.items) item.selected = item.cmd === selected.cmd;

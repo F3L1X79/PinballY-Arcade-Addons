@@ -1,8 +1,8 @@
 ﻿// ============================================================
-// Adds the custom entries (table setup, random table, table of the day,
-// table of the week) to PinballY's main menu through the main menu module,
-// which places them after "Play" and runs the matching action when one is
-// selected. Once the household has an Admin Profile, only the Admin
+// Adds the launch section entries (table setup, table of the day, table of
+// the week, random table) to PinballY's main menu through the main menu
+// module, which places them right after "Play" and runs the matching action
+// when one is selected. Once the household has an Admin Profile, only the Admin
 // Profiles see "Table Setup" there and PinballY's "Operator Menu" in the
 // Exit menu (listens to "menuopen"); the coin door service button still
 // opens the Operator Menu for anyone.

@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // The Profile Stats, started through main.js on the fake PinballY globals:
 // its main menu entry sits right after the Achievement List entry, the
 // screen names Guest and shows Guest's own plays, and its Achievements line
@@ -35,6 +35,9 @@ const GUEST_PLAYS = {
 
 const ADD_ONS_UNDER_TEST = ["customMenuCommands", "achievements"];
 
+// A separator has no title.
+const SEPARATOR = undefined;
+
 test("the Profile Stats entry follows the Achievement List and shows Guest's own numbers", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
     fake.addFile(GUEST_PROFILE_FILE, JSON.stringify({ version: 1, plays: GUEST_PLAYS, notified: [] }));
@@ -56,12 +59,14 @@ test("the Profile Stats entry follows the Achievement List and shows Guest's own
     openMainMenu();
     assert.deepEqual(fake.currentMenu().items.map(item => item.title), [
         "Play",
-        lang.achievementList.menuEntry,
-        TEXT.menuEntry,
         MENU_LABELS.tableSetup,
-        MENU_LABELS.randomGame,
         MENU_LABELS.tableOfTheDay,
         MENU_LABELS.tableOfTheWeek,
+        MENU_LABELS.randomGame,
+        SEPARATOR,
+        lang.achievementList.menuEntry,
+        TEXT.menuEntry,
+        SEPARATOR,
         "Exit",
     ]);
 

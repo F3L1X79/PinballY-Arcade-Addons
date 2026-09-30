@@ -1,9 +1,9 @@
 ﻿// ============================================================
 // The Achievement List, started through main.js on the fake PinballY
-// globals: its main menu entry sits right after "Play", above the other
-// custom entries, and opens the drawn list of the real Achievements (the
-// Unlocked ones first, the missing ones in natural order with their
-// Achievement Progress). Exit reopens the main menu on the entry; opened
+// globals: its main menu entry sits in the personal section, after the
+// launch section and a separator, and opens the drawn list of the real
+// Achievements (the Unlocked ones first, the missing ones in natural order
+// with their Achievement Progress). Exit reopens the main menu on the entry; opened
 // from the Profile Stats, Exit shows the Profile Stats again.
 // ============================================================
 
@@ -43,7 +43,10 @@ const GUEST_NOTIFIED = ["collectionMilestone:10percent", "collectionMilestone:fi
 
 const ADD_ONS_UNDER_TEST = ["customMenuCommands", "achievements"];
 
-test("the Achievement List entry follows Play, lists the real Achievements and Exit goes back one level", async () => {
+// A separator has no title.
+const SEPARATOR = undefined;
+
+test("the Achievement List entry sits in the personal section, lists the real Achievements and Exit goes back one level", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
     fake.addFile(GUEST_PROFILE_FILE, JSON.stringify({ version: 1, plays: GUEST_PLAYS, notified: GUEST_NOTIFIED }));
     // Never uninstalled: node --test runs each test file in its own process.
@@ -65,12 +68,14 @@ test("the Achievement List entry follows Play, lists the real Achievements and E
     openMainMenu();
     assert.deepEqual(fake.currentMenu().items.map(item => item.title), [
         "Play",
-        TEXT.menuEntry,
-        lang.profileStats.menuEntry,
         MENU_LABELS.tableSetup,
-        MENU_LABELS.randomGame,
         MENU_LABELS.tableOfTheDay,
         MENU_LABELS.tableOfTheWeek,
+        MENU_LABELS.randomGame,
+        SEPARATOR,
+        TEXT.menuEntry,
+        lang.profileStats.menuEntry,
+        SEPARATOR,
         "Exit",
     ]);
 
