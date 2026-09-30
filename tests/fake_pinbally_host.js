@@ -50,11 +50,13 @@ const parentFolder = path => path.slice(0, path.lastIndexOf("\\"));
 
 // Records its runs and gives a plausible measure; drawing it writes each
 // run's text (without its line break) to the drawing context, where the
-// fake layer records it.
+// fake layer records it. Like PinballY, measuring it with no text logs a
+// layout error and gives 0 by 0.
 class FakeStyledText {
-    constructor(options = {}) {
+    constructor(options = {}, log = () => {}) {
         this.options = options;
         this.runs = [];
+        this.log = log;
     }
 
     add(run) {
@@ -66,6 +68,10 @@ class FakeStyledText {
     }
 
     measure(width) {
+        if (this.runs.length === 0) {
+            this.log("Error creating styled text layout (CreateTextFormat, HRESULT=80070057)");
+            return { width: 0, height: 0 };
+        }
         const lines = this.text().split("\n");
         const lineCount = lines.reduce(
             (count, line) => count + Math.max(1, Math.ceil(line.length * CHAR_WIDTH / width)), 0);
@@ -262,9 +268,9 @@ export function createFakePinballYHost({
                 if (!isImageReadable(path)) throw new Error(`Cannot load image: ${path}`);
                 return { width: 256, height: 256 };
             },
-            drawText: (text) => {
+            drawText: (text, rect) => {
                 texts.push(text);
-                strokes.push({ text });
+                strokes.push({ text, rect: rect && { ...rect } });
             },
         };
         const layer = {
@@ -538,7 +544,7 @@ export function createFakePinballYHost({
         showMenu,
         on,
         createDrawingLayer,
-        createStyledText: (options) => new FakeStyledText(options),
+        createStyledText: (options) => new FakeStyledText(options, (text) => { logLines.push(text); }),
         allocateCommand,
         getBuiltInCommand,
         doCommand: (id) => { executedCommands.push(id); },

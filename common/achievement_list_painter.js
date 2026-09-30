@@ -327,7 +327,11 @@ export function drawMask(host, dc, g, { header, footer }) {
 // Its title in gold, the count beside it, and a rule to the right edge.
 export function drawSectionHeader(host, dc, width, { title, count }) {
     const style = { font: FONTS.display, size: 17 };
-    const textY = LIST_LOOK.sectionHeight - 8 - host.createStyledText({ textStyle: style }).measure(width).height;
+    // Measured on the title itself: PinballY cannot lay out an empty text
+    // (it logs an error and measures it 0 high).
+    const probe = host.createStyledText({ textStyle: { ...style, weight: 700 } });
+    probe.add(title);
+    const textY = LIST_LOOK.sectionHeight - 8 - probe.measure(width).height;
     const titleSize = drawText(host, dc, [title], { ...style, x: 6, y: textY, width, weight: 700, color: COLORS.gold });
     const countX = 6 + titleSize.width + 10;
     const countSize = drawText(host, dc, [count], { ...style, x: countX, y: textY, width: width - countX, weight: 400, color: COLORS.description });

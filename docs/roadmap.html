@@ -266,7 +266,6 @@
 
           <div class="ax row">Fort</div>
           <div class="cell sweet">
-            <a class="chip tr-play" href="#list-missing-texts"><b></b>Textes manquants</a>
           </div>
           <div class="cell">
             <a class="chip tr-profiles" href="#marked-profiles"><b></b>Profiles marqués</a>
@@ -543,25 +542,6 @@
           <details>
             <summary>Contexte</summary>
             <p class="ctx">On ne modifie jamais <code>System\</code> (<code>.claude/rules/conventions.md</code>) : la revue ne produit que des constats, et d'éventuels changements de notre côté. Utile aussi pour la <a href="#nested-install">installation non invasive (n° <span data-ref="nested-install"></span>)</a>, qui doit décider où <code>System\</code> se trouve par rapport au dépôt.</p>
-          </details>
-        </div>
-      </li>
-
-
-      <li draggable="true" tabindex="0" class="item tr-play" id="list-missing-texts" data-track="play" data-rank="bronze">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Achievement List : textes des en-têtes de section manquants</h3>
-            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span><span class="tag">bug</span></div>
-          </div>
-          <p>Sur la borne, les en-têtes de section de l'Achievement List n'affichent que des accents isolés (<code>` ´ ´</code>) au lieu de leur texte, et <code>logfile.log</code> se remplit de « Error creating styled text layout (CreateTextFormat, HRESULT=80070057) », au démarrage (dessin d'avance) comme à l'ouverture.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>diagnose</span><i>›</i><span>implement</span></div>
-          <div class="links">Flow Matt : <code>/diagnosing-bugs</code>, puis <code>/implement</code></div>
-          <details>
-            <summary>Contexte</summary>
-            <p class="ctx">Vu le 30/09/2026 pendant la mesure du Profile picker (capture et log de la session). <code>80070057</code> est <code>E_INVALIDARG</code> : un argument de <code>CreateTextFormat</code> (police, taille, graisse ou style) refusé par DirectWrite. Les lignes et le bandeau s'affichent bien, seuls les en-têtes de section sont touchés.</p>
           </details>
         </div>
       </li>

@@ -127,6 +127,23 @@ test("the list opens over the menu with the Profile's header, both sections and 
     ]);
 });
 
+test("the section headers' texts sit inside their layer, with no text layout error", () => {
+    const { fake } = setUp();
+
+    const titles = [upper(TEXT.unlockedSection), upper(TEXT.missingSection)];
+    const headers = fake.drawingLayers()
+        .filter(layer => layer.zIndex === ACHIEVEMENT_LIST_Z_INDEX.items && titles.includes(layer.texts()[0]));
+    assert.equal(headers.length, 2, "both section headers are drawn");
+    for (const header of headers) {
+        const { height } = header.canvasSize();
+        for (const { text, rect } of header.strokes().filter(stroke => "text" in stroke)) {
+            assert.ok(rect.y >= 0 && rect.y + rect.height <= height,
+                `"${text}" drawn from y=${rect.y} to y=${rect.y + rect.height} fits the ${height}-pixel header`);
+        }
+    }
+    assert.deepEqual(fake.logLines().filter(line => line.includes("styled text layout")), []);
+});
+
 test("the list always opens at the top, on the first Achievement", () => {
     const { fake, list } = setUp();
     pressAndGlide(fake, "Next");
