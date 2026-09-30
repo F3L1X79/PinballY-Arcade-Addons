@@ -234,7 +234,7 @@
   <!-- ===== Queue ===== -->
   <section>
     <p class="eyebrow">File d'attente <span class="count" id="queue-count"></span></p>
-    <p class="lede"><strong>Pourquoi cet ordre :</strong> finir ce qui est en cours, lancer tôt ce qui accumule des données, préparer l'arrivée de nouveaux joueurs, enchaîner les petits Achievements (un seul grilling), puis la fiche joueur et ce qui s'appuie dessus. Traductions et Distribution à la fin, quand les textes et les fonctionnalités sont stables.</p>
+    <p class="lede"><strong>Pourquoi cet ordre :</strong> finir ce qui est en cours, lancer tôt ce qui accumule des données, préparer l'arrivée de nouveaux joueurs, enchaîner les petits Achievements (un seul grilling), puis la fiche joueur, la Maîtrise des tables et ce qui s'appuie dessus. Traductions et Distribution à la fin, quand les textes et les fonctionnalités sont stables.</p>
     <p class="lede">Glisse une ligne, ou utilise ▲ ▼ (ou <kbd>ALT</kbd> + flèches sur la ligne surlignée), pour changer la priorité. Ton ordre reste dans ce navigateur : copie-le et colle-le-moi pour que je l'écrive dans le fichier.</p>
 
     <div class="toolbar">
@@ -392,31 +392,6 @@
         </div>
       </li>
 
-      <li draggable="true" tabindex="0" class="item tr-play" id="table-fan" data-track="play" data-rank="silver">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Maîtrise des tables : Apprenti → Grand Maître</h3>
-            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span><span class="tag">UI</span></div>
-          </div>
-          <p>Chaque table donne un titre selon le temps que le Profile y a joué : Apprenti, Habitué, Virtuose, Grand Maître (en anglais Rookie, Regular, Expert, Wizard). Une échelle de <strong>4 Achievements en tout</strong>, pas par table : « atteindre ce titre sur une table », avec la table la plus avancée comme Achievement Progress. Le détail par table vit dans un écran à part, et un toast non bloquant fait le récap après la partie.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">À griller avec le <a href="#world-tour">Tour du monde (n° <span data-ref="world-tour"></span>)</a> et les <a href="#hidden-achievements">Achievements cachés (n° <span data-ref="hidden-achievements"></span>)</a> ; l'écran par table rejoint la <a href="#stats-drawn">fiche joueur (n° <span data-ref="stats-drawn"></span>)</a></div>
-          <details>
-            <summary>Questions ouvertes (5)</summary>
-            <ul>
-              <li>Seuils de temps de chaque titre (par exemple 30 min, 2 h, 5 h, 10 h) ? Ils font partie des ID, à figer dans <code>persisted_data_pinning.test.js</code>.</li>
-              <li>Récap après la partie : à chaque partie d'au moins une minute (progression vers le titre suivant), ou seulement quand un titre est atteint ?</li>
-              <li>Où vit la liste des tables et de leurs titres : un écran à part ouvert depuis la fiche joueur, ou une section de celle-ci ?</li>
-              <li>Afficher aussi le titre de la table sélectionnée sur la roue (près de la Challenge Card) ?</li>
-              <li>Tables Hidden exclues ? Quelle Achievement Family : Play Time, ou une nouvelle « Maîtrise » ?</li>
-            </ul>
-            <p class="ctx">Fusion du « Féru d'une table » et de l'idée d'XP par table (30/09/2026). Le temps est plus juste que le nombre de parties, qui avantage les parties courtes ; il est déjà suivi par Profile (<code>plays[configId].seconds</code>). Les noms passent par <code>lang/</code> : chaque langue a les siens.</p>
-          </details>
-        </div>
-      </li>
-
       <li draggable="true" tabindex="0" class="item tr-play" id="hidden-achievements" data-track="play" data-rank="bronze">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>
@@ -427,7 +402,7 @@
           </div>
           <p>Un Achievement peut être caché : l'Achievement List montre « ??? » et un indice (« Il se passe quelque chose après minuit… ») jusqu'à son déblocage. Esprit arcade, sans nouveau type : la difficulté reste dite par l'Achievement Rank.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">À griller avec le <a href="#world-tour">Tour du monde (n° <span data-ref="world-tour"></span>)</a> et la <a href="#table-fan">Maîtrise des tables (n° <span data-ref="table-fan"></span>)</a> : un seul grilling</div>
+          <div class="links">À griller avec le <a href="#world-tour">Tour du monde (n° <span data-ref="world-tour"></span>)</a> : un seul grilling</div>
           <details>
             <summary>Questions ouvertes (4)</summary>
             <ul>
@@ -451,7 +426,7 @@
           </div>
           <p>Passer les Profile Stats et leur liste de tables des menus natifs à une vraie fiche joueur dessinée, avec la palette commune. Elle gagne un <strong>niveau du joueur</strong>, calculé à partir des Achievement Ranks débloqués, et de nouvelles stats : durée moyenne d'une partie, meilleure Streak, tables découvertes, première et dernière table jouée.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Reprend la surface et la palette de l'Achievement List ; avant les <a href="#stats">Stats des autres (n° <span data-ref="stats"></span>)</a></div>
+          <div class="links">Reprend la surface et la palette de l'Achievement List ; à griller avec la <a href="#table-mastery">Maîtrise des tables (n° <span data-ref="table-mastery"></span>)</a>, avant les <a href="#stats">Stats des autres (n° <span data-ref="stats"></span>)</a></div>
           <details>
             <summary>Questions ouvertes (3)</summary>
             <ul>
@@ -460,6 +435,31 @@
               <li>« Première table jouée » n'existe que depuis le journal des parties : l'afficher seulement quand il la connaît ?</li>
             </ul>
             <p class="ctx">Reporté pendant le grilling de l'Achievement List dessinée (27/09/2026). Le niveau remplace l'idée externe d'un système d'XP (30/09/2026) : aucune donnée nouvelle, aucun barème d'activités à équilibrer.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="table-mastery" data-track="profiles" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Maîtrise des tables : Apprenti → Grand Maître</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span><span class="tag">UI</span></div>
+          </div>
+          <p>Chaque table donne un titre selon le temps que le Profile y a joué : Apprenti, Habitué, Virtuose, Grand Maître (en anglais Rookie, Regular, Expert, Wizard). Une progression à part, <strong>sans Achievement</strong> : le détail par table vit dans la fiche joueur, et un toast non bloquant fait le récap après la partie.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">À griller avec la <a href="#stats-drawn">fiche joueur (n° <span data-ref="stats-drawn"></span>)</a>, dont elle utilise l'écran</div>
+          <details>
+            <summary>Questions ouvertes (4)</summary>
+            <ul>
+              <li>Seuils de temps de chaque titre (par exemple 30 min, 2 h, 5 h, 10 h) ?</li>
+              <li>Récap après la partie : à chaque partie d'au moins une minute (progression vers le titre suivant), ou seulement quand un titre est atteint ?</li>
+              <li>Dans la fiche joueur : une section, ou un écran ouvert depuis elle ?</li>
+              <li>Afficher aussi le titre de la table sélectionnée sur la roue (près de la Challenge Card) ?</li>
+              <li>Tables Hidden exclues ?</li>
+            </ul>
+            <p class="ctx">Fusion du « Féru d'une table » et de l'idée d'XP par table (30/09/2026). Pas d'Achievement : ils doubleraient le toast de maîtrise, et la famille Play Time récompense déjà le temps de jeu. Un Achievement de synthèse (« Grand Maître sur 5 tables ») pourra venir plus tard si le niveau du joueur paraît trop pauvre. Le temps est plus juste que le nombre de parties ; il est déjà suivi par Profile (<code>plays[configId].seconds</code>). Les noms passent par <code>lang/</code> : chaque langue a les siens.</p>
           </details>
         </div>
       </li>
@@ -591,12 +591,14 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
-          <summary>30/09 <span class="count">(8)</span></summary>
+          <summary>30/09 <span class="count">(9)</span></summary>
           <ol>
+            <li><strong>La Maîtrise des tables sans Achievement</strong>
+              <span>Une progression à part : les Achievements doubleraient son toast, et Play Time récompense déjà le temps. Grillée avec la fiche joueur, juste après elle.</span></li>
             <li><strong>Guest aura les Challenges</strong>
               <span>Sans Profile créé, il est le seul Profile : le priver des Challenges cachait l'un des points forts du pack. Il reste hors de l'Unlock Rate.</span></li>
             <li><strong>Féru d'une table devient Maîtrise des tables</strong>
-              <span>Un titre par table selon le temps joué, mais 4 Achievements en tout, pas par table. Détail dans un écran à part, récap en toast après la partie. Noms propres à chaque langue : Apprenti → Grand Maître en français.</span></li>
+              <span>Un titre par table selon le temps joué. Détail dans un écran à part, récap en toast après la partie. Noms propres à chaque langue : Apprenti → Grand Maître en français.</span></li>
             <li><strong>Nouvel ordre de la file, pensé par Claude</strong>
               <span>Finir les Profiles marqués, lancer tôt le journal des parties (les données s'accumulent), préparer l'arrivée de nouveaux joueurs (revue de <code>System\</code>, installation non invasive), puis les petits Achievements, les Profile Stats, et la diffusion en dernier.</span></li>
             <li><strong>Idées externes triées</strong>
@@ -670,7 +672,7 @@
                         <a class="chip tr-play" href="#hidden-achievements"><b></b>Succès cachés</a>
           </div>
           <div class="cell">
-            <a class="chip tr-play" href="#table-fan"><b></b>Maîtrise des tables</a>
+            <a class="chip tr-profiles" href="#table-mastery"><b></b>Maîtrise des tables</a>
             <a class="chip tr-profiles" href="#stats-drawn"><b></b>Fiche joueur</a>
             <a class="chip tr-profiles" href="#stats"><b></b>Stats des autres</a>
             <a class="chip tr-share" href="#language-menu"><b></b>Menu des langues</a>
