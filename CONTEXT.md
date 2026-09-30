@@ -20,6 +20,18 @@ _Avoid_: account, user, login
 The Profile that always exists and cannot be removed; it is the active Profile until another one is picked, and whenever the Profile picker is turned off.
 _Avoid_: default user, anonymous
 
+**Admin Profile**:
+A Profile marked as one of those who look after the cabinet: only Admin Profiles see the setup entries of the menus, and only they find the Profile Reset in the Exit menu. While no Profile is marked, every Profile sees everything. Guest is never one.
+_Avoid_: administrator, operator (the operator is whoever holds the coin door key)
+
+**Child Profile**:
+A Profile marked as a child's: Adult Tables are left out of everything it can pick a table from, Period Tables included: while a Period Table is an Adult Table, it is not offered to a Child Profile at all. Not parental control: nothing asks for a password. Guest is never one.
+_Avoid_: kid mode, parental control, family filter
+
+**Profile Reset**:
+Starting a Profile over as if it had never played: its plays, Streaks, Challenge progress and Notified Achievements are erased, while its name, Avatar and marks stay. Only an Admin Profile can reset one, and never while no Profile is an Admin Profile.
+_Avoid_: fresh start, wipe, achievement reset (the Achievements come from the plays, so the plays go too)
+
 **Avatar**:
 The picture that stands for a Profile.
 _Avoid_: profile picture, photo
@@ -42,6 +54,10 @@ _Avoid_: timeframe, cycle
 A table picked once per Period and kept for the whole Period, offered to the player as a suggestion. The same for every Profile. Never the previous Period's table, unless it is the only one.
 _Avoid_: daily pick, featured table, table of period
 
+**Adult Table**:
+A table in the PinballY category set aside for adults ("NSFW" unless configured otherwise). A Child Profile never sees one, and it counts in none of its groups for completion Achievements.
+_Avoid_: NSFW table, hidden table (Hidden is PinballY's own flag, for the whole cabinet)
+
 **Table of the Day**:
 The Period Table whose Period is a day; prefers tables never played, otherwise the one played longest ago.
 
@@ -60,7 +76,7 @@ The ten visible tables the active Profile has spent the most time on, ranked fro
 _Avoid_: top played, most played, leaderboard
 
 **Streak**:
-The number of consecutive Periods in which the active Profile actually played the Period Table during its Period, however it was launched.
+The number of consecutive Periods in which the active Profile actually played the Period Table during its Period, however it was launched. A Period whose Period Table is an Adult Table neither extends nor breaks a Child Profile's Streak.
 _Avoid_: combo, chain
 
 **Periods Played**:
