@@ -41,7 +41,7 @@ The short greeting, with the Avatar and the Profile's name, shown when a Profile
 _Avoid_: welcome toast, login message
 
 **Profile Stats**:
-The screen, opened by the player from the main menu, that sums up the active Profile's own plays: games played, total time, favourite manufacturer and decade, most played and never played tables, collection completion, Achievements Unlocked, and Streaks. Shown as "Statistiques" in French.
+The screen, opened by the player from the main menu, that sums up the active Profile's own plays: games played, total time, favourite manufacturer and decade, most played and never played tables, collection completion, Achievements Unlocked, and Streaks. Shown as "Statistiques" in French, opened from "Vos statistiques" ("Your Stats").
 _Avoid_: Pinball Profile, player card, profile screen (a Profile is the identity, not the screen)
 
 ### Choosing what to play
@@ -74,6 +74,10 @@ _Avoid_: random table, lucky pick
 **Hall of Fame**:
 The ten visible tables the active Profile has spent the most time on, ranked from the most played, offered as a wheel selection from the main menu. Shown as "Most Played Tables" ("Tables les plus jouées" in French), like the same tables in the Profile Stats.
 _Avoid_: top played, most played, leaderboard
+
+**Favorite Tables**:
+The tables the household has added to PinballY's favourites, offered as a wheel selection from the main menu, right under the Hall of Fame. Shown as "Tables favorites" in French.
+_Avoid_: Favorites, favourites filter
 
 **Streak**:
 The number of consecutive Periods in which the active Profile actually played the Period Table during its Period, however it was launched. A Period whose Period Table is an Adult Table neither extends nor breaks a Child Profile's Streak.
@@ -119,7 +123,7 @@ An Achievement whose condition holds right now. It can be lost again, for exampl
 _Avoid_: earned, obtained
 
 **Achievement List**:
-The screen, opened by the player, that shows every Achievement in one scrolling list of two sections: the Unlocked ones, the most recently Notified at the top, then the missing ones, the highest Unlock Rate first. Each Achievement shows its Achievement Rank. Shown as "Succès personnels" in French.
+The screen, opened by the player, that shows every Achievement in one scrolling list of two sections: the Unlocked ones, the most recently Notified at the top, then the missing ones, the highest Unlock Rate first. Each Achievement shows its Achievement Rank. Shown as "Succès personnels" in French, opened from "Voir vos succès" ("Your Achievements").
 _Avoid_: My Achievements, trophy room
 
 **Achievement Family**:
