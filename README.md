@@ -2,9 +2,6 @@
 
 An unofficial extension of [PinballY](http://mjrnet.org/pinscape/PinballY.php), written with the JavaScript scripting API that PinballY opens to every developer. · *[Version française](README.fr.md)*
 
-> [!WARNING]
-> **Work in progress.** The project is still under construction: features, settings and saved data may change from one version to the next.
-
 > **Give everyone in the house a real reason to come back to your pincab.** A Profile with an Avatar for each of you, a Table of the Day, weekly Challenges, Achievements from Bronze to Platinum, and PinballY itself in French, German, Spanish, Italian or Portuguese: everything PinballY was missing, without touching PinballY. And this is only the beginning…
 
 <img src="docs/images/hero.png" alt="The wheel screen with the clock, the active Profile's badge and the week's Challenge Card" width="360">
@@ -60,6 +57,10 @@ ACHIEVEMENT_TOAST_SECONDS=4
 `LANGUAGE` sets the language (`en`, `fr`, `de`, `es`, `it` or `pt`) and `ACHIEVEMENT_TOAST_SECONDS` how many seconds an Achievement stays on screen. Every feature can be turned off with its `ADD_ON_*` key, for example `ADD_ON_CLOCK=false`. Every setting is described in [.env.example](.env.example).
 
 Each Profile's progress is saved in the `profiles` folder, which project updates never overwrite: keep it to get your progress back after reinstalling.
+
+### Admin Profile
+
+To keep the setup entries for yourself, add `"isAdmin": true` at the top level of your Profile's `profiles\<name>\profile.json`, PinballY closed. Once at least one Profile is marked, the other Profiles (Guest included) no longer see "Table Setup" in the main menu nor "Operator Menu" in the Exit menu; the Admin Profiles still see both, and the coin door service button still opens the Operator Menu for anyone. Several Profiles can be marked. Guest is never an Admin Profile, and a mark that is not `true` or `false` is ignored and logged in `PinballY.log`.
 
 ## Contributing
 

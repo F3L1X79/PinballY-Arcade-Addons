@@ -2,9 +2,6 @@
 
 Extension non officielle de [PinballY](http://mjrnet.org/pinscape/PinballY.php), écrite avec l'API de scripting JavaScript que PinballY ouvre à tous les développeurs. · *[English version](README.md)*
 
-> [!WARNING]
-> **Projet en construction.** Les fonctionnalités, les réglages et les données enregistrées peuvent encore changer d'une version à l'autre.
-
 > **Votre pincab, en français, avec de vraies raisons d'y revenir.** Profils avec avatar, table du jour, défis hebdomadaires, succès Bronze à Platine : tout ce qui manquait à PinballY, sans toucher à PinballY. Et ce n'est que le début…
 
 <img src="docs/images/hero.png" alt="L'écran de la roue avec l'horloge, le badge du Profil actif et la carte du Défi de la semaine" width="360">
@@ -60,6 +57,10 @@ ACHIEVEMENT_TOAST_SECONDS=4
 `LANGUAGE` choisit la langue (`en`, `fr`, `de`, `es`, `it` ou `pt`) et `ACHIEVEMENT_TOAST_SECONDS` le nombre de secondes pendant lesquelles un Succès reste affiché. Chaque fonctionnalité se désactive avec sa clé `ADD_ON_*`, par exemple `ADD_ON_CLOCK=false`. Tous les réglages sont décrits dans [.env.example](.env.example).
 
 La progression de chaque Profil est enregistrée dans le dossier `profiles`, que les mises à jour du projet n'écrasent jamais : gardez-le pour la retrouver après une réinstallation.
+
+### Profil admin
+
+Pour garder les entrées de configuration pour vous seul, ajoutez `"isAdmin": true` au premier niveau du `profiles\<nom>\profile.json` de votre Profil, PinballY fermé. Dès qu'au moins un Profil est marqué, les autres Profils (Invité compris) ne voient plus « Configuration de la table » dans le menu principal ni « Menu opérateur » dans le menu de sortie ; les Profils admin voient toujours les deux, et le bouton de service de la porte monnayeur ouvre toujours le Menu opérateur pour tout le monde. Plusieurs Profils peuvent être marqués. Invité n'est jamais un Profil admin, et une marque qui n'est ni `true` ni `false` est ignorée et signalée dans `PinballY.log`.
 
 ## Contribuer
 

@@ -225,3 +225,41 @@ test("the active Profile's data and the cabinet data can be updated, and each up
     assert.equal(readJson(fake, CABINET_FILE).note, "kept");
     assert.equal(store.getCabinetData().note, "kept");
 });
+
+test("the isAdmin mark is read for the active Profile and by name, and kept when profile.json is rewritten", () => {
+    const fake = createFake();
+    fake.addFile(`${PROFILES}\\Alice\\profile.json`, JSON.stringify({ version: 1, isAdmin: true }));
+    fake.addFolder(`${PROFILES}\\Bob`);
+    const store = createProfileStore(fake);
+
+    assert.equal(store.isAdmin(), false, "Guest, the active Profile, is not marked");
+    assert.equal(store.isAdmin("Alice"), true);
+    assert.equal(store.isAdmin("Bob"), false, "a missing mark is false");
+    assert.equal(store.hasAdminProfile(), true);
+
+    store.switchTo("Alice");
+    assert.equal(store.isAdmin(), true);
+    play(fake, MEDIEVAL, 60);
+    assert.equal(readJson(fake, `${PROFILES}\\Alice\\profile.json`).isAdmin, true, "the mark survives a save");
+    assert.equal(createProfileStore(fake).isAdmin(), true, "and a restart");
+});
+
+test("a mark that is not a boolean, or a mark on Guest, is logged once and read as false", () => {
+    const fake = createFake();
+    fake.addFile(`${PROFILES}\\Alice\\profile.json`, JSON.stringify({ version: 1, isAdmin: "yes" }));
+    fake.addFile(GUEST_FILE, JSON.stringify({ version: 1, isAdmin: true }));
+    const store = createProfileStore(fake);
+
+    assert.equal(store.isAdmin(), false);
+    assert.equal(store.isAdmin("Alice"), false);
+    assert.equal(store.hasAdminProfile(), false);
+    store.hasAdminProfile();
+    store.switchTo("Alice");
+    play(fake, MEDIEVAL, 60);
+    assert.equal(readJson(fake, `${PROFILES}\\Alice\\profile.json`).isAdmin, "yes", "a wrong mark is kept for the player to fix");
+
+    const markLines = fake.logLines().filter(line => line.includes("isAdmin"));
+    assert.equal(markLines.length, 2, markLines.join("\n"));
+    assert.ok(markLines.some(line => line.includes("guest\\profile.json")));
+    assert.ok(markLines.some(line => line.includes("Alice\\profile.json")));
+});

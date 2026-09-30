@@ -3,8 +3,8 @@
 // interface as common/pinbally_host.js, plus controls for the tests: set
 // the date (a manual clock that also runs the host's timers), the monitor
 // count, the table list, the wheel selection (and its filter) and the
-// layout size, seed settings, fire PinballY events, pick menu items, play
-// launched games, and inspect shown menus, launches, written settings keys,
+// layout size, seed settings, fire PinballY events, open the Exit menu
+// with its native items, pick menu items, play launched games, and inspect shown menus, launches, written settings keys,
 // drawing layers, what was drawn, sounds played (and on which player), the
 // backglass window shown or hidden, and the lower status line (which can
 // start with the player's own messages, and get a temporary one as
@@ -29,7 +29,7 @@ export const settle = () => new Promise(resolve => realSetTimeout(resolve, 10));
 // PinballY's own commands used by the add-ons; custom ones start above them.
 const BUILT_IN_COMMANDS = {
     PlayGame: 1, ShowGameSetupMenu: 2, RateGame: 3, MenuReturn: 4, MenuPageUp: 5, MenuPageDown: 6, Quit: 7,
-    ShowMainMenu: 8,
+    ShowMainMenu: 8, ShowOperatorMenu: 9, PowerOff: 10,
 };
 const FIRST_CUSTOM_COMMAND = 1000;
 
@@ -623,19 +623,42 @@ export function createFakePinballYHost({
         currentMenu: () => shownMenu,
 
         // A menu opened by the player (unlike showMenu, which doesn't fire
-        // "menuopen"): handlers may add items before it is shown.
+        // "menuopen"): handlers may add items, or delete them by command id
+        // then tidy the separators, before it is shown.
         openMenu(id, items) {
-            const menuItems = [...items];
+            let menuItems = [...items];
             const ev = fire("menuopen", {
                 id,
-                items: menuItems,
+                get items() { return menuItems; },
                 addMenuItem(where, newItems) {
                     const toAdd = Array.isArray(newItems) ? newItems : [newItems];
                     const afterIndex = menuItems.findIndex(item => item.cmd === where.after);
                     menuItems.splice(afterIndex + 1, 0, ...toAdd);
                 },
+                deleteMenuItem(cmd) {
+                    menuItems = menuItems.filter(item => item.cmd !== cmd);
+                    this.menuUpdated = true;
+                },
+                // Like PinballY: each run of separators becomes a single one.
+                tidyMenu() {
+                    menuItems = menuItems.filter((item, index) => item.cmd !== -1 || menuItems[index - 1]?.cmd !== -1);
+                    this.menuUpdated = true;
+                },
             });
             if (!ev.defaultPrevented) showMenu(id, menuItems);
+        },
+
+        // The Exit menu as PinballY opens it on the Exit button, with its
+        // native items.
+        openExitMenu() {
+            host.openMenu("exit", [
+                { title: "Exit PinballY", cmd: BUILT_IN_COMMANDS.Quit },
+                { title: "Shut Down", cmd: BUILT_IN_COMMANDS.PowerOff },
+                { cmd: -1 },
+                { title: "Operator Menu", cmd: BUILT_IN_COMMANDS.ShowOperatorMenu },
+                { cmd: -1 },
+                { title: "Cancel", cmd: BUILT_IN_COMMANDS.MenuReturn },
+            ]);
         },
 
         // Closes the current menu (as Escape would). Back to the wheel only if

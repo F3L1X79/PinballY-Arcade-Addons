@@ -150,9 +150,9 @@ export default {
             const lines = [`Salut à toi, ${playerName} !`];
             lines.push('');
             lines.push('Choisis une option parmi celles-ci pour pouvoir démarrer ton pèlerinage de Geek.');
-            lines.push('---');
+            if (dayTitle) lines.push('---');
             if (dayTitle) lines.push(`Table du jour : ${dayTitle}`);
-            lines.push('---');
+            if (weekTitle) lines.push('---');
             if (weekTitle) lines.push(`Table de la semaine : ${weekTitle}`);
             return lines.join("\n");
         },

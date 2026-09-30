@@ -6,7 +6,9 @@
 // are read at startup and on each switch, kept in memory, and rewritten
 // whole on every change (tmp, backup, rename). A broken file comes back
 // from its backup, or is set aside under a dated name when the backup is
-// broken too; every such problem is logged to logfile.log.
+// broken too; every such problem is logged to logfile.log. A Profile's
+// marks (isAdmin), set by hand in its profile.json, are read and kept
+// through every rewrite, never written.
 // Listens to "gamestarted" / "gameover" to record every finished game for
 // the Profile active when it started; at startup, creates the Guest folder
 // and writes cabinet.json when they are missing. Tells its listeners of
@@ -68,6 +70,8 @@ export function createProfileStore(host) {
     const log = text => host.log(`[${SCRIPT_NAME}] ${text}`);
     // Logged once per session: the picker lists the Profiles on every opening.
     const loggedUnreadableAvatars = new Set();
+    // Logged once per session too: the menus check the marks on every opening.
+    const loggedMarkProblems = new Set();
 
     // The first readable one of the Profile's own Avatars, otherwise the default Avatar.
     function avatarPathOf(folder) {
@@ -222,6 +226,29 @@ export function createProfileStore(host) {
         }
     }
 
+    // A mark set by hand (ADR 0006) counts only when it is true on a Profile
+    // other than Guest; any other value is logged and read as false, but kept
+    // in the file for the player to fix.
+    function markOf(profile, data, markName) {
+        const value = data[markName];
+        if (value === undefined || value === false) return false;
+        let problem = null;
+        if (profile.isGuest) problem = `Guest is never marked "${markName}"`;
+        else if (typeof value !== "boolean") problem = `"${markName}" must be true or false, not ${JSON.stringify(value)}`;
+        if (!problem) return true;
+        const problemLine = `${profile.name}\\profile.json: ${problem}; read as false.`;
+        if (!loggedMarkProblems.has(problemLine)) {
+            loggedMarkProblems.add(problemLine);
+            log(problemLine);
+        }
+        return false;
+    }
+
+    const isAdmin = (profileName = activeProfile.name) => {
+        const { profile, data } = profileWithData(profileName);
+        return markOf(profile, data, "isAdmin");
+    };
+
     function switchTo(name) {
         const profile = findProfile(name);
         if (!profile) throw new Error(`No Profile named "${name}".`);
@@ -283,6 +310,11 @@ export function createProfileStore(host) {
         // The IDs of the Achievements the named Profile was Notified of.
         getNotifiedOf: (profileName) => profileWithData(profileName).data.notified,
         updateProfileData,
+        // Whether the named Profile (the active one by default) is an Admin Profile.
+        isAdmin,
+        // Whether any Profile is an Admin Profile; re-read on every call, so a hand edit shows up.
+        // Guest is skipped since it never counts: reading it would only log its mark on every menu opening.
+        hasAdminProfile: () => listProfileNames().filter(name => !isGuestName(name)).some(isAdmin),
         getCabinetData: () => cabinet,
         updateCabinetData: (change) => {
             change(cabinet);

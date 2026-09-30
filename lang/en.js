@@ -61,9 +61,9 @@ export default {
     startupPrompt: {
         introWithPicks: (playerName, dayTitle, weekTitle) => {
             const lines = [`Hi, ${playerName}! How would you like to start?`];
-            lines.push('---');
+            if (dayTitle) lines.push('---');
             if (dayTitle) lines.push(`Table of the Day: ${dayTitle}`);
-            lines.push('---');
+            if (weekTitle) lines.push('---');
             if (weekTitle) lines.push(`Table of the Week: ${weekTitle}`);
             return lines.join("\n");
         },

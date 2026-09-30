@@ -4,7 +4,8 @@
 // every Achievement ID produced, and the Guest profile.json (play record,
 // Streaks and Periods Played, Random Games played, session stats and
 // Notified list) and cabinet.json (active Profile, Period Table locks)
-// written by the Profile store; no PinballY settings key is written. A
+// written by the Profile store; no PinballY settings key is written. The
+// Admin Profile mark (isAdmin) keeps its key through a rewrite. A
 // second test locks the Challenges' saved data: the week's lock in
 // cabinet.json, a Profile's "challenge" record and its counted games in
 // profile.json, and the template ids. A third locks a verdict on the
@@ -349,6 +350,17 @@ test("a verdict on the previous Challenge stays byte-identical in the Profile's 
         { week: "2026-09-21", template: "differentTables", param: null, target: 2, reached: 0, completed: false },
     ]);
     assert.deepEqual(Object.keys(challenge.history[0]), ["week", "template", "param", "target", "reached", "completed"]);
+});
+
+test("the Admin Profile mark keeps its key in profile.json", () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    fake.addFile(`${PROFILES_FOLDER}\\Alice\\profile.json`, JSON.stringify({ version: 1, isAdmin: true }));
+    const store = createProfileStore(fake);
+    store.switchTo("Alice");
+    store.updateProfileData(data => { data.randomGames += 1; });
+
+    assert.equal(store.isAdmin(), true);
+    assert.equal(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`)).isAdmin, true);
 });
 
 test("the Challenge template ids stay byte-identical", () => {
