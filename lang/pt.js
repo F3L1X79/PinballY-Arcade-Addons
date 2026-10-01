@@ -420,6 +420,10 @@ export default {
         yes: "Sim, redefinir",
         no: "Não",
         cancel: "Cancelar",
+        // TODO: translation pass
+        done: name => `${name} starts over.`,
+        failed: name => `${name} could not be reset. See the log for details.`,
+        ok: "OK",
     },
 
     // The clock at the top left of the wheel screen.

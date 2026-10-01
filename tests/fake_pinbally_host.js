@@ -130,6 +130,8 @@ export function createFakePinballYHost({
     // program folder, its Scripts folder and the pack's folder exist, as in PinballY.
     const folders = new Set();
     const files = new Map();
+    // Files another program holds open: writing, renaming or deleting them throws.
+    const lockedFiles = new Set();
     // Image files that exist but cannot be decoded (broken or half-written).
     const unreadableImages = new Set();
     // Every write, rename and delete, in order: { operation, path, to? }.
@@ -400,6 +402,10 @@ export function createFakePinballYHost({
         if (!files.has(path)) throw new Error(`File not found: ${path}`);
     }
 
+    function requireUnlocked(path) {
+        if (lockedFiles.has(path)) throw new Error(`Permission denied: ${path}`);
+    }
+
     // Same rules as Scripting.FileSystemObject and ADODB.Stream: writing
     // needs the folder, renaming never overwrites, a missing file throws.
     const fileSystem = {
@@ -419,11 +425,13 @@ export function createFakePinballYHost({
         },
         writeText(path, text) {
             requireParentFolder(path);
+            requireUnlocked(path);
             files.set(path, text);
             fileOperationList.push({ operation: "write", path });
         },
         renameFile(fromPath, toPath) {
             requireFile(fromPath);
+            requireUnlocked(fromPath);
             requireParentFolder(toPath);
             if (files.has(toPath)) throw new Error(`File already exists: ${toPath}`);
             files.set(toPath, files.get(fromPath));
@@ -432,6 +440,7 @@ export function createFakePinballYHost({
         },
         deleteFile(path) {
             requireFile(path);
+            requireUnlocked(path);
             files.delete(path);
             fileOperationList.push({ operation: "delete", path });
         },
@@ -653,6 +662,8 @@ export function createFakePinballYHost({
             host.addFile(filePath, "not an image");
             unreadableImages.add(filePath);
         },
+        // Locks a file as another program holding it open would.
+        lockFile(filePath) { lockedFiles.add(filePath); },
         addFolder,
         // Removes the folder with everything in it, as a player would by hand.
         removeFolder(folderPath) {

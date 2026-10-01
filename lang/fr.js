@@ -424,6 +424,9 @@ export default {
         yes: "Oui, réinitialiser",
         no: "Non",
         cancel: "Annuler",
+        done: name => `${name} repart de zéro.`,
+        failed: name => `Impossible de réinitialiser ${name}. Voir le journal pour les détails.`,
+        ok: "OK",
     },
 
     // The clock at the top left of the wheel screen.
