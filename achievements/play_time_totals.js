@@ -8,7 +8,7 @@
 
 import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT } from "../common/achievements.js";
 import lang from "../common/i18n.js";
-import { getVisibleTables } from "../common/visible_tables.js";
+import { createPinballYHost } from "../common/pinbally_host.js";
 import { getProfileStore } from "../common/profile_store.js";
 
 // Each value is part of an Achievement ID: changing one would announce the
@@ -23,7 +23,9 @@ export function buildPlayTimeTotalAchievements() {
     // Rounded down to a tenth of an hour: it reaches a whole number of hours
     // exactly when the seconds do, so it never shows a target not yet met.
     function getTotalPlayTimeHours() {
-        const seconds = getVisibleTables()
+        // The household's visible tables, Adult Tables included: like the
+        // Profile Stats' total time, a Child Profile keeps what it played.
+        const seconds = createPinballYHost().getVisibleTables()
             .reduce((total, game) => total + getProfileStore().getPlay(game.configId).seconds, 0);
         return Math.floor(seconds / SECONDS_PER_TENTH_OF_AN_HOUR) / 10;
     }

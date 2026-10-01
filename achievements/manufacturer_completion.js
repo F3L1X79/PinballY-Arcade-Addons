@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // One achievement per manufacturer found in the collection (including
 // the fictional "VPX Community" manufacturer, treated like any other):
-// unlocked once the active Profile has played every visible table from
+// unlocked once the active Profile has played every table it can see from
 // that manufacturer at least once, with the tables played of that
 // manufacturer as Achievement Progress and an Achievement Rank from the
 // number of its tables. Sorted by manufacturer. Called by
@@ -10,13 +10,13 @@
 
 import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT } from "../common/achievements.js";
 import lang from "../common/i18n.js";
-import { getVisibleTables } from "../common/visible_tables.js";
+import { getActiveProfileTables } from "../common/visible_tables.js";
 import { getProfileStore } from "../common/profile_store.js";
 
 export function buildManufacturerCompletionAchievements() {
     const { achievements: TEXT } = lang;
 
-    const allGames = getVisibleTables();
+    const allGames = getActiveProfileTables();
 
     const manufacturers = new Set();
     for (const game of allGames) {

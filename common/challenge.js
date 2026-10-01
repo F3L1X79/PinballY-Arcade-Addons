@@ -16,8 +16,9 @@
 // completed count goes up and a Challenge Toast is submitted. When a
 // Profile first shows up in a later week, the previous Challenge is judged
 // once and the verdict kept in its history. It also selects the Challenge
-// Tables, for the templates where some tables move the Challenge forward,
-// and reads a Profile's record of completed Challenges.
+// Tables among the tables the active Profile can see, for the templates
+// where some tables move the Challenge forward, and reads a Profile's
+// record of completed Challenges.
 // Created from the PinballY host, the Profile store, the Period Tables, the
 // Random Game module, the Achievement Toast module and a random source; the
 // Add-ons share one instance through getChallenges(). Listens to "gamestarted" /
@@ -30,6 +31,7 @@ import { getProfileStore } from "./profile_store.js";
 import { getTableOfTheDay, getTableOfTheWeek, formatDateKey, getWeekKey } from "./period_table.js";
 import { getRandomGame } from "./random_game.js";
 import { getDecadeStartYear } from "./decade.js";
+import { isVisibleTo, tablesVisibleTo } from "./visible_tables.js";
 import { getAchievementToasts, TOAST_KIND } from "./achievement_toast.js";
 import config from "./config.js";
 import lang from "./i18n.js";
@@ -328,7 +330,7 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         const { tablesToPlay } = TEMPLATES[view.challenge.template];
         if (!tablesToPlay) return [];
         return tablesToPlay({
-            visibleTables: host.getVisibleTables(),
+            visibleTables: tablesVisibleTo(host.getVisibleTables(), profileStore),
             games: readProfileChallenge(profileStore.getActiveProfile().data).games,
             param: view.challenge.param,
             playOf: table => profileStore.getPlay(table.configId),
@@ -370,16 +372,17 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         startedGames.set(ev.game.configId, { profileName: profile.name, start, facts: factsOf(ev.game, start) });
     }));
 
-    // Fires on table exit: the game counts when it lasted long enough, on
-    // a table still visible, for a Profile following the Challenge of the
-    // week the game started in; the first one to reach the target completes it.
+    // Fires on table exit: the game counts when it lasted long enough, on a
+    // table the Profile can still see, for a Profile following the Challenge
+    // of the week the game started in; the first one to reach the target
+    // completes it.
     host.on("gameover", safeHandler(SCRIPT_NAME, ev => {
         const started = ev.game && startedGames.get(ev.game.configId);
         if (!started) return;
         startedGames.delete(ev.game.configId);
         const seconds = Math.round((host.now().getTime() - started.start.getTime()) / 1000);
         const table = host.getGameInfo(ev.game.configId);
-        if (seconds < MIN_GAME_SECONDS || !table || table.isHidden) return;
+        if (seconds < MIN_GAME_SECONDS || !table || !isVisibleTo(table, profileStore, started.profileName)) return;
 
         const week = getWeekKey(started.start);
         const { current, previous } = getLocks();

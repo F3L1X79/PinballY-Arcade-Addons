@@ -72,7 +72,7 @@ A table drawn at random from the current wheel selection and launched right away
 _Avoid_: random table, lucky pick
 
 **Hall of Fame**:
-The ten visible tables the active Profile has spent the most time on, ranked from the most played, offered as a wheel selection from the main menu. Shown as "Most Played Tables" ("Tables les plus jouées" in French), like the same tables in the Profile Stats.
+The ten tables the active Profile can see that it has spent the most time on, ranked from the most played, offered as a wheel selection from the main menu. Shown as "Most Played Tables" ("Tables les plus jouées" in French), like the same tables in the Profile Stats.
 _Avoid_: top played, most played, leaderboard
 
 **Favorite Tables**:
@@ -93,7 +93,7 @@ The distinct non-empty manufacturers of the tables that started playing during o
 ### Challenges
 
 **Challenge**:
-An easy play goal set for one week, the same for every Profile, Guest included, such as playing five different Stern tables; each Profile's own progress counts only games of at least one minute on visible tables, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
+An easy play goal set for one week, the same for every Profile, Guest included, such as playing five different Stern tables; each Profile's own progress counts only games of at least one minute on tables it can see, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
 _Avoid_: quest, goal, mission, Achievement (an Achievement is a permanent milestone)
 
 **Challenge Card**:
@@ -101,7 +101,7 @@ The small card at the top right of the wheel screen, under the Profile badge whe
 _Avoid_: challenge widget, challenge popup, status line
 
 **Challenge Tables**:
-The visible tables that would move the active Profile's Challenge forward if played now, offered as a wheel selection from the main menu, right under "All Tables"; only some Challenges have them, for example not one about total play time. The entry is always in the main menu: chosen with no Challenge Tables, or when none is left while they are on the wheel, every table comes back.
+The tables the active Profile can see that would move its Challenge forward if played now, offered as a wheel selection from the main menu, right under "All Tables"; only some Challenges have them, for example not one about total play time. The entry is always in the main menu: chosen with no Challenge Tables, or when none is left while they are on the wheel, every table comes back.
 _Avoid_: challenge filter, eligible tables
 
 **Challenge Toast**:

@@ -1,0 +1,153 @@
+// ============================================================
+// The tables a Child Profile can see, everywhere but the wheel, started
+// through main.js on the fake PinballY globals: no Adult Table (category
+// "NSFW") among its Challenge Tables, its Most Played Tables, its never
+// played tables, its collection completion nor its completion
+// Achievements, where a group made only of Adult Tables has no row; a game
+// on an Adult Table never moves its Challenge forward. Switching to an
+// adult Profile brings every one of them back.
+// ============================================================
+
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
+import config from "../common/config.js";
+import { pressAndGlide, readRows } from "./achievement_list_reader.js";
+
+// A Thursday: the week started on Monday 2026-09-28.
+const NOW = new Date(2026, 9, 1, 20, 0, 0);
+const WEEK = "2026-09-28";
+const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
+
+const table = (id, title, manufacturer, year, categories) => ({
+    id, configId: `${title} (${manufacturer} ${year})`, title, manufacturer, year, categories,
+    isConfigured: true, isHidden: false,
+});
+const PLAYBOY = table(1, "Playboy", "Bally", 1978, ["NSFW", "Classic"]);
+const CLOSE_ENCOUNTERS = table(2, "Close Encounters", "Gottlieb", 1978, ["SciFi"]);
+const MEDIEVAL = table(3, "Medieval Madness", "Williams", 1997, ["Fantasy", "Classic"]);
+const MARS = table(4, "Attack from Mars", "Bally", 1995, ["SciFi"]);
+// The only table of its manufacturer, of its decade and of the NSFW category.
+const PARTY_NIGHT = table(5, "Party Night", "VPX Community", 2023, ["NSFW"]);
+const TABLES = [PLAYBOY, CLOSE_ENCOUNTERS, MEDIEVAL, MARS, PARTY_NIGHT];
+
+const followingTheWeek = games => ({
+    firstWeek: WEEK, week: WEEK, games, completed: false, completedCount: 0, judgedWeek: "", history: [],
+});
+const factsOf = (game, seconds) => ({
+    configId: game.configId, manufacturer: game.manufacturer, decade: 1970, day: "2026-09-29", seconds,
+    randomGame: false, isTableOfTheDay: false, isTableOfTheWeek: false, wasNeverPlayed: true, wasDusty: false,
+});
+// Alice played Playboy before she was marked, and Close Encounters this week.
+const ALICE = {
+    version: 1,
+    isChild: true,
+    plays: {
+        [PLAYBOY.configId]: { count: 2, seconds: 1200, lastPlayed: "2026-09-20T20:00:00" },
+        [CLOSE_ENCOUNTERS.configId]: { count: 1, seconds: 600, lastPlayed: "2026-09-29T20:00:00" },
+    },
+    notified: [],
+    challenge: followingTheWeek([factsOf(CLOSE_ENCOUNTERS, 600)]),
+};
+const BOB = { version: 1, plays: {}, notified: [], challenge: followingTheWeek([]) };
+
+const challengeGamesOf = (fake, name) => JSON.parse(fake.readFile(profileFile(name))).challenge.games;
+
+test("a Child Profile's Challenge, Profile Stats and Achievements leave out the Adult Tables", async () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    fake.addFile(profileFile("Alice"), JSON.stringify(ALICE));
+    fake.addFile(profileFile("Bob"), JSON.stringify(BOB));
+    fake.addFile(`${PROFILES}\\cabinet.json`, JSON.stringify({
+        version: 1,
+        activeProfile: "Alice",
+        challenge: { current: { week: WEEK, template: "decadeTables", param: 1970, target: 2 }, previous: null },
+    }));
+    // Never uninstalled: node --test runs each test file in its own process.
+    fake.installGlobals();
+    const addOnsUnderTest = ["challenges", "profilePicker", "customMenuCommands", "achievements"];
+    for (const key of Object.keys(config.addOns)) config.addOns[key] = addOnsUnderTest.includes(key);
+    config.language = "en";
+
+    const { default: lang } = await import("../common/i18n.js");
+    const { getProfileStore } = await import("../common/profile_store.js");
+    await import("../main.js");
+    await settle();
+    const store = getProfileStore();
+    const STATS = lang.profileStats;
+    const ACHIEVEMENTS = lang.achievements;
+
+    const openMainMenu = () => fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
+    function readStats() {
+        openMainMenu();
+        fake.selectMenuItem(STATS.menuEntry);
+        const lines = fake.currentMenu().items.map(item => item.title);
+        // An empty list has no line.
+        const listOf = label => {
+            const line = lines.find(title => TABLES.some((_, count) => title === label(count + 1)));
+            if (!line) return [];
+            fake.selectMenuItem(line);
+            const titles = fake.currentMenu().items.map(item => item.title).filter(title => TABLES.some(game => game.title === title));
+            fake.selectMenuItem(STATS.back);
+            return titles;
+        };
+        const stats = { lines, mostPlayed: listOf(STATS.mostPlayedTables), neverPlayed: listOf(STATS.neverPlayedTables) };
+        fake.closeMenu();
+        return stats;
+    }
+    function readAchievementRows() {
+        openMainMenu();
+        fake.selectMenuItem(lang.achievementList.menuEntry);
+        const rows = readRows(fake, lang.achievementList);
+        pressAndGlide(fake, "Exit");
+        return rows;
+    }
+    const titlesOf = rows => rows.map(row => row.title);
+    const classicDescription = rows => rows.find(row => row.title === ACHIEVEMENTS.categoryCompletionTitle("Classic")).description;
+    const ADULT_ONLY_GROUPS = [
+        ACHIEVEMENTS.categoryCompletionTitle("NSFW"),
+        ACHIEVEMENTS.manufacturerCompletionTitle("VPX Community"),
+        ACHIEVEMENTS.decadeCompletionTitle(2020),
+    ];
+
+    // The child's only 1970s table left is an Adult Table: no Challenge
+    // Tables, so every table comes back on the next return to the wheel.
+    fake.selectFilter("User.project.ChallengeTables");
+    fake.fire("wheelmode");
+    assert.equal(fake.currentFilterId(), "All", "no Adult Table among the Challenge Tables");
+
+    const childStats = readStats();
+    assert.ok(childStats.lines.includes(STATS.collection(1, 3, 33)), "collection completion without the Adult Tables");
+    assert.deepEqual(childStats.mostPlayed, ["Close Encounters"], "Most Played Tables");
+    assert.deepEqual(childStats.neverPlayed, ["Attack from Mars", "Medieval Madness"], "never played tables");
+
+    const childRows = readAchievementRows();
+    assert.deepEqual(ADULT_ONLY_GROUPS.filter(title => titlesOf(childRows).includes(title)), [],
+        "no completion Achievement for a group made only of Adult Tables");
+    assert.equal(classicDescription(childRows), ACHIEVEMENTS.categoryCompletionDescription("Classic", 1));
+
+    // A game on an Adult Table, however it was launched, never counts for the child.
+    fake.gameStarted(PLAYBOY);
+    fake.advanceTime(5 * 60 * 1000);
+    fake.gameOver(PLAYBOY);
+    await settle();
+    assert.equal(challengeGamesOf(fake, "Alice").length, 1, "the Challenge progress leaves out the Adult Tables");
+
+    store.switchTo("Bob");
+    await settle();
+    const adultRows = readAchievementRows();
+    assert.deepEqual(ADULT_ONLY_GROUPS.filter(title => titlesOf(adultRows).includes(title)), ADULT_ONLY_GROUPS,
+        "an adult Profile gets every group back");
+    assert.equal(classicDescription(adultRows), ACHIEVEMENTS.categoryCompletionDescription("Classic", 2));
+    assert.ok(readStats().lines.includes(STATS.collection(0, 5, 0)));
+
+    fake.selectFilter("User.project.ChallengeTables");
+    assert.deepEqual(fake.getWheelTables().map(game => game.title).sort(), ["Close Encounters", "Playboy"]);
+    fake.gameStarted(PLAYBOY);
+    fake.advanceTime(5 * 60 * 1000);
+    fake.gameOver(PLAYBOY);
+    await settle();
+    assert.equal(challengeGamesOf(fake, "Bob").length, 1, "an Adult Table counts for an adult Profile");
+
+    assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
+});

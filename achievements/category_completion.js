@@ -1,6 +1,6 @@
 ﻿// ============================================================
 // Builds one achievement per table category (PinballY's game.categories):
-// unlocked once the active Profile has played every visible table in that
+// unlocked once the active Profile has played every table it can see in that
 // category at least once. Sorted by category. Called by
 // achievements_engine.js at each check; no side effects.
 // ============================================================

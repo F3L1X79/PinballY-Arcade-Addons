@@ -4,16 +4,17 @@
 // with the tables played of the group as Achievement Progress and an
 // Achievement Rank from the size of the group. A game can belong
 // to multiple groups (e.g. multiple categories), in which case it counts
-// toward each of them. The Achievements come sorted by group key. No side
-// effects.
+// toward each of them. Groups are made of the tables the active Profile can
+// see, so a group with none of them gives no Achievement. The Achievements
+// come sorted by group key. No side effects.
 // ============================================================
 
-import { getVisibleTables } from "./visible_tables.js";
+import { getActiveProfileTables } from "./visible_tables.js";
 import { getProfileStore } from "./profile_store.js";
 import { countedAchievement, PROGRESS_UNIT } from "./achievements.js";
 
 export function buildGroupedCompletionAchievements({ getGroupKeys, idPrefix, family, getTitle, getDescription }) {
-    const allGames = getVisibleTables();
+    const allGames = getActiveProfileTables();
     const groups = new Map();
 
     for (const game of allGames) {

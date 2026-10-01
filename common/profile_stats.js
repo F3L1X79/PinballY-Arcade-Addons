@@ -21,7 +21,7 @@ import lang from "./i18n.js";
 import { displayNameOf } from "./profile_name.js";
 import { safeHandler } from "./safe_handler.js";
 import { getDecadeStartYear } from "./decade.js";
-import { countPlayedTables, getUnplayedTables } from "./visible_tables.js";
+import { countPlayedTables, getUnplayedTables, tablesVisibleTo } from "./visible_tables.js";
 import { getHallOfFame } from "./hall_of_fame.js";
 
 const SCRIPT_NAME = "ProfileStats";
@@ -49,14 +49,14 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
         {
             command: host.allocateCommand("profileStatsMostPlayed"),
             label: TEXT.mostPlayedTables,
-            readTables: visibleTables => getHallOfFame(visibleTables, profileStore.getPlay),
+            readTables: profileTables => getHallOfFame(profileTables, profileStore.getPlay),
         },
         {
             command: host.allocateCommand("profileStatsNeverPlayed"),
             label: TEXT.neverPlayedTables,
             // Unconfigured tables left out, like the Hall of Fame: PinballY's
             // wheel never shows them, so the jump could not land on them.
-            readTables: visibleTables => getUnplayedTables(visibleTables, profileStore)
+            readTables: profileTables => getUnplayedTables(profileTables, profileStore)
                 .filter(game => game.isConfigured)
                 .sort((a, b) => a.title.localeCompare(b.title)),
         },
@@ -80,18 +80,18 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
     }
 
     // The Collection Achievements' rule, so the two never disagree.
-    function readCompletion(visibleTables) {
-        const played = countPlayedTables(visibleTables, profileStore);
-        const percent = visibleTables.length === 0 ? 0 : Math.round(played / visibleTables.length * 100);
-        return { played, total: visibleTables.length, percent };
+    function readCompletion(profileTables) {
+        const played = countPlayedTables(profileTables, profileStore);
+        const percent = profileTables.length === 0 ? 0 : Math.round(played / profileTables.length * 100);
+        return { played, total: profileTables.length, percent };
     }
 
-    // The group with the most play seconds over visible tables; ties go to
+    // The group with the most play seconds over the tables the Profile can see; ties go to
     // the most games, then to alphabetical order, so the favourite never
     // changes at random. Tables without a group key are skipped.
-    function findFavourite(visibleTables, getKey) {
+    function findFavourite(profileTables, getKey) {
         const groups = new Map();
-        for (const game of visibleTables) {
+        for (const game of profileTables) {
             const key = getKey(game);
             const play = profileStore.getPlay(game.configId);
             if (key === null || play.count === 0) continue;
@@ -116,17 +116,17 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
 
     function show(selectedList = null) {
         const plays = sumPlays();
-        const visibleTables = host.getVisibleTables();
-        const completion = readCompletion(visibleTables);
-        const favouriteManufacturer = findFavourite(visibleTables, game => game.manufacturer || null);
-        const favouriteDecade = findFavourite(visibleTables, game => getDecadeStartYear(game.year));
+        const profileTables = tablesVisibleTo(host.getVisibleTables(), profileStore);
+        const completion = readCompletion(profileTables);
+        const favouriteManufacturer = findFavourite(profileTables, game => game.manufacturer || null);
+        const favouriteDecade = findFavourite(profileTables, game => getDecadeStartYear(game.year));
         const achievements = achievementList.countAll();
         // Without the Challenges Add-on, no Challenges line.
         const challengeRecord = challenges && challenges.getRecord();
         const info = title => ({ title, cmd: -1 });
         // An empty list is left out: the player never opens an empty menu.
         const listItems = tableLists
-            .map(list => ({ list, count: list.readTables(visibleTables).length }))
+            .map(list => ({ list, count: list.readTables(profileTables).length }))
             .filter(({ count }) => count > 0)
             .map(({ list, count }) => ({
                 title: list.label(count),
@@ -155,7 +155,7 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
     // Paged like an Achievement Family: the never played list can be longer
     // than the screen.
     function showTableList(list) {
-        const tables = list.readTables(host.getVisibleTables());
+        const tables = list.readTables(tablesVisibleTo(host.getVisibleTables(), profileStore));
         host.showMenu(TABLE_LIST_MENU_ID, [
             { cmd: host.getBuiltInCommand("MenuPageUp") },
             ...tables.map((game, index) => ({ title: game.title, cmd: getTableCommand(index) })),

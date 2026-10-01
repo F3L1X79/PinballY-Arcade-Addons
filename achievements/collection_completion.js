@@ -9,7 +9,7 @@
 
 import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT } from "../common/achievements.js";
 import lang from "../common/i18n.js";
-import { countPlayedTables, getVisibleTables } from "../common/visible_tables.js";
+import { countPlayedTables, getActiveProfileTables } from "../common/visible_tables.js";
 import { getProfileStore } from "../common/profile_store.js";
 
 // Each value is part of an Achievement ID: changing one would announce the
@@ -23,10 +23,10 @@ const COLLECTION_LADDER = [FIRST_TABLE_STEP, ...COLLECTION_PERCENT_THRESHOLDS];
 export function buildCollectionCompletionAchievements() {
     const { achievements: TEXT } = lang;
 
-    const totalCount = getVisibleTables().length;
+    const totalCount = getActiveProfileTables().length;
 
     function countPlayed() {
-        return countPlayedTables(getVisibleTables(), getProfileStore());
+        return countPlayedTables(getActiveProfileTables(), getProfileStore());
     }
 
     // A target of 1 shows no Achievement Progress.

@@ -1,8 +1,8 @@
 // ============================================================
 // Adds a "Hall of Fame" filter to PinballY's main menu, after the
 // Challenge Tables and right before the Favorite Tables: the wheel then
-// shows the active Profile's Hall of Fame tables in rank order, each table
-// its own Next/Previous Page stop.
+// shows the active Profile's Hall of Fame tables, among the tables it can
+// see, in rank order, each table its own Next/Previous Page stop.
 // Registered once at init; the ranking is recomputed each time the filter
 // is activated, and on a Profile switch while the filter is on the wheel.
 // ============================================================
@@ -11,6 +11,7 @@ import lang from "../common/i18n.js";
 import { getHallOfFame } from "../common/hall_of_fame.js";
 import { safeHandler } from "../common/safe_handler.js";
 import { getProfileStore } from "../common/profile_store.js";
+import { getActiveProfileTables } from "../common/visible_tables.js";
 
 const SCRIPT_NAME = "HallOfFame";
 const FILTER_ID = "project.HallOfFame";
@@ -36,7 +37,7 @@ export default function init() {
         sortKey: BEFORE_FAVORITES_SORT_KEY,
         // Fires each time the filter is activated, before PinballY scans the tables.
         before: safeHandler(SCRIPT_NAME, () => {
-            const hallOfFame = getHallOfFame(gameList.getAllGames(), profileStore.getPlay);
+            const hallOfFame = getHallOfFame(getActiveProfileTables(), profileStore.getPlay);
             ranks = new Map(hallOfFame.map((game, index) => [game.id, index + 1]));
         }),
         select: game => ranks.has(game.id),
