@@ -101,7 +101,7 @@ The distinct non-empty manufacturers of the tables of the Plays started during o
 ### Challenges
 
 **Challenge**:
-An easy play goal set for one week, the same for every Profile, Guest included, such as playing five different Stern tables; each Profile's own progress counts only Plays on tables it can see, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
+A casual play goal set for one week, the same for every Profile, Guest included, such as playing five different Stern tables; each Profile's own progress counts only Plays on tables it can see, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
 _Avoid_: quest, goal, mission, Achievement (an Achievement is a permanent milestone)
 
 **Challenge Card**:
