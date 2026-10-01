@@ -315,12 +315,13 @@
             <h3>Revue des scripts de <code>System\</code></h3>
             <div class="tags"><span class="tag track">Diffusion</span><span class="tag">petit</span><span class="tag">lecture</span></div>
           </div>
-          <p>Passer en revue les scripts fournis par PinballY dans <code>System\</code> pour savoir ce qu'ils font, ce qu'ils offrent qu'on pourrait réutiliser, et où ils pourraient entrer en conflit avec nos Add-ons.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>research</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span class="skip">implement</span></div>
-          <div class="links">Flow Matt : <code>/research</code> (constats dans un fichier Markdown du dépôt), puis <code>/grill-with-docs</code> seulement si un constat demande un changement</div>
+          <p>Passer en revue les scripts fournis par PinballY dans <code>System\</code> : ce qu'ils définissent, ce qu'on pourrait réutiliser au lieu de le refaire dans <code>common/</code>, où ils pourraient entrer en conflit avec nos Add-ons, et ce qu'ils font que l'aide ne dit pas. Sur la borne, <code>SystemClasses.js</code> et <code>CParser.js</code> ont été corrigés par IA (les originaux sont les <code>_old</code>) : chaque correction est revue aussi.</p>
+          <div class="stepper"><span>idée</span><i>›</i><span class="here">research</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span class="skip">implement</span></div>
+          <div class="links">Cadré le 01/10. Flow Matt : <code>/research</code> (constats dans <code>docs/research/system-scripts.md</code>), puis <code>/grill-with-docs</code> seulement si un constat demande un changement</div>
           <details>
             <summary>Contexte</summary>
-            <p class="ctx">On ne modifie jamais <code>System\</code> (<code>.claude/rules/conventions.md</code>) : la revue ne produit que des constats, et d'éventuels changements de notre côté. Utile aussi pour la <a href="#nested-install">installation non invasive (n° <span data-ref="nested-install"></span>)</a>, qui doit décider où <code>System\</code> se trouve par rapport au dépôt.</p>
+            <p class="ctx">Cadré le 01/10/2026. Référence pour l'inventaire et les conflits : les originaux (<code>_old</code>), ceux que tout joueur reçoit ; PinballY ne charge que <code>SystemClasses.js</code> et <code>CParser.js</code>, donc la borne tourne avec les versions corrigées. Pour chaque correction IA : ce qu'elle corrige, si le bug existe vraiment dans l'original, si elle est juste, si un de nos Add-ons emprunte ce chemin (<code>sprintf</code>, <code>logfile</code>, <code>CParser</code> derrière <code>dllImport</code>…), et une recommandation sans décision : revenir à l'original (par défaut, puisqu'on ne modifie jamais <code>System\</code>), garder, proposer à PinballY, ou contourner dans <code>common/</code>. Les faits durables (écarts avec l'aide, globales utiles) vont aussi dans <code>.claude/reference/pinbally-help.md</code>.</p>
+            <p class="ctx"><code>System\</code> reste dans <code>Scripts\System\</code>, où PinballY l'installe : il ne fait pas partie du projet. La revue constate seulement ce que nos imports et nos tests supposent de cet emplacement, pour l'<a href="#nested-install">installation non invasive (n° <span data-ref="nested-install"></span>)</a>, sans recommander.</p>
           </details>
         </div>
       </li>
