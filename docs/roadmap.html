@@ -227,7 +227,7 @@
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
       <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne.</p>
-      <span class="next">Ensuite : <code>/grill-with-docs</code> du <a href="#play-log">Journal des parties</a></span>
+      <span class="next">Ensuite : <code>/to-spec</code> du <a href="#play-log">Play Log</a></span>
     </div>
   </section>
 
@@ -258,21 +258,39 @@
         <div class="emblem"></div>
         <div class="content">
           <div class="item-head">
-            <h3>Journal des parties datées</h3>
+            <h3>Play Log : journal des parties datées</h3>
             <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span><span class="tag">données</span></div>
           </div>
-          <p>Garder chaque partie avec sa date et sa durée dans le <code>profile.json</code> du Profile, en plus des cumuls par table. Rien ne s'affiche encore : ce sont les données du futur Year in Pinball et de « première table jouée ».</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span>implement</span></div>
+          <p>Garder chaque Play (partie d'au moins une minute) avec son début, sa table (<code>configId</code>) et sa durée, dans un fichier par année du dossier du Profile (<code>play-log-2026.json</code>). Rien ne s'affiche encore : ce sont les données du futur Year in Pinball et de « première table jouée ».</p>
+          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span class="here">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
           <div class="links">Tôt dans la file : ce qui est joué avant le journal manquera au <a href="#year-in-pinball">Year in Pinball (n° <span data-ref="year-in-pinball"></span>)</a></div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">Grillé le 01/10/2026 : termes Play et Play Log dans <code>CONTEXT.md</code>, fichier par année dans l'ADR 0007. Guest compris ; durée inconnue exclue ; journal vide au départ, sans reprise de l'existant ; la Profile Reset renomme chaque fichier en copie datée. Clés <code>start</code>, <code>configId</code>, <code>seconds</code> à figer dans <code>persisted_data_pinning.test.js</code>.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-play" id="one-minute-rule" data-track="play" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Une partie de moins d'une minute ne compte pas</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span></div>
+          </div>
+          <p>Seules les Plays comptent, partout : cumuls par table (Last Played Table, Hall of Fame, Profile Stats, complétion, Play Time), Streak et Periods Played, Random Games, Day's Manufacturers, Grand Return. Une partie plus courte est un lancement par erreur. Seule exception, le Rage Quit, gardé tel quel.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Juste après le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a>, qui applique déjà la règle</div>
           <details>
             <summary>Questions ouvertes (4)</summary>
             <ul>
-              <li>Quoi garder par partie : date, table (<code>configId</code>), durée ? Rien de plus ?</li>
-              <li>Taille du fichier : garder tout, ou résumer les années passées (par table et par mois) ?</li>
-              <li>Les parties de moins d'une minute comptent-elles, comme pour les Challenges ?</li>
-              <li>La Profile Reset efface-t-elle aussi le journal ? A priori oui, comme le reste des parties.</li>
+              <li>Streak, Random Games, Day's Manufacturers et Grand Return se comptent aujourd'hui au <code>gamestarted</code> : les déplacer au <code>gameover</code> d'une partie d'au moins une minute ?</li>
+              <li>La Table of the Day doit-elle être jouée une minute pendant sa Period, même si la partie se termine après minuit ?</li>
+              <li>Les session stats (<code>shortestSeconds</code>, plus courte partie) gardent-elles les parties courtes, comme le Rage Quit ?</li>
+              <li>Les cumuls déjà enregistrés gardent leurs parties courtes passées (impossible de les retrouver) : on l'accepte ?</li>
             </ul>
-            <p class="ctx">Aujourd'hui <code>plays[configId]</code> ne garde que <code>count</code>, <code>seconds</code> et <code>lastPlayed</code> : impossible de dire ce qui a été joué en 2026. Nouvelle clé à figer dans <code>persisted_data_pinning.test.js</code>.</p>
+            <p class="ctx">Décidé pendant le grilling du Play Log (01/10/2026), défini par le terme Play de <code>CONTEXT.md</code>. Les Challenges appliquent déjà la règle (<code>MIN_GAME_SECONDS</code> dans <code>common/challenge.js</code>), à partager. Tant qu'elle n'est pas généralisée, les cumuls d'une table lancée par erreur ne suivent plus exactement le Play Log.</p>
           </details>
         </div>
       </li>
@@ -571,7 +589,7 @@
           </div>
           <p>Un bilan de l'année par Profile, façon Spotify Wrapped : tables jouées et découvertes, temps de jeu, table et fabricant préférés, plus longue session, Achievements débloqués, plus longue Streak. Proposé tout seul en fin d'année.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Lit le <a href="#play-log">journal des parties datées (n° <span data-ref="play-log"></span>)</a> ; sur l'écran des <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
+          <div class="links">Lit le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a> ; sur l'écran des <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
           <details>
             <summary>Questions ouvertes (4)</summary>
             <ul>
@@ -594,6 +612,17 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
+          <summary>01/10 <span class="count">(3)</span></summary>
+          <ol>
+            <li><strong>Une partie de moins d'une minute ne compte pas</strong>
+              <span>Personne n'éprouve une table en moins d'une minute : c'est un lancement par erreur. Le terme Play le dit ; le Play Log l'applique, sa généralisation est un chantier à part, juste après. Le Rage Quit reste tel quel.</span></li>
+            <li><strong>Le Play Log, un fichier par année</strong>
+              <span>Hors de <code>profile.json</code>, réécrit à chaque changement : on garde tout sans résumé, et un bilan de l'année ne lit qu'un fichier (ADR 0007).</span></li>
+            <li><strong>Le Play Log avant la règle de la minute</strong>
+              <span>Il applique déjà la règle lui-même : le commencer tôt ne coûte rien, et chaque semaine sans journal manque au Year in Pinball.</span></li>
+          </ol>
+        </details>
+        <details>
           <summary>30/09 <span class="count">(11)</span></summary>
           <ol>
             <li><strong>Challenges trop faciles : à rééquilibrer</strong>
@@ -662,7 +691,7 @@
 
           <div class="ax row">Fort</div>
           <div class="cell sweet">
-            <a class="chip tr-profiles" href="#play-log"><b></b>Journal des parties</a>
+            <a class="chip tr-profiles" href="#play-log"><b></b>Play Log</a>
           </div>
           <div class="cell">
             <a class="chip tr-share" href="#nested-install"><b></b>Install non invasive</a>
@@ -679,6 +708,7 @@
             <a class="chip tr-play" href="#challenge-confetti"><b></b>Confettis</a>
           </div>
           <div class="cell">
+            <a class="chip tr-play" href="#one-minute-rule"><b></b>Règle de la minute</a>
             <a class="chip tr-profiles" href="#table-mastery"><b></b>Maîtrise des tables</a>
             <a class="chip tr-profiles" href="#stats-drawn"><b></b>Fiche joueur</a>
             <a class="chip tr-profiles" href="#stats"><b></b>Stats des autres</a>

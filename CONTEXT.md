@@ -29,7 +29,7 @@ A Profile marked as a child's: Adult Tables are left out of everything it can pi
 _Avoid_: kid mode, parental control, family filter
 
 **Profile Reset**:
-Starting a Profile over as if it had never played: its plays, Streaks, session stats, Random Games, Challenge progress and Notified Achievements are erased, after a dated copy of its former data is kept, while its name, Avatar and marks stay. Only an Admin Profile can reset one, and never while no Profile is an Admin Profile.
+Starting a Profile over as if it had never played: its plays, Play Log, Streaks, session stats, Random Games, Challenge progress and Notified Achievements are erased, after a dated copy of its former data is kept, while its name, Avatar and marks stay. Only an Admin Profile can reset one, and never while no Profile is an Admin Profile.
 _Avoid_: fresh start, wipe, achievement reset (the Achievements come from the plays, so the plays go too)
 
 **Avatar**:
@@ -39,6 +39,14 @@ _Avoid_: profile picture, photo
 **Profile Greeting**:
 The short greeting, with the Avatar and the Profile's name, shown when a Profile is picked and when PinballY starts, so the player knows whose plays will count. At startup it gives way to the startup prompt, which greets the Profile by name itself.
 _Avoid_: welcome toast, login message
+
+**Play**:
+A game of at least one minute on a table, which counts for the Profile active when it started. A shorter game is a launch by mistake and counts for nothing, except for the Rage Quit Achievement, which notices a game given up early without making it a Play.
+_Avoid_: session (a session stat is about one game, Play or not), launch (a launch becomes a Play only after a minute)
+
+**Play Log**:
+The dated list of a Profile's Plays: when each started, which table, and how long it lasted, kept year by year. It starts empty on the day it is introduced: earlier games are known only by their totals. Shown to no one yet; it feeds later summaries such as a yearly one.
+_Avoid_: Game Log, play history, journal
 
 **Profile Stats**:
 The screen, opened by the player from the main menu, that sums up the active Profile's own plays: games played, total time, favourite manufacturer and decade, most played and never played tables, collection completion, Achievements Unlocked, and Streaks. Shown as "Statistiques" in French, opened from "Vos statistiques" ("Your Stats").
