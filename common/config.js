@@ -21,6 +21,8 @@ const DEFAULTS = {
     // Manufacturer name you gave fictional/community VPX tables in PinballY.
     // Used by the status line and the "Original Tables" filter.
     communityTablesManufacturer: "VPX Community",
+    // PinballY category of the Adult Tables, which a Child Profile never sees (exact name).
+    adultCategory: "NSFW",
 
     // --- Optional preferences ---
 

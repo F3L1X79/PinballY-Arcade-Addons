@@ -244,6 +244,29 @@ test("the isAdmin mark is read for the active Profile and by name, and kept when
     assert.equal(createProfileStore(fake).isAdmin(), true, "and a restart");
 });
 
+test("the isChild mark is read for the active Profile and by name, and kept when profile.json is rewritten", () => {
+    const fake = createFake();
+    fake.addFile(`${PROFILES}\\Alice\\profile.json`, JSON.stringify({ version: 1, isChild: true }));
+    fake.addFile(`${PROFILES}\\Bob\\profile.json`, JSON.stringify({ version: 1, isChild: 1 }));
+    fake.addFile(GUEST_FILE, JSON.stringify({ version: 1, isChild: true }));
+    const store = createProfileStore(fake);
+
+    assert.equal(store.isChild(), false, "Guest is never a Child Profile");
+    assert.equal(store.isChild("Alice"), true);
+    assert.equal(store.isChild("Bob"), false, "a mark that is not a boolean is false");
+    assert.equal(store.isAdmin("Alice"), false, "the marks are independent");
+
+    store.switchTo("Alice");
+    assert.equal(store.isChild(), true);
+    play(fake, MEDIEVAL, 60);
+    assert.equal(readJson(fake, `${PROFILES}\\Alice\\profile.json`).isChild, true, "the mark survives a save");
+    assert.equal(createProfileStore(fake).isChild(), true, "and a restart");
+
+    const markLines = fake.logLines().filter(line => line.includes("isChild"));
+    assert.ok(markLines.some(line => line.includes("guest\\profile.json")), markLines.join("\n"));
+    assert.ok(markLines.some(line => line.includes("Bob\\profile.json")), markLines.join("\n"));
+});
+
 test("a mark that is not a boolean, or a mark on Guest, is logged once and read as false", () => {
     const fake = createFake();
     fake.addFile(`${PROFILES}\\Alice\\profile.json`, JSON.stringify({ version: 1, isAdmin: "yes" }));

@@ -1,6 +1,7 @@
 ﻿// ============================================================
-// Entry point loaded by PinballY: loads the Profile store (switching to
-// Guest when the Profile picker is disabled), then initializes
+// Entry point loaded by PinballY: loads the Profile store, keeps the Adult
+// Tables off a Child Profile's wheel, switches to Guest when the Profile
+// picker is disabled, then initializes
 // every project script listed in SCRIPTS, in order, skipping those disabled
 // in config.addOns.
 // A script whose init() throws is logged to logfile.log and skipped so the
@@ -9,6 +10,7 @@
 
 import config from "./common/config.js";
 import { getProfileStore } from "./common/profile_store.js";
+import { installChildWheelFilter } from "./common/adult_tables.js";
 
 // Logs each script's init duration (ms), to help find a slow-starting script.
 const LOG_STARTUP_TIMING = true;
@@ -81,9 +83,19 @@ try {
     logfile.log(`[Startup] ERROR loading the Profiles: ${error.message}`);
 }
 
+// Whatever Add-ons are on, a Child Profile never sees an Adult Table on the
+// wheel. Before the switch to Guest below, which must refresh the wheel too.
+if (store) {
+    try {
+        installChildWheelFilter();
+    } catch (error) {
+        logfile.log(`[Startup] ERROR installing the Child Profile's wheel filter: ${error.message}`);
+    }
+}
+
 // Without the picker nothing could switch away from the saved Profile, so
 // Guest takes over. Done before any Add-on subscribes to onSwitch, so no
-// greeting or toast follows.
+// greeting or toast follows; only the Child Profile's wheel filter hears it.
 if (store && ENABLED_SCRIPTS.profilePicker === false) {
     try {
         const previousProfile = store.getActiveProfile();

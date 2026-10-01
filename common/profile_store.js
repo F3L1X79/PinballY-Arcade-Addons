@@ -7,7 +7,7 @@
 // whole on every change (tmp, backup, rename). A broken file comes back
 // from its backup, or is set aside under a dated name when the backup is
 // broken too; every such problem is logged to logfile.log. A Profile's
-// marks (isAdmin), set by hand in its profile.json, are read and kept
+// marks (isAdmin, isChild), set by hand in its profile.json, are read and kept
 // through every rewrite, never written.
 // Listens to "gamestarted" / "gameover" to record every finished game for
 // the Profile active when it started; at startup, creates the Guest folder
@@ -253,10 +253,12 @@ export function createProfileStore(host) {
         return false;
     }
 
-    const isAdmin = (profileName = activeProfile.name) => {
+    function profileHasMark(markName, profileName) {
         const { profile, data } = profileWithData(profileName);
-        return markOf(profile, data, "isAdmin");
-    };
+        return markOf(profile, data, markName);
+    }
+    const isAdmin = (profileName = activeProfile.name) => profileHasMark("isAdmin", profileName);
+    const isChild = (profileName = activeProfile.name) => profileHasMark("isChild", profileName);
 
     function switchTo(name) {
         const profile = findProfile(name);
@@ -324,6 +326,8 @@ export function createProfileStore(host) {
         // Whether any Profile is an Admin Profile; re-read on every call, so a hand edit shows up.
         // Guest is skipped since it never counts: reading it would only log its mark on every menu opening.
         hasAdminProfile: () => listProfileNames().filter(name => !isGuestName(name)).some(isAdmin),
+        // Whether the named Profile (the active one by default) is a Child Profile.
+        isChild,
         getCabinetData: () => cabinet,
         updateCabinetData: (change) => {
             change(cabinet);

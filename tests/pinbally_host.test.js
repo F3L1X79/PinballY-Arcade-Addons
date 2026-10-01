@@ -128,6 +128,22 @@ for (const { name, createHost, usesGlobals } of ADAPTERS) {
             assert.deepEqual(host.getWheelTables().map(game => game.title), ["Medieval Madness"]);
         });
 
+        test("a metafilter narrows every filter at once, and decides again only when the filter runs", () => {
+            let ruledOut = "Attack from Mars (Bally 1995)";
+            host.setCurrentFilter("All");
+            host.createMetaFilter({ select: game => game.configId !== ruledOut });
+            assert.deepEqual(host.getWheelTables().map(game => game.title), ["Medieval Madness"]);
+
+            ruledOut = "Medieval Madness (Williams 1997)";
+            assert.deepEqual(host.getWheelTables().map(game => game.title), ["Medieval Madness"]);
+            host.refreshFilter();
+            assert.deepEqual(host.getWheelTables().map(game => game.title), ["Attack from Mars"]);
+
+            host.createFilter({ id: "test.Both", title: "Both", select: () => true });
+            host.setCurrentFilter("User.test.Both");
+            assert.deepEqual(host.getWheelTables().map(game => game.title), ["Attack from Mars"]);
+        });
+
         test("allocates a distinct command ID per name", () => {
             const first = host.allocateCommand("first");
             const second = host.allocateCommand("second");

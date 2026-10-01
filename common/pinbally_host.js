@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // Production PinballY host: the single seam through which the deepened
 // modules reach PinballY (settings, clock, timers, visible tables, wheel
-// selection and filter, main window menus / UI mode / events / drawing layers,
+// selection, filter and metafilters, main window menus / UI mode / events / drawing layers,
 // StyledText, commands and running them, table launch, program folder,
 // monitor count, backglass window, sound playback (one-off or on players
 // in turn), logfile.log, and the few file operations the Profile store
@@ -135,6 +135,8 @@ export function createPinballYHost() {
         getCurrentFilterId: () => gameList.getCurFilter().id,
         // Runs the current filter again, before() included.
         refreshFilter: () => { gameList.refreshFilter(); },
+        // Always on top of the current filter, in effect at once; returns its id.
+        createMetaFilter: (desc) => gameList.createMetaFilter(desc),
         // Makes the table at this wheel offset the current one, instantly:
         // no spin animation, no sound, no "gameselect".
         setWheelGame: (offset) => { gameList.setWheelGame(offset, { animate: false }); },

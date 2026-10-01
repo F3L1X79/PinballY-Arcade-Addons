@@ -5,7 +5,7 @@
 // Streaks and Periods Played, Random Games played, session stats and
 // Notified list) and cabinet.json (active Profile, Period Table locks)
 // written by the Profile store; no PinballY settings key is written. The
-// Admin Profile mark (isAdmin) keeps its key through a rewrite. A
+// Admin and Child Profile marks (isAdmin, isChild) keep their keys through a rewrite. A
 // second test locks the Challenges' saved data: the week's lock in
 // cabinet.json, a Profile's "challenge" record and its counted games in
 // profile.json, and the template ids. A third locks a verdict on the
@@ -361,6 +361,17 @@ test("the Admin Profile mark keeps its key in profile.json", () => {
 
     assert.equal(store.isAdmin(), true);
     assert.equal(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`)).isAdmin, true);
+});
+
+test("the Child Profile mark keeps its key in profile.json", () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    fake.addFile(`${PROFILES_FOLDER}\\Alice\\profile.json`, JSON.stringify({ version: 1, isChild: true }));
+    const store = createProfileStore(fake);
+    store.switchTo("Alice");
+    store.updateProfileData(data => { data.randomGames += 1; });
+
+    assert.equal(store.isChild(), true);
+    assert.equal(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`)).isChild, true);
 });
 
 test("the Challenge template ids stay byte-identical", () => {

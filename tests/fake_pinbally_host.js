@@ -3,7 +3,8 @@
 // interface as common/pinbally_host.js, plus controls for the tests: set
 // the date (a manual clock that also runs the host's timers), the monitor
 // count, the table list, the wheel selection (and its filter) and the
-// layout size, seed settings, fire PinballY events, open the Exit menu
+// layout size, seed settings, fire PinballY events, apply the metafilters
+// to the wheel selection and a filter's games, open the Exit menu
 // or main menu with their native items, pick menu items, play launched games, and inspect shown menus, launches, written settings keys,
 // drawing layers, what was drawn, sounds played (and on which player), the
 // backglass window shown or hidden, and the lower status line (which can
@@ -130,6 +131,11 @@ export function createFakePinballYHost({
     // Script filters by full id ("User.<id>"), and the id of the one shown.
     const filters = new Map();
     let currentFilterId = "All";
+    // Metafilters by id, and the tables they ruled out the last time a
+    // filter ran: like PinballY, select() is not called again until then.
+    const metaFilters = new Map();
+    let nextMetaFilterId = 1;
+    let ruledOutConfigIds = new Set();
     // The status lines' entries, as PinballY's getText() gives them.
     const upperStatusLine = upperStatusLineMessages.map(text => ({ text, isTemp: false }));
     const lowerStatusLine = lowerStatusLineMessages.map(text => ({ text, isTemp: false }));
@@ -470,6 +476,23 @@ export function createFakePinballYHost({
     // PinballY's wheel never shows hidden or unconfigured tables.
     const canBeOnWheel = game => !game.isHidden && game.isConfigured !== false;
 
+    // Runs the metafilters over every table, in ascending priority. Narrowing
+    // metafilters only: a table stays when every one keeps it, which is what
+    // PinballY's "the last one called decides" gives when none widens.
+    function runMetaFilters() {
+        const ordered = [...metaFilters.values()].sort((a, b) => (a.priority || 0) - (b.priority || 0));
+        for (const metaFilter of ordered) if (metaFilter.before) metaFilter.before();
+        ruledOutConfigIds = new Set(allTables
+            .filter(game => !ordered.every(metaFilter => metaFilter.select(game, true)))
+            .map(game => game.configId));
+        for (const metaFilter of ordered) if (metaFilter.after) metaFilter.after();
+    }
+
+    // The wheel selection before the metafilters, in wheel order.
+    const unfilteredWheel = () => (wheelConfigIds === null
+        ? host.getVisibleTables().map(game => game.configId)
+        : wheelConfigIds);
+
     // Runs the filter like PinballY: before(), then select() over the
     // visible, configured tables, sorted with compareForSort(); the wheel
     // then shows them from the first one.
@@ -483,6 +506,7 @@ export function createFakePinballYHost({
         if (filter.compareForSort) selected.sort(filter.compareForSort);
         if (filter.after) filter.after();
         wheelConfigIds = selected.map(game => game.configId);
+        runMetaFilters();
     }
 
     // Like gameList.setCurFilter(): "All" shows every visible, configured
@@ -495,10 +519,11 @@ export function createFakePinballYHost({
             wheelConfigIds = allTables
                 .filter(canBeOnWheel)
                 .map(game => game.configId);
+            runMetaFilters();
         } else {
             applyFilter(filterId);
         }
-        const currentIndex = current ? wheelConfigIds.indexOf(current.configId) : -1;
+        const currentIndex = current ? host.getWheelTables().findIndex(game => game.configId === current.configId) : -1;
         if (currentIndex > 0) setWheelGame(currentIndex);
     }
 
@@ -508,16 +533,32 @@ export function createFakePinballYHost({
         return allocateCommand(`filter ${filter.id}`);
     }
 
+    // A script filter runs again from its first table; any other filter
+    // keeps its selection, and only the metafilters run again: a table they
+    // now rule out leaves the wheel, the next one becoming current.
     function refreshFilter() {
         if (filters.has(currentFilterId)) applyFilter(currentFilterId);
+        else runMetaFilters();
+    }
+
+    // Like gameList.createMetaFilter(): in effect at once. Narrowing only.
+    function createMetaFilter(metaFilter) {
+        if (metaFilter.includeExcluded) throw new Error("The fake host has no widening metafilters.");
+        const id = nextMetaFilterId++;
+        metaFilters.set(id, metaFilter);
+        runMetaFilters();
+        return id;
     }
 
     // Like gameList.setWheelGame(): the table at this offset from the current
-    // one becomes the current one; the wheel wraps around.
+    // one becomes the current one; the wheel wraps around. The tables the
+    // metafilters rule out keep their place, for when they come back.
     function setWheelGame(offset) {
-        const configIds = host.getWheelTables().map(game => game.configId);
-        if (configIds.length === 0) return;
-        const start = ((offset % configIds.length) + configIds.length) % configIds.length;
+        const shown = host.getWheelTables();
+        if (shown.length === 0) return;
+        const target = shown[((offset % shown.length) + shown.length) % shown.length].configId;
+        const configIds = unfilteredWheel();
+        const start = configIds.indexOf(target);
         wheelConfigIds = [...configIds.slice(start), ...configIds.slice(0, start)];
     }
 
@@ -535,14 +576,15 @@ export function createFakePinballYHost({
         setInterval: (callback, ms) => addTimer(callback, ms, ms),
         clearInterval: removeTimer,
         getVisibleTables: () => allTables.filter(table => !table.isHidden),
-        getWheelTables: () => (wheelConfigIds === null
-            ? host.getVisibleTables()
-            : wheelConfigIds.map(getGameInfo)),
+        getWheelTables: () => unfilteredWheel()
+            .filter(configId => !ruledOutConfigIds.has(configId))
+            .map(getGameInfo),
         getGameInfo,
         setCurrentFilter,
         createFilter,
         getCurrentFilterId: () => currentFilterId,
         refreshFilter,
+        createMetaFilter,
         setWheelGame,
         getUIMode: () => uiMode,
         getFullUIMode,
@@ -606,6 +648,7 @@ export function createFakePinballYHost({
             if (unknown.length > 0) throw new Error(`Unknown tables in the wheel: ${unknown.join(", ")}`);
             wheelConfigIds = [...configIds];
             currentFilterId = filterId;
+            runMetaFilters();
         },
         currentFilterId: () => currentFilterId,
         // Shows a script filter, by its full id ("User.<id>").
@@ -777,6 +820,7 @@ export function createFakePinballYHost({
                     setCurFilter: setCurrentFilter,
                     setWheelGame: (offset) => { setWheelGame(offset); },
                     refreshFilter,
+                    createMetaFilter,
                     getGameInfo,
                 },
                 mainWindow: {
