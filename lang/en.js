@@ -52,6 +52,12 @@ export default {
         starTables: (count) => `${count}-Star Tables`,
         startDelay: (seconds) => `Adjust Start Delay (${seconds} sec)`,
         unratedTables: () => "Unrated Tables",
+        batchCaptureReady: (count, duration) => `Batch Capture is ready to go!  ${count} game(s) will be included in this process, which will take roughly ${duration}.`,
+        confirmDeleteGameDetails: (title) => `Do you really want to delete the game details for ${title}?  (This only deletes the bibliographic information, not any game files or media.)`,
+        showCustomView: (name) => `Show ${name}`,
+        durationSeconds: (count) => `${count} second${count === 1 ? "" : "s"}`,
+        durationMinutes: (count) => `${count} minute${count === 1 ? "" : "s"}`,
+        durationHours: (hours, minutes) => (minutes > 0 ? `${hours}:${String(minutes).padStart(2, "0")} hours` : `${hours} hour${hours === 1 ? "" : "s"}`),
     },
 
     ratingPrompt: {

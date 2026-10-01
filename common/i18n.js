@@ -2,8 +2,8 @@
 // Shared language selection for all project-owned UI text.
 // Translation can be disabled globally, in which case English is used.
 // Any key missing from the selected language falls back to its English
-// text (per key, recursively), and the missing keys are logged once to
-// the PinballY log file at load time.
+// text (per key, recursively); tests/lang_keys.test.js keeps every key in
+// every language. No side effects.
 // ============================================================
 
 import de from "../lang/de.js";
@@ -31,16 +31,14 @@ function isSection(value) {
 
 // Only fills in keys the language lacks and never overrides present ones, so
 // translation maps keyed by English source text (empty in en.js) keep their own entries.
-export function withFallback(language, fallback, missingKeys = [], pathPrefix = "") {
+export function withFallback(language, fallback) {
     const merged = { ...language };
     for (const key of Object.keys(fallback)) {
-        const path = pathPrefix ? `${pathPrefix}.${key}` : key;
         const own = Object.prototype.hasOwnProperty.call(language, key) ? language[key] : undefined;
         if (own === undefined) {
             merged[key] = fallback[key];
-            missingKeys.push(path);
         } else if (isSection(own) && isSection(fallback[key])) {
-            merged[key] = withFallback(own, fallback[key], missingKeys, path);
+            merged[key] = withFallback(own, fallback[key]);
         }
     }
     return merged;
@@ -52,24 +50,10 @@ const activeLanguageCodeResolved = AVAILABLE_LANGUAGES[activeLanguageCode]
     ? activeLanguageCode
     : DEFAULT_LANGUAGE_CODE;
 
-const missingKeys = [];
 const englishTexts = AVAILABLE_LANGUAGES[DEFAULT_LANGUAGE_CODE];
 
 export const activeLanguage = activeLanguageCodeResolved === DEFAULT_LANGUAGE_CODE
     ? englishTexts
-    : withFallback(AVAILABLE_LANGUAGES[activeLanguageCodeResolved], englishTexts, missingKeys);
-
-// logfile is a PinballY global; it does not exist when this module is loaded
-// outside PinballY (e.g. in node for verification), so check before logging.
-if (missingKeys.length > 0 && typeof logfile !== "undefined") {
-    try {
-        logfile.log(
-            `[i18n] Language "${activeLanguageCodeResolved}" is missing ${missingKeys.length} key(s), ` +
-            `using English instead: ${missingKeys.join(", ")}`
-        );
-    } catch (error) {
-        console.log(`[i18n] Could not log missing keys: ${error instanceof Error ? error.message : error}`);
-    }
-}
+    : withFallback(AVAILABLE_LANGUAGES[activeLanguageCodeResolved], englishTexts);
 
 export default activeLanguage;

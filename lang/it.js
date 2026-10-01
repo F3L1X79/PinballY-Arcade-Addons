@@ -79,6 +79,33 @@ export default {
         "Uncategorized": "Non categorizzati",
         "Yes, add to current game": "Sì, aggiungi al tavolo attuale",
         "You must enter the game's bibliographic information (title, system, etc.) before adding media files for the game.  The game information is used to determine the folder locations and file names for the game's media files, so it has to be entered before media files can be added to the game.": "Devi inserire le informazioni bibliografiche del tavolo (titolo, sistema, ecc.) prima di aggiungere file multimediali per il tavolo. Queste informazioni vengono utilizzate per determinare i percorsi delle cartelle e i nomi dei file per i contenuti multimediali del tavolo, quindi devono essere inserite prima di poter aggiungere file multimediali.",
+        "Flyer": "Volantino",
+        "Pinscape Night Mode": "Modalità notte Pinscape",
+        "Hidden Tables": "Tavoli nascosti",
+        "Unconfigured Tables": "Tavoli non configurati",
+        "Tables played within:": "Tavoli giocati da meno di:",
+        "Tables not played within:": "Tavoli non giocati da:",
+        "Tables added within:": "Tavoli aggiunti da meno di:",
+        "Tables added more than:": "Tavoli aggiunti più di:",
+        "A week": "Una settimana",
+        "A month": "Un mese",
+        "A year": "Un anno",
+        "A week ago": "Una settimana fa",
+        "A month ago": "Un mese fa",
+        "A year ago": "Un anno fa",
+        "Never played": "Mai giocati",
+        "Batch Capture Step 2: Select the media types you'd like to capture for the selected games.  (You'll be able to say what to do about existing files in the next step.)": "Acquisizione in batch, passo 2: seleziona i tipi di media da acquisire per i tavoli scelti. (Nel passo successivo potrai indicare cosa fare dei file esistenti.)",
+        "Batch Capture Step 3: For each type, indicate if you'd like to capture the item for EVERY game, even for games that already have existing media of the same type, or if you'd only like to capture missing items.": "Acquisizione in batch, passo 3: per ogni tipo, indica se acquisirlo per OGNI tavolo, anche per quelli che hanno già un media di quel tipo, o solo per quelli in cui manca.",
+        "Next Step": "Passo successivo",
+        "Missing only": "Solo mancanti",
+        "Capture all": "Acquisisci tutto",
+        "View Capture List": "Visualizza elenco di acquisizione",
+        "Please select the system to use to launch this table:": "Seleziona il sistema con cui avviare questo tavolo:",
+        "Yes, run as Admin": "Sì, esegui come amministratore",
+        "No, cancel": "No, annulla",
+        "Allow (this session only)": "Consenti (solo questa sessione)",
+        "Allow (always)": "Consenti (sempre)",
+        "Yes, delete it": "Sì, elimina",
     },
 
     // Labels for the media-capture screen's "Item: Action" lines
@@ -92,6 +119,15 @@ export default {
         "Playfield Video": "Video del piano di gioco",
         "Table Audio": "Audio del tavolo",
         "Wheel Image": "Immagine della wheel",
+        "DMD Image": "Immagine del DMD",
+        "DMD Video": "Video del DMD",
+        "Topper Image": "Immagine del topper",
+        "Topper Video": "Video del topper",
+        "Launch Audio": "Audio di avvio",
+        "Real DMD Image": "Immagine del DMD reale",
+        "Real DMD Video": "Video del DMD reale",
+        "Real RGB DMD Image": "Immagine del DMD RGB reale",
+        "Real RGB DMD Video": "Video del DMD RGB reale",
     },
     mediaCaptureActionLabels: {
         "Add": "Aggiungi",
@@ -136,6 +172,12 @@ export default {
         starTables: (count) => `Tavoli con ${count} stella${count > 1 ? "e" : ""}`,
         startDelay: (seconds) => `Regola ritardo di avvio (${seconds} sec)`,
         unratedTables: () => "Tavoli non valutati",
+        batchCaptureReady: (count, duration) => `L'acquisizione in batch è pronta! ${count} tavolo/i saranno inclusi in questo processo, che richiederà circa ${duration}.`,
+        confirmDeleteGameDetails: (title) => `Vuoi davvero eliminare i dettagli del tavolo ${title}? (Vengono eliminate solo le informazioni bibliografiche, non i file del tavolo né i suoi media.)`,
+        showCustomView: (name) => `Mostra ${name}`,
+        durationSeconds: (count) => `${count} second${count === 1 ? "o" : "i"}`,
+        durationMinutes: (count) => `${count} minut${count === 1 ? "o" : "i"}`,
+        durationHours: (hours, minutes) => (minutes > 0 ? `${hours} h ${minutes} min` : `${hours} or${hours === 1 ? "a" : "e"}`),
     },
 
     ratingPrompt: {
@@ -231,8 +273,8 @@ export default {
             100: "Non mi sfugge niente",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `Giocare ${playedCount} tavoli su ${totalCount} (${percent}% della tua collezione).`,
-        worldTourTitle: () => "World Tour", // TODO: translation pass
-        worldTourDescription: () => "Browse every table of the wheel in one go, without launching any.", // TODO: translation pass
+        worldTourTitle: () => "Giro del mondo",
+        worldTourDescription: () => "Scorrere tutti i tavoli della ruota in una volta sola, senza avviarne nessuno.",
         playTimeMilestoneTitles: {
             1: "Riscaldamento",
             5: "Si fa sul serio",
@@ -255,9 +297,9 @@ export default {
         grandReturnTitle: () => "Il grande ritorno",
         grandReturnDescription: (days) => `Rigiocare un tavolo dopo ${days} o più giorni di assenza.`,
         // A Secret Achievement's hint, shown instead of its description while it is missing.
-        rageQuitHint: () => "Some tables just aren't your day...", // TODO: translation pass
-        grandReturnHint: () => "Old friends are always glad to see you again...", // TODO: translation pass
-        worldTourHint: () => "Some journeys are made without ever pressing Start...", // TODO: translation pass
+        rageQuitHint: () => "Ci sono giorni in cui un tavolo proprio non gira...",
+        grandReturnHint: () => "I vecchi amici sono sempre felici di rivederti...",
+        worldTourHint: () => "Certi viaggi si fanno senza mai premere Start...",
         randomGamesTitles: {
             10: "E perché no?",
             25: "Testa o croce",
@@ -289,15 +331,15 @@ export default {
         menuEntry: "Elenco degli obiettivi",
         // The header's title, the section titles, the key caps and the
         // footer's hints are shown in capitals.
-        title: "Achievement List", // TODO: translation pass
-        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} achievements unlocked (${percent}%)`, // TODO: translation pass
-        unlockedSection: "Unlocked achievements", // TODO: translation pass
-        missingSection: "Achievements to earn", // TODO: translation pass
+        title: "Elenco degli obiettivi",
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} obiettivi sbloccati (${percent}%)`,
+        unlockedSection: "Obiettivi sbloccati",
+        missingSection: "Obiettivi da ottenere",
         // After a section's title.
         sectionCount: (count) => `(${count})`,
         // PinballY's button names, as on the cabinet's key caps.
         keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
-        browse: "Browse", // TODO: translation pass
+        browse: "Sfoglia",
         back: "Indietro",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
@@ -367,6 +409,16 @@ export default {
         pickerHint: "Flipper: scorri · Start: scegli · Exit: annulla",
         guestName: "Ospite",
         greeting: name => `Ciao ${name}!`,
+    },
+
+    // The Profile Reset, in PinballY's Exit menu for an Admin Profile.
+    profileReset: {
+        menuEntry: "Azzera un profilo",
+        listTitle: "Quale profilo riparte da zero?",
+        confirm: name => `Azzerare ${name}? Tutte le sue partite, serie, sfide e obiettivi saranno cancellati.`,
+        yes: "Sì, azzera",
+        no: "No",
+        cancel: "Annulla",
     },
 
     // The clock at the top left of the wheel screen.

@@ -486,12 +486,12 @@
             <h3>Passe de traduction : allemand, espagnol, italien, portugais</h3>
             <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen</span></div>
           </div>
-          <p>Depuis le 29/09/2026, les nouveaux textes ne sont écrits qu'en anglais et en français. Une seule passe, à la fin, les traduit dans <code>lang/de.js</code>, <code>es.js</code>, <code>it.js</code> et <code>pt.js</code>.</p>
+          <p>Les nouveaux textes ne sont écrits qu'en anglais et en français. Une seule passe, à la fin, traduira ceux ajoutés après le 01/10/2026 dans <code>lang/de.js</code>, <code>es.js</code>, <code>it.js</code> et <code>pt.js</code>.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
           <div class="links">Flow Matt : <code>/to-tickets</code> (un ticket par langue) puis <code>/implement</code> par ticket</div>
           <details>
             <summary>Contexte</summary>
-            <p class="ctx">En attendant, <code>tests/lang_keys.test.js</code> exige chaque clé dans chaque langue : les nouvelles clés y reçoivent le texte anglais, marqué <code>// TODO: translation pass</code>, faciles à retrouver. Les titres des paliers ajoutés le 29/09/2026 (séries de 4 paliers) sont déjà traduits.</p>
+            <p class="ctx">Une première passe a été faite le 01/10/2026 : plus aucun <code>// TODO: translation pass</code>, la section de la Profile Reset traduite, et les menus de PinballY restés en anglais traduits dans les six langues (comparés à son code source). En attendant la suivante, <code>tests/lang_keys.test.js</code> exige chaque clé dans chaque langue, toutes sections comprises : les nouvelles clés y reçoivent le texte anglais, marqué <code>// TODO: translation pass</code>. Pour un nouveau PinballY : <code>LOG_UNTRANSLATED_MENU_TITLES=true</code> dans <code>.env.local</code> journalise les titres de menus non traduits.</p>
           </details>
         </div>
       </li>

@@ -79,6 +79,33 @@ export default {
         "Uncategorized": "Sem categoria",
         "Yes, add to current game": "Sim, adicionar à mesa atual",
         "You must enter the game's bibliographic information (title, system, etc.) before adding media files for the game.  The game information is used to determine the folder locations and file names for the game's media files, so it has to be entered before media files can be added to the game.": "Você deve inserir as informações bibliográficas da mesa (título, sistema, etc.) antes de adicionar arquivos de mídia para a mesa. Essas informações são usadas para determinar os locais das pastas e os nomes de arquivo das mídias da mesa, portanto, elas precisam ser inseridas antes que os arquivos de mídia possam ser adicionados.",
+        "Flyer": "Cartaz",
+        "Pinscape Night Mode": "Modo noturno do Pinscape",
+        "Hidden Tables": "Mesas ocultas",
+        "Unconfigured Tables": "Mesas não configuradas",
+        "Tables played within:": "Mesas jogadas há menos de:",
+        "Tables not played within:": "Mesas não jogadas há:",
+        "Tables added within:": "Mesas adicionadas há menos de:",
+        "Tables added more than:": "Mesas adicionadas há mais de:",
+        "A week": "Uma semana",
+        "A month": "Um mês",
+        "A year": "Um ano",
+        "A week ago": "Uma semana",
+        "A month ago": "Um mês",
+        "A year ago": "Um ano",
+        "Never played": "Nunca jogadas",
+        "Batch Capture Step 2: Select the media types you'd like to capture for the selected games.  (You'll be able to say what to do about existing files in the next step.)": "Captura em lote, passo 2: selecione os tipos de mídia que deseja capturar para as mesas escolhidas. (No próximo passo, você poderá indicar o que fazer com os arquivos existentes.)",
+        "Batch Capture Step 3: For each type, indicate if you'd like to capture the item for EVERY game, even for games that already have existing media of the same type, or if you'd only like to capture missing items.": "Captura em lote, passo 3: para cada tipo, indique se deseja capturá-lo para TODAS as mesas, mesmo as que já têm uma mídia desse tipo, ou somente para as que não a têm.",
+        "Next Step": "Próximo passo",
+        "Missing only": "Somente os ausentes",
+        "Capture all": "Capturar tudo",
+        "View Capture List": "Ver lista de captura",
+        "Please select the system to use to launch this table:": "Selecione o sistema para iniciar esta mesa:",
+        "Yes, run as Admin": "Sim, executar como administrador",
+        "No, cancel": "Não, cancelar",
+        "Allow (this session only)": "Permitir (somente nesta sessão)",
+        "Allow (always)": "Permitir (sempre)",
+        "Yes, delete it": "Sim, excluir",
     },
 
     // Labels for the media-capture screen's "Item: Action" lines
@@ -92,6 +119,15 @@ export default {
         "Playfield Video": "Vídeo do campo de jogo",
         "Table Audio": "Áudio da mesa",
         "Wheel Image": "Imagem da roleta",
+        "DMD Image": "Imagem do DMD",
+        "DMD Video": "Vídeo do DMD",
+        "Topper Image": "Imagem do topper",
+        "Topper Video": "Vídeo do topper",
+        "Launch Audio": "Áudio de inicialização",
+        "Real DMD Image": "Imagem do DMD real",
+        "Real DMD Video": "Vídeo do DMD real",
+        "Real RGB DMD Image": "Imagem do DMD RGB real",
+        "Real RGB DMD Video": "Vídeo do DMD RGB real",
     },
     mediaCaptureActionLabels: {
         "Add": "Adicionar",
@@ -136,6 +172,12 @@ export default {
         starTables: (count) => `Mesas com ${count} estrela${count > 1 ? "s" : ""}`,
         startDelay: (seconds) => `Ajustar atraso de inicialização (${seconds} s)`,
         unratedTables: () => "Mesas sem avaliação",
+        batchCaptureReady: (count, duration) => `A captura em lote está pronta! ${count} mesa(s) serão incluídas neste processo, que levará cerca de ${duration}.`,
+        confirmDeleteGameDetails: (title) => `Deseja realmente excluir os detalhes da mesa ${title}? (Somente as informações bibliográficas são excluídas, não os arquivos da mesa nem suas mídias.)`,
+        showCustomView: (name) => `Mostrar ${name}`,
+        durationSeconds: (count) => `${count} segundo${count === 1 ? "" : "s"}`,
+        durationMinutes: (count) => `${count} minuto${count === 1 ? "" : "s"}`,
+        durationHours: (hours, minutes) => (minutes > 0 ? `${hours} h ${minutes} min` : `${hours} hora${hours === 1 ? "" : "s"}`),
     },
 
     ratingPrompt: {
@@ -232,8 +274,8 @@ export default {
             100: "Nada me escapa",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `Jogar ${playedCount} de ${totalCount} mesas (${percent}% da sua coleção).`,
-        worldTourTitle: () => "World Tour", // TODO: translation pass
-        worldTourDescription: () => "Browse every table of the wheel in one go, without launching any.", // TODO: translation pass
+        worldTourTitle: () => "Volta ao mundo",
+        worldTourDescription: () => "Percorrer todas as mesas da roda de uma só vez, sem iniciar nenhuma.",
         playTimeMilestoneTitles: {
             1: "Aquecimento",
             5: "A coisa ficou séria",
@@ -256,9 +298,9 @@ export default {
         grandReturnTitle: () => "O grande retorno",
         grandReturnDescription: (days) => `Voltar a jogar uma mesa depois de ${days} dias ou mais.`,
         // A Secret Achievement's hint, shown instead of its description while it is missing.
-        rageQuitHint: () => "Some tables just aren't your day...", // TODO: translation pass
-        grandReturnHint: () => "Old friends are always glad to see you again...", // TODO: translation pass
-        worldTourHint: () => "Some journeys are made without ever pressing Start...", // TODO: translation pass
+        rageQuitHint: () => "Há dias em que uma mesa simplesmente não colabora...",
+        grandReturnHint: () => "Velhos amigos sempre ficam felizes com um reencontro...",
+        worldTourHint: () => "Algumas viagens se fazem sem nunca apertar Start...",
         randomGamesTitles: {
             10: "E por que não?",
             25: "Cara ou coroa",
@@ -290,15 +332,15 @@ export default {
         menuEntry: "Lista de conquistas",
         // The header's title, the section titles, the key caps and the
         // footer's hints are shown in capitals.
-        title: "Achievement List", // TODO: translation pass
-        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} achievements unlocked (${percent}%)`, // TODO: translation pass
-        unlockedSection: "Unlocked achievements", // TODO: translation pass
-        missingSection: "Achievements to earn", // TODO: translation pass
+        title: "Lista de conquistas",
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} conquistas desbloqueadas (${percent}%)`,
+        unlockedSection: "Conquistas desbloqueadas",
+        missingSection: "Conquistas a obter",
         // After a section's title.
         sectionCount: (count) => `(${count})`,
         // PinballY's button names, as on the cabinet's key caps.
         keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
-        browse: "Browse", // TODO: translation pass
+        browse: "Navegar",
         back: "Voltar",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
@@ -368,6 +410,16 @@ export default {
         pickerHint: "Flippers: mudar · Start: escolher · Exit: cancelar",
         guestName: "Convidado",
         greeting: name => `Olá ${name}!`,
+    },
+
+    // The Profile Reset, in PinballY's Exit menu for an Admin Profile.
+    profileReset: {
+        menuEntry: "Redefinir um perfil",
+        listTitle: "Qual perfil recomeça do zero?",
+        confirm: name => `Redefinir ${name}? Todas as suas partidas, sequências, desafios e conquistas serão apagados.`,
+        yes: "Sim, redefinir",
+        no: "Não",
+        cancel: "Cancelar",
     },
 
     // The clock at the top left of the wheel screen.

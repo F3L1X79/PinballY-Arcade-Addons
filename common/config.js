@@ -35,6 +35,9 @@ const DEFAULTS = {
     achievementToastSeconds: 4,
     // Size of an Achievement Toast: 1 = the original card, 2 = twice as large (from 0.5 to 3).
     achievementToastScale: 1.0,
+    // true = every PinballY menu title shown without a translation is written
+    // to the PinballY log (for a new PinballY version or a new language).
+    logUntranslatedMenuTitles: false,
 
     // --- Add-ons ---
 

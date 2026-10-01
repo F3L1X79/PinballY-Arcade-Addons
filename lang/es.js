@@ -79,6 +79,33 @@ export default {
         "Uncategorized": "Sin categoría",
         "Yes, add to current game": "Sí, añadir a la mesa actual",
         "You must enter the game's bibliographic information (title, system, etc.) before adding media files for the game.  The game information is used to determine the folder locations and file names for the game's media files, so it has to be entered before media files can be added to the game.": "Debes introducir la información bibliográfica de la mesa (título, sistema, etc.) antes de añadir archivos multimedia para la mesa. Esta información se utiliza para determinar las ubicaciones de las carpetas y los nombres de archivo de los elementos multimedia de la mesa, por lo que debe introducirse antes de poder añadir archivos multimedia.",
+        "Flyer": "Cartel",
+        "Pinscape Night Mode": "Modo nocturno de Pinscape",
+        "Hidden Tables": "Mesas ocultas",
+        "Unconfigured Tables": "Mesas no configuradas",
+        "Tables played within:": "Mesas jugadas hace menos de:",
+        "Tables not played within:": "Mesas sin jugar desde hace:",
+        "Tables added within:": "Mesas añadidas hace menos de:",
+        "Tables added more than:": "Mesas añadidas hace más de:",
+        "A week": "Una semana",
+        "A month": "Un mes",
+        "A year": "Un año",
+        "A week ago": "Una semana",
+        "A month ago": "Un mes",
+        "A year ago": "Un año",
+        "Never played": "Nunca jugadas",
+        "Batch Capture Step 2: Select the media types you'd like to capture for the selected games.  (You'll be able to say what to do about existing files in the next step.)": "Captura por lotes, paso 2: selecciona los tipos de medios que quieres capturar para las mesas elegidas. (En el siguiente paso podrás indicar qué hacer con los archivos existentes.)",
+        "Batch Capture Step 3: For each type, indicate if you'd like to capture the item for EVERY game, even for games that already have existing media of the same type, or if you'd only like to capture missing items.": "Captura por lotes, paso 3: para cada tipo, indica si quieres capturarlo para TODAS las mesas, incluso las que ya tienen un medio de ese tipo, o solo para las que no lo tienen.",
+        "Next Step": "Siguiente paso",
+        "Missing only": "Solo los que faltan",
+        "Capture all": "Capturar todo",
+        "View Capture List": "Ver la lista de captura",
+        "Please select the system to use to launch this table:": "Selecciona el sistema con el que lanzar esta mesa:",
+        "Yes, run as Admin": "Sí, ejecutar como administrador",
+        "No, cancel": "No, cancelar",
+        "Allow (this session only)": "Permitir (solo esta sesión)",
+        "Allow (always)": "Permitir (siempre)",
+        "Yes, delete it": "Sí, eliminar",
     },
 
     // Labels for the media-capture screen's "Item: Action" lines
@@ -92,6 +119,15 @@ export default {
         "Playfield Video": "Vídeo del campo de juego",
         "Table Audio": "Audio de la mesa",
         "Wheel Image": "Imagen de la rueda",
+        "DMD Image": "Imagen del DMD",
+        "DMD Video": "Vídeo del DMD",
+        "Topper Image": "Imagen del topper",
+        "Topper Video": "Vídeo del topper",
+        "Launch Audio": "Audio de lanzamiento",
+        "Real DMD Image": "Imagen del DMD real",
+        "Real DMD Video": "Vídeo del DMD real",
+        "Real RGB DMD Image": "Imagen del DMD RGB real",
+        "Real RGB DMD Video": "Vídeo del DMD RGB real",
     },
     mediaCaptureActionLabels: {
         "Add": "Añadir",
@@ -136,6 +172,12 @@ export default {
         starTables: (count) => `Mesas con ${count} estrella${count > 1 ? "s" : ""}`,
         startDelay: (seconds) => `Ajustar el retraso de inicio (${seconds} s)`,
         unratedTables: () => "Mesas sin valorar",
+        batchCaptureReady: (count, duration) => `¡La captura por lotes está lista! Se incluirán ${count} mesa(s) en este proceso, que tardará aproximadamente ${duration}.`,
+        confirmDeleteGameDetails: (title) => `¿Seguro que quieres eliminar los detalles de la mesa ${title}? (Solo se elimina la información bibliográfica, no los archivos de la mesa ni sus medios.)`,
+        showCustomView: (name) => `Mostrar ${name}`,
+        durationSeconds: (count) => `${count} segundo${count === 1 ? "" : "s"}`,
+        durationMinutes: (count) => `${count} minuto${count === 1 ? "" : "s"}`,
+        durationHours: (hours, minutes) => (minutes > 0 ? `${hours} h ${minutes} min` : `${hours} hora${hours === 1 ? "" : "s"}`),
     },
 
     ratingPrompt: {
@@ -232,8 +274,8 @@ export default {
             100: "Nada se me escapa",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `Jugar ${playedCount} mesas de ${totalCount} (${percent} % de tu colección).`,
-        worldTourTitle: () => "World Tour", // TODO: translation pass
-        worldTourDescription: () => "Browse every table of the wheel in one go, without launching any.", // TODO: translation pass
+        worldTourTitle: () => "La vuelta al mundo",
+        worldTourDescription: () => "Recorrer todas las mesas de la rueda de una sola vez, sin lanzar ninguna.",
         playTimeMilestoneTitles: {
             1: "Calentando",
             5: "Esto va en serio",
@@ -256,9 +298,9 @@ export default {
         grandReturnTitle: () => "El gran regreso",
         grandReturnDescription: (days) => `Volver a jugar una mesa tras ${days} días o más sin tocarla.`,
         // A Secret Achievement's hint, shown instead of its description while it is missing.
-        rageQuitHint: () => "Some tables just aren't your day...", // TODO: translation pass
-        grandReturnHint: () => "Old friends are always glad to see you again...", // TODO: translation pass
-        worldTourHint: () => "Some journeys are made without ever pressing Start...", // TODO: translation pass
+        rageQuitHint: () => "Hay días en que una mesa simplemente no sale...",
+        grandReturnHint: () => "Los viejos amigos siempre se alegran de un reencuentro...",
+        worldTourHint: () => "Algunos viajes se hacen sin pulsar nunca Start...",
         randomGamesTitles: {
             10: "¿Y por qué no?",
             25: "Cara o cruz",
@@ -290,15 +332,15 @@ export default {
         menuEntry: "Lista de logros",
         // The header's title, the section titles, the key caps and the
         // footer's hints are shown in capitals.
-        title: "Achievement List", // TODO: translation pass
-        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} achievements unlocked (${percent}%)`, // TODO: translation pass
-        unlockedSection: "Unlocked achievements", // TODO: translation pass
-        missingSection: "Achievements to earn", // TODO: translation pass
+        title: "Lista de logros",
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} logros desbloqueados (${percent} %)`,
+        unlockedSection: "Logros desbloqueados",
+        missingSection: "Logros por conseguir",
         // After a section's title.
         sectionCount: (count) => `(${count})`,
         // PinballY's button names, as on the cabinet's key caps.
         keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
-        browse: "Browse", // TODO: translation pass
+        browse: "Explorar",
         back: "Volver",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
@@ -368,6 +410,16 @@ export default {
         pickerHint: "Flippers: cambiar · Start: elegir · Exit: cancelar",
         guestName: "Invitado",
         greeting: name => `¡Hola ${name}!`,
+    },
+
+    // The Profile Reset, in PinballY's Exit menu for an Admin Profile.
+    profileReset: {
+        menuEntry: "Reiniciar un perfil",
+        listTitle: "¿Qué perfil empieza de cero?",
+        confirm: name => `¿Reiniciar ${name}? Se borrarán todas sus partidas, rachas, retos y logros.`,
+        yes: "Sí, reiniciar",
+        no: "No",
+        cancel: "Cancelar",
     },
 
     // The clock at the top left of the wheel screen.

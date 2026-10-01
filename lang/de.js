@@ -79,6 +79,33 @@ export default {
         "Uncategorized": "Nicht kategorisiert",
         "Yes, add to current game": "Ja, zum aktuellen Tisch hinzufügen",
         "You must enter the game's bibliographic information (title, system, etc.) before adding media files for the game.  The game information is used to determine the folder locations and file names for the game's media files, so it has to be entered before media files can be added to the game.": "Sie müssen die bibliografischen Informationen des Tisches (Titel, System usw.) eingeben, bevor Sie Mediendateien für den Tisch hinzufügen können. Diese Informationen werden verwendet, um die Ordnerpfade und Dateinamen für die Mediendateien des Tisches zu bestimmen, daher müssen sie eingegeben werden, bevor Mediendateien hinzugefügt werden können.",
+        "Flyer": "Flyer",
+        "Pinscape Night Mode": "Pinscape-Nachtmodus",
+        "Hidden Tables": "Ausgeblendete Tische",
+        "Unconfigured Tables": "Nicht konfigurierte Tische",
+        "Tables played within:": "Gespielt innerhalb von:",
+        "Tables not played within:": "Nicht gespielt seit:",
+        "Tables added within:": "Hinzugefügt innerhalb von:",
+        "Tables added more than:": "Hinzugefügt vor mehr als:",
+        "A week": "Einer Woche",
+        "A month": "Einem Monat",
+        "A year": "Einem Jahr",
+        "A week ago": "Einer Woche",
+        "A month ago": "Einem Monat",
+        "A year ago": "Einem Jahr",
+        "Never played": "Nie gespielt",
+        "Batch Capture Step 2: Select the media types you'd like to capture for the selected games.  (You'll be able to say what to do about existing files in the next step.)": "Stapelaufnahme, Schritt 2: Wählen Sie die Medientypen, die für die ausgewählten Tische aufgenommen werden sollen. (Was mit vorhandenen Dateien geschieht, legen Sie im nächsten Schritt fest.)",
+        "Batch Capture Step 3: For each type, indicate if you'd like to capture the item for EVERY game, even for games that already have existing media of the same type, or if you'd only like to capture missing items.": "Stapelaufnahme, Schritt 3: Geben Sie für jeden Typ an, ob er für JEDEN Tisch aufgenommen werden soll, auch für Tische mit vorhandenen Medien dieses Typs, oder nur dort, wo er fehlt.",
+        "Next Step": "Nächster Schritt",
+        "Missing only": "Nur fehlende",
+        "Capture all": "Alle aufnehmen",
+        "View Capture List": "Aufnahmeliste anzeigen",
+        "Please select the system to use to launch this table:": "Wählen Sie das System, mit dem dieser Tisch gestartet werden soll:",
+        "Yes, run as Admin": "Ja, als Administrator ausführen",
+        "No, cancel": "Nein, abbrechen",
+        "Allow (this session only)": "Erlauben (nur diese Sitzung)",
+        "Allow (always)": "Erlauben (immer)",
+        "Yes, delete it": "Ja, löschen",
     },
 
     // Labels for the media-capture screen's "Item: Action" lines
@@ -92,6 +119,15 @@ export default {
         "Playfield Video": "Spielfeldvideo",
         "Table Audio": "Tischaudio",
         "Wheel Image": "Wheel-Bild",
+        "DMD Image": "DMD-Bild",
+        "DMD Video": "DMD-Video",
+        "Topper Image": "Topper-Bild",
+        "Topper Video": "Topper-Video",
+        "Launch Audio": "Startaudio",
+        "Real DMD Image": "Bild des echten DMD",
+        "Real DMD Video": "Video des echten DMD",
+        "Real RGB DMD Image": "Bild des echten RGB-DMD",
+        "Real RGB DMD Video": "Video des echten RGB-DMD",
     },
     mediaCaptureActionLabels: {
         "Add": "Hinzufügen",
@@ -136,6 +172,12 @@ export default {
         starTables: (count) => `Tische mit ${count} Stern${count > 1 ? "en" : ""}`,
         startDelay: (seconds) => `Startverzögerung einstellen (${seconds} Sek.)`,
         unratedTables: () => "Nicht bewertete Tische",
+        batchCaptureReady: (count, duration) => `Die Stapelaufnahme ist bereit! ${count} Tisch(e) werden einbezogen; das dauert etwa ${duration}.`,
+        confirmDeleteGameDetails: (title) => `Die Tischdetails von ${title} wirklich löschen? (Nur die bibliografischen Angaben werden gelöscht, keine Tischdateien oder Medien.)`,
+        showCustomView: (name) => `${name} anzeigen`,
+        durationSeconds: (count) => `${count} Sekunde${count === 1 ? "" : "n"}`,
+        durationMinutes: (count) => `${count} Minute${count === 1 ? "" : "n"}`,
+        durationHours: (hours, minutes) => (minutes > 0 ? `${hours} Std. ${minutes} Min.` : `${hours} Stunde${hours === 1 ? "" : "n"}`),
     },
 
     ratingPrompt: {
@@ -232,8 +274,8 @@ export default {
             100: "Mir entgeht nichts",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `${playedCount} von ${totalCount} Tischen spielen (${percent} % der Sammlung).`,
-        worldTourTitle: () => "World Tour", // TODO: translation pass
-        worldTourDescription: () => "Browse every table of the wheel in one go, without launching any.", // TODO: translation pass
+        worldTourTitle: () => "Weltreise",
+        worldTourDescription: () => "Alle Tische des Rads in einem Zug durchblättern, ohne einen zu starten.",
         playTimeMilestoneTitles: {
             1: "Aufwärmen",
             5: "Jetzt wird's ernst",
@@ -256,9 +298,9 @@ export default {
         grandReturnTitle: () => "Die große Rückkehr",
         grandReturnDescription: (days) => `Einen Tisch nach ${days} oder mehr Tagen Pause wieder spielen.`,
         // A Secret Achievement's hint, shown instead of its description while it is missing.
-        rageQuitHint: () => "Some tables just aren't your day...", // TODO: translation pass
-        grandReturnHint: () => "Old friends are always glad to see you again...", // TODO: translation pass
-        worldTourHint: () => "Some journeys are made without ever pressing Start...", // TODO: translation pass
+        rageQuitHint: () => "An manchen Tagen will ein Tisch einfach nicht...",
+        grandReturnHint: () => "Alte Freunde freuen sich immer über ein Wiedersehen...",
+        worldTourHint: () => "Manche Reisen gelingen, ohne je Start zu drücken...",
         randomGamesTitles: {
             10: "Warum nicht?",
             25: "Kopf oder Zahl",
@@ -290,15 +332,15 @@ export default {
         menuEntry: "Erfolgsliste",
         // The header's title, the section titles, the key caps and the
         // footer's hints are shown in capitals.
-        title: "Achievement List", // TODO: translation pass
-        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} achievements unlocked (${percent}%)`, // TODO: translation pass
-        unlockedSection: "Unlocked achievements", // TODO: translation pass
-        missingSection: "Achievements to earn", // TODO: translation pass
+        title: "Erfolgsliste",
+        totalLine: (unlockedCount, totalCount, percent) => `${unlockedCount} / ${totalCount} Erfolge freigeschaltet (${percent} %)`,
+        unlockedSection: "Freigeschaltete Erfolge",
+        missingSection: "Offene Erfolge",
         // After a section's title.
         sectionCount: (count) => `(${count})`,
         // PinballY's button names, as on the cabinet's key caps.
         keyCaps: { next: "Next", prev: "Prev", exit: "Exit" },
-        browse: "Browse", // TODO: translation pass
+        browse: "Blättern",
         back: "Zurück",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
@@ -368,6 +410,16 @@ export default {
         pickerHint: "Flipper: blättern · Start: wählen · Exit: abbrechen",
         guestName: "Gast",
         greeting: name => `Hallo ${name}!`,
+    },
+
+    // The Profile Reset, in PinballY's Exit menu for an Admin Profile.
+    profileReset: {
+        menuEntry: "Profil zurücksetzen",
+        listTitle: "Welches Profil fängt von vorne an?",
+        confirm: name => `${name} zurücksetzen? Alle Partien, Serien, Herausforderungen und Erfolge werden gelöscht.`,
+        yes: "Ja, zurücksetzen",
+        no: "Nein",
+        cancel: "Abbrechen",
     },
 
     // The clock at the top left of the wheel screen.

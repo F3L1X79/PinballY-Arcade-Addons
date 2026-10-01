@@ -2,17 +2,16 @@
 // Translates PinballY's native menu titles (fixed labels, plus dynamically
 // built ones matched by DYNAMIC_TITLE_RULES) and launch-overlay status
 // messages into the active project language. Listens to "menuopen" and
-// "launchoverlaymessage"; can log untranslated titles (LOG_UNKNOWN_TITLES).
+// "launchoverlaymessage"; logs untranslated titles when
+// logUntranslatedMenuTitles is on in common/config.js.
 // ============================================================
 
 import lang from "../common/i18n.js";
 import { safeHandler } from "../common/safe_handler.js";
+import config from "../common/config.js";
 
 const SCRIPT_NAME = "UITranslation";
 
-// Logs any menu title encountered without a known translation. Useful while
-// discovering new strings or adding a language.
-const LOG_UNKNOWN_TITLES = false;
 // Menu scroll indicators to ignore silently (never logged as missing).
 const IGNORED_SCROLL_INDICATORS = ["↑", "↓"]; // ↑ ↓
 
@@ -24,6 +23,25 @@ export default function init() {
     const MEDIA_CAPTURE_ACTION_LABELS = lang.mediaCaptureActionLabels || {};
     const LAUNCH_OVERLAY_MESSAGES = lang.launchOverlayMessages || {};
     const BUILD_LABEL = lang.dynamicLabelBuilders || {};
+
+    // PinballY's own durations ("5 minutes", "An hour and 5 minutes"...),
+    // inside a sentence; kept as they are when no rule matches.
+    const DURATION_RULES = [
+        { pattern: /^(\d+) seconds?$/, build: m => BUILD_LABEL.durationSeconds?.(Number(m[1])) },
+        { pattern: /^(\d+) minutes?$/, build: m => BUILD_LABEL.durationMinutes?.(Number(m[1])) },
+        { pattern: /^One hour$/, build: () => BUILD_LABEL.durationHours?.(1, 0) },
+        { pattern: /^An hour and (\d+) minutes$/, build: m => BUILD_LABEL.durationHours?.(1, Number(m[1])) },
+        { pattern: /^(\d+) hours$/, build: m => BUILD_LABEL.durationHours?.(Number(m[1]), 0) },
+        { pattern: /^(\d+) hours and (\d+) minutes$/, build: m => BUILD_LABEL.durationHours?.(Number(m[1]), Number(m[2])) },
+        { pattern: /^(\d+):(\d+) hours$/, build: m => BUILD_LABEL.durationHours?.(Number(m[1]), Number(m[2])) },
+    ];
+    const translateDuration = text => {
+        for (const rule of DURATION_RULES) {
+            const match = text.match(rule.pattern);
+            if (match) return rule.build(match) ?? text;
+        }
+        return text;
+    };
 
     // Rules for menu titles PinballY builds dynamically (category names, star
     // ratings, media-capture labels...), tried in order — first match wins.
@@ -79,9 +97,20 @@ export default function init() {
             pattern: /^The following media items are ready to be added for (.+)\.\s+Choose the items you'd like to add or replace\.$/,
             build: m => BUILD_LABEL.mediaReadyToAdd ? BUILD_LABEL.mediaReadyToAdd(m[1]) : null
         },
+        {
+            pattern: /^Batch Capture is ready to go!\s+(\d+) game\(s\) will be included in this process, which will take roughly (.+)\.$/,
+            build: m => BUILD_LABEL.batchCaptureReady ? BUILD_LABEL.batchCaptureReady(m[1], translateDuration(m[2])) : null
+        },
+        {
+            pattern: /^Do you really want to delete the game details for (.+)\?\s+\(This only deletes the bibliographic information, not any game files or media\.\)$/,
+            build: m => BUILD_LABEL.confirmDeleteGameDetails ? BUILD_LABEL.confirmDeleteGameDetails(m[1]) : null
+        },
+        // Last: the "Show" command of a custom media window, named by the
+        // player; PinballY's own "Show ..." items are translated above.
+        { pattern: /^Show (.+)$/, build: m => BUILD_LABEL.showCustomView ? BUILD_LABEL.showCustomView(m[1]) : null },
     ];
 
-    /** Returns the translated version of a menu title, or the original if no translation applies. */
+    // The translated menu title, or the original one when no translation applies.
     function translateMenuTitle(title) {
         if (typeof title !== "string" || title.length === 0) return title;
         if (IGNORED_SCROLL_INDICATORS.includes(title)) return title;
@@ -95,7 +124,7 @@ export default function init() {
             if (translated !== null && translated !== undefined) return translated;
         }
 
-        if (LOG_UNKNOWN_TITLES) {
+        if (config.logUntranslatedMenuTitles) {
             const charCodes = title.split("").map(c => c.charCodeAt(0)).join(",");
             logfile.log(`[UITranslation] Missing translation: "${title}" (char codes: ${charCodes})`);
         }
