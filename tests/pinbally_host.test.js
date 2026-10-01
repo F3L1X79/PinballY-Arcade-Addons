@@ -105,6 +105,16 @@ for (const { name, createHost, usesGlobals } of ADAPTERS) {
             assert.equal(host.getWheelTables()[0].title, "Attack from Mars");
         });
 
+        test("only the player's wheel moves fire the game selection, with the new table", () => {
+            const selected = [];
+            host.onGameListEvent("gameselect", ev => selected.push(ev.game.title));
+
+            host.setWheelGame(1);
+            fake.moveWheel(1);
+
+            assert.deepEqual(selected, ["Medieval Madness"]);
+        });
+
         test("switches to the all-tables filter, keeping the current table", () => {
             fake.setTables([...TABLES, { id: 4, configId: "Whirlwind (Williams 1990)", title: "Whirlwind", isConfigured: false }]);
             fake.setWheelTables(["Attack from Mars (Bally 1995)"], { filterId: "Favorites" });

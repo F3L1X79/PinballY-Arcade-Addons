@@ -232,6 +232,8 @@ export default {
             100: "Mir entgeht nichts",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `${playedCount} von ${totalCount} Tischen spielen (${percent} % der Sammlung).`,
+        worldTourTitle: () => "World Tour", // TODO: translation pass
+        worldTourDescription: () => "Browse every table of the wheel in one go, without launching any.", // TODO: translation pass
         playTimeMilestoneTitles: {
             1: "Aufwärmen",
             5: "Jetzt wird's ernst",

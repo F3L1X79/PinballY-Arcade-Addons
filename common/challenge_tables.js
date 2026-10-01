@@ -9,12 +9,12 @@
 
 import { safeHandler } from "./safe_handler.js";
 import lang from "./i18n.js";
+import { ALL_TABLES_FILTER } from "./pinbally_host.js";
 
 const SCRIPT_NAME = "ChallengeTables";
 const FILTER_ID = "project.ChallengeTables";
 // PinballY prefixes a script filter's id.
 const FULL_FILTER_ID = `User.${FILTER_ID}`;
-const ALL_TABLES_FILTER = "All";
 // PinballY's "All Tables" has sort key "3000" and the Hall of Fame "6000" in the [Top] group.
 const UNDER_ALL_TABLES_SORT_KEY = "5000";
 

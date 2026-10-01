@@ -23,6 +23,7 @@ import { safeHandler } from "./safe_handler.js";
 import { getDecadeStartYear } from "./decade.js";
 import { countPlayedTables, getUnplayedTables, tablesVisibleTo } from "./visible_tables.js";
 import { getHallOfFame } from "./hall_of_fame.js";
+import { ALL_TABLES_FILTER } from "./pinbally_host.js";
 
 const SCRIPT_NAME = "ProfileStats";
 const MENU_ID = "profileStats";
@@ -30,7 +31,6 @@ const TABLE_LIST_MENU_ID = "profileStatsTables";
 const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
 // PinballY's own filter showing every table.
-const ALL_TABLES_FILTER = "All";
 
 export function createProfileStats(host, { profileStore, achievementList, tableOfTheDay, tableOfTheWeek, challenges = null }) {
     const { profileStats: TEXT } = lang;

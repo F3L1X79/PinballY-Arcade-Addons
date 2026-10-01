@@ -1,7 +1,8 @@
 ﻿// ============================================================
 // Checks all registered achievements for the active Profile at startup,
-// after every "gamestarted" and "gameover" event and on every Profile
-// switch, and hands each newly unlocked one to the Achievement Toast
+// after every "gamestarted" and "gameover" event, on every Profile
+// switch and when the World Tour tracker, started here, completes a tour,
+// and hands each newly unlocked one to the Achievement Toast
 // module, which announces it with a card in the bottom-right corner once no
 // game is running; an Achievement becomes Notified, for the Profile that
 // unlocked it, when its toast starts. A Profile Reset forgets what was
@@ -23,6 +24,8 @@ import { buildCategoryCompletionAchievements } from "../achievements/category_co
 import { buildSessionMilestoneAchievements } from "../achievements/session_milestones.js";
 import { buildRandomGameFanAchievements } from "../achievements/random_game_fans.js";
 import { buildChallengeAchievements } from "../achievements/challenges.js";
+import { buildWorldTourAchievements } from "../achievements/world_tour.js";
+import { createWorldTour } from "../common/world_tour.js";
 import { getAchievementToasts } from "../common/achievement_toast.js";
 import { getMainMenu, MAIN_MENU_POSITION } from "../common/main_menu.js";
 import { createAchievementList } from "../common/achievement_list.js";
@@ -50,6 +53,7 @@ export function getAllAchievements() {
         ...buildDayManufacturersAchievements(),
         ...buildManufacturerCompletionAchievements(),
         ...buildCollectionCompletionAchievements(),
+        ...buildWorldTourAchievements(),
         ...buildPlayTimeTotalAchievements(),
         ...buildPeriodTableAchievements(),
         ...buildDecadeCompletionAchievements(),
@@ -145,6 +149,10 @@ export default function init() {
     // Fires on every Profile switch: announces what the new Profile has
     // unlocked but was never announced (for example after an update).
     profileStore.onSwitch(safeCheckForNewAchievements);
+
+    // Checked right after the flag is set, so the World Tour's toast shows
+    // on the wheel the moment the last table is selected.
+    createWorldTour(createPinballYHost(), profileStore, { onCompleted: checkForNewAchievements });
 
     // Startup check: its toasts show alongside the startup prompt.
     checkForNewAchievements();

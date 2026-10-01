@@ -277,6 +277,30 @@
         </div>
       </li>
 
+      <li draggable="true" tabindex="0" class="item tr-play" id="achievement-list-scrollbar" data-track="play" data-rank="bronze">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Barre de défilement dans l'Achievement List</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
+          </div>
+          <p>Une barre de défilement le long de l'Achievement List, pour voir où l'on en est dans la liste et ce qu'il reste en dessous.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/grill-with-docs</code> → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code></div>
+          <details>
+            <summary>Questions ouvertes</summary>
+            <ul>
+              <li>Toujours visible, ou seulement quand la liste dépasse l'écran ?</li>
+              <li>Curseur proportionnel à la part visible, dans les couleurs Steamball ? Glisse-t-il avec les lignes ?</li>
+              <li>Repères des sections « Débloqués » / « Manquants » sur la barre ?</li>
+              <li>Dessinée d'avance avec le reste de la liste (<code>drawing_ahead.js</code>), pour ne rien coûter au défilement ?</li>
+            </ul>
+            <p class="ctx">Demandé le 01/10/2026, pendant l'implémentation du Tour du monde.</p>
+          </details>
+        </div>
+      </li>
+
       <li draggable="true" tabindex="0" class="item tr-play" id="challenge-confetti" data-track="play" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>

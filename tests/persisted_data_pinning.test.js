@@ -11,7 +11,8 @@
 // cabinet.json, a Profile's "challenge" record and its counted games in
 // profile.json, and the template ids. A third locks a verdict on the
 // previous Challenge in a Profile's history, another the Challenges
-// Achievement IDs, and one the Play Log's year file name and keys. These
+// Achievement IDs, one the Play Log's year file name and keys, and one the
+// World Tour's key in profile.json and its Achievement ID. These
 // strings are players' saved progress: this test must keep passing unchanged.
 // ============================================================
 
@@ -24,6 +25,8 @@ import { createPeriodTable, TABLE_OF_THE_DAY, TABLE_OF_THE_WEEK } from "../commo
 import { createRandomGame } from "../common/random_game.js";
 import { createChallenges, CHALLENGE_TEMPLATE_IDS } from "../common/challenge.js";
 import { buildChallengeAchievements } from "../achievements/challenges.js";
+import { buildWorldTourAchievements } from "../achievements/world_tour.js";
+import { createWorldTour } from "../common/world_tour.js";
 
 // Wednesday 23 September 2026, 10:00 local time: its week starts Monday 21.
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -445,4 +448,14 @@ test("the Challenges Achievement IDs stay byte-identical", () => {
         "challengesCompleted:50",
         "challengesCompleted:100",
     ]);
+});
+
+test("the World Tour keeps its key in profile.json and its Achievement ID", () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    const store = createProfileStore(fake);
+    createWorldTour(fake, store, { onCompleted: () => {} });
+    for (let move = 0; move < TABLES.length; move++) fake.moveWheel(1);
+
+    assert.equal(JSON.parse(fake.readFile(GUEST_PROFILE_FILE)).worldTour, true);
+    assert.deepEqual(buildWorldTourAchievements().map(achievement => achievement.id), ["worldTour"]);
 });

@@ -2,7 +2,8 @@
 // In-memory fake PinballY host for the node tests. Offers the same
 // interface as common/pinbally_host.js, plus controls for the tests: set
 // the date (a manual clock that also runs the host's timers), the monitor
-// count, the table list, the wheel selection (and its filter) and the
+// count, the table list, the wheel selection (and its filter, and the
+// player's wheel moves) and the
 // layout size, seed settings, fire PinballY events, apply the metafilters
 // to the wheel selection and a filter's games, open the Exit menu
 // or main menu with their native items, pick menu items, play launched games, and inspect shown menus, launches, written settings keys,
@@ -609,6 +610,7 @@ export function createFakePinballYHost({
         getFullUIMode,
         showMenu,
         on,
+        onGameListEvent: on,
         createDrawingLayer,
         createStyledText: (options) => new FakeStyledText(options, (text) => { logLines.push(text); }),
         allocateCommand,
@@ -671,6 +673,12 @@ export function createFakePinballYHost({
             runMetaFilters();
         },
         currentFilterId: () => currentFilterId,
+        // The player moves the wheel by this offset (Next, Prev, Next Page...):
+        // unlike setWheelGame(), PinballY fires "gameselect" with the new table.
+        moveWheel(offset) {
+            setWheelGame(offset);
+            fire("gameselect", { game: host.getWheelTables()[0] || null });
+        },
         // Shows a script filter, by its full id ("User.<id>").
         selectFilter: applyFilter,
         // The script filters' descriptions, as created.

@@ -237,6 +237,8 @@ export default {
             100: "Rien ne m'échappe",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `Jouer à ${playedCount} tables sur ${totalCount} (${percent} % de votre collection).`,
+        worldTourTitle: () => "Tour du monde",
+        worldTourDescription: () => "Faire défiler toutes les tables de la roue d'une traite, sans en lancer aucune.",
         playTimeMilestoneTitles: {
             1: "Mise en jambes",
             5: "Ça devient sérieux",

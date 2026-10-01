@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // Production PinballY host: the single seam through which the deepened
 // modules reach PinballY (settings, clock, timers, visible tables, wheel
-// selection, filter and metafilters, main window menus / UI mode / events / drawing layers,
+// selection, filter and metafilters, game list events, main window menus / UI mode / events / drawing layers,
 // StyledText, commands and running them, table launch, program and pack folders,
 // monitor count, backglass window, sound playback (one-off or on players
 // in turn), logfile.log, and the few file operations the Profile store
@@ -20,6 +20,9 @@ const IMAGE_PROBE_Z_INDEX = -1000;
 const SM_CMONITORS = 80;
 // The pack's fixed folder under Scripts (ADR 0009): never detected at run time.
 const PROJECT_FOLDER_NAME = "ExpansionPack";
+
+// The id of PinballY's own "All Tables" filter.
+export const ALL_TABLES_FILTER = "All";
 
 // The pack's folder for a PinballY program folder, with no trailing backslash.
 export const projectFolderOf = programFolder => `${programFolder.replace(/\\+$/, "")}\\Scripts\\${PROJECT_FOLDER_NAME}`;
@@ -160,6 +163,8 @@ export function createPinballYHost() {
         getFullUIMode: () => mainWindow.getUIMode(),
         showMenu: (id, items, options) => { mainWindow.showMenu(id, items, options); },
         on: (eventName, handler) => { mainWindow.on(eventName, handler); },
+        // The game list's own events, such as "gameselect" or "filterselect".
+        onGameListEvent: (eventName, handler) => { gameList.on(eventName, handler); },
         createDrawingLayer: (zIndex) => mainWindow.createDrawingLayer(zIndex),
         createStyledText: (options) => new StyledText(options),
 

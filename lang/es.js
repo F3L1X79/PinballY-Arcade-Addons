@@ -232,6 +232,8 @@ export default {
             100: "Nada se me escapa",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `Jugar ${playedCount} mesas de ${totalCount} (${percent} % de tu colección).`,
+        worldTourTitle: () => "World Tour", // TODO: translation pass
+        worldTourDescription: () => "Browse every table of the wheel in one go, without launching any.", // TODO: translation pass
         playTimeMilestoneTitles: {
             1: "Calentando",
             5: "Esto va en serio",

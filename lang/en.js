@@ -152,6 +152,8 @@ export default {
             100: "Nothing Escapes Me",
         },
         collectionPercentDescription: (percent, playedCount, totalCount) => `Play ${playedCount} of your ${totalCount} tables (${percent}% of your collection).`,
+        worldTourTitle: () => "World Tour",
+        worldTourDescription: () => "Browse every table of the wheel in one go, without launching any.",
         playTimeMilestoneTitles: {
             1: "Warming Up",
             5: "Getting Serious",
