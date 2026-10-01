@@ -18,21 +18,41 @@ Not checked: the upstream issue tracker (the API is blocked and the issue search
 3. **Our Add-ons go down none of the fixed paths, except one.** We call `logfile.log` and `console.log` with a single string only, never `sprintf`, never `off`, `addEventListener` or the `items` argument of the menu helpers, never `ev.name`. The exception is the CParser scanner (change C2), which every `dllImport.bind` goes through. That includes our one `dllImport.bind("User32.dll", "int WINAPI GetSystemMetrics(int nIndex);")` (`common/pinbally_host.js:165`) and the system's own COM definitions at startup. The Node probe gives the same result with both versions there. So for our Add-ons, going back to the originals changes nothing observable, and keeping the fixes buys nothing (Inference).
 4. **Default recommendation, as the project rules ask: revert both files to the originals.** The real bugs are candidates to propose upstream. Nothing calls for a workaround in `common/` today. Two habits keep us off the buggy paths: call `logfile.log` with one string, and never end a `dllImport` declaration string with a `//` comment.
 
-**Decision (2026-10-01):** the cabinet keeps the AI-fixed copies, since `System\` is not versioned and they are only a local convenience. Nothing is reported upstream. The habits became rules in `.claude/rules/conventions.md`: `logfile.log` with one string, no trailing `//` in a `dllImport` declaration, and the timer functions added to the allowed globals (§3.1). To keep in mind: after a PinballY upgrade, `Scripts\System\` must come from the new build (§3.6).
+**Decision (2026-10-01):** the cabinet keeps its AI-edited copies, since `System\` is not versioned and they are only a local convenience, and every defect left in them is fixed in place (below). Nothing is reported upstream. The habits became rules in `.claude/rules/conventions.md`, since players run the originals: `logfile.log` with one string, no trailing `//` in a `dllImport` declaration, and the timer functions added to the allowed globals (§3.1).
 
-### What the cabinet's AI copies still get wrong
+### State of the cabinet's copies (fixed on 2026-10-01)
 
-Nothing below has been corrected: `System\` is left untouched, and the decision above keeps the copies as they are. None of it is on a path our code takes (§5).
+`System/system_scripts_check.js` checks every point below (`node --test System/system_scripts_check.js`; its name keeps the project's `node --test` from picking it up). Against the AI copies it fails 19 of its 38 checks. Our Add-ons only reach two of the changed paths: `tidyMenu()` (`addons/custom_menu_commands.js:62`), and `dllImport.bind` through the CParser scanner, whose output is unchanged on a corpus of declarations apart from `HFONT`.
 
-**Defects the AI introduced** (absent from the originals; checked in the files):
-- **S6:** `console.countReset()` without a label no longer resets the unlabelled counter, and unlabelled `count()` calls still share one counter. A regression.
-- **C4:** an interface GUID written with spaces inside the quotes (`' {GUID} '`) is now rejected as "invalid GUID format", where the original accepted it.
-- **S1:** `%+d` / `%+f` of 0 prints `+0` instead of the original's deliberate ` 0`.
-- **C9:** the author's name in the CParser licence comment is corrupted. A comment, so no runtime effect.
+**Defects the AI introduced, now fixed:**
+- **S6:** `count()` without a label now counts per calling location, as the help promises, with that location as the label. `countReset()` without a label resets all of those counters.
+- **C4:** spaces around an interface GUID are accepted again; other text around it is still rejected.
+- **S1:** `%+d` / `%+f` of 0 gives ` 0` again, as the help describes.
+- **C9:** the author's name is restored, and `CParser.js` is back in Latin-1, like the original, so PinballY reads it right.
+- **S13, C10:** final newlines restored.
 
-**Bugs of the originals the AI copies still have:** the list "Bugs that neither version fixes" at the end of §5, and every row marked "Same" in §4 (for example `HttpRequest.send()` rejecting any status other than 200).
+**Bugs of the originals, now fixed:**
+- `sprintf` integers follow C: the precision zero-pads the digits, then the width pads the field (`%8.3d` of 7 gives `     007`); `%.0d` of 0 is empty. The space flag and the `#` prefix now come before the zero padding (`% 05d` gives ` 0007`, `%#06x` of 255 gives `0x00ff`). The help's line about integer precision ("left-justifying") matches neither the code nor C.
+- `%S` of an object nested more than 5 levels deep prints `[object Object]` there instead of throwing.
+- A first argument that isn't a string is never treated as a format (no more TypeError).
+- Arguments left over after the format codes are appended, as in a browser.
+- A listener that throws no longer stops the other listeners. The first error is still rethrown at the end, so PinballY logs it and runs the default action as before; the others go to `logfile`. A once-only listener is removed before it runs, so it stays removed even if it throws.
+- `deleteMenuItem(which, items)` edits `items` in place and returns it.
+- `tidyMenu()` treats `{ cmd: -1 }` without a title as a separator.
+- `command.nameAndIndex()` names the `UserFilterGroup` range too.
+- `HighScoresReadyEvent` carries its own class name.
+- Typed-array `toString()` / `toStringRaw()` convert in chunks, so a buffer of a few hundred thousand elements no longer overflows the stack.
+- `HttpRequest.send()` resolves on any 2xx status, and an error without a status text says the status.
+- `HFONT` is a handle (`H`); `"\a"` is the bell character in string escapes.
+- `pinscape` is defined, with the same lines as upstream master, so a newer PinballY build no longer turns Javascript off with these copies.
 
-**Optimizations:** only one, C2 (the sticky-regex scanner). It is correct and gives the same output, with no visible gain on our one-line declarations.
+**Optimizations:** `next()` in the CParser scanner no longer creates two functions per character read. Like C2, it gives no measurable gain in Node (3,000 declarations parse in 70 to 90 ms with or without it). No other hot path stood out.
+
+**Left as is, on purpose:**
+- A single argument is never formatted. The help suggests otherwise, but this matches the browser console standard, and our `logfile.log` rule relies on it.
+- Numeric `%o` honours the width, which the help says it ignores; C honours it too.
+- `command.allocate(name)` overwrites `command[name]`, as the help describes.
+- What the C++ does: console output to `OutputDebugString`, the `[Script]` prefix and ANSI conversion in `PinballY.log`, and the default action running when a listener throws.
 
 ### The AI fixes at a glance
 
