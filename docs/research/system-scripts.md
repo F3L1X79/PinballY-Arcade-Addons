@@ -18,6 +18,8 @@ Not checked: the upstream issue tracker (the API is blocked and the issue search
 3. **Our Add-ons go down none of the fixed paths, except one.** We call `logfile.log` and `console.log` with a single string only, never `sprintf`, never `off`, `addEventListener` or the `items` argument of the menu helpers, never `ev.name`. The exception is the CParser scanner (change C2), which every `dllImport.bind` goes through. That includes our one `dllImport.bind("User32.dll", "int WINAPI GetSystemMetrics(int nIndex);")` (`common/pinbally_host.js:165`) and the system's own COM definitions at startup. The Node probe gives the same result with both versions there. So for our Add-ons, going back to the originals changes nothing observable, and keeping the fixes buys nothing (Inference).
 4. **Default recommendation, as the project rules ask: revert both files to the originals.** The real bugs are candidates to propose upstream. Nothing calls for a workaround in `common/` today. Two habits keep us off the buggy paths: call `logfile.log` with one string, and never end a `dllImport` declaration string with a `//` comment.
 
+**Decision (2026-10-01):** the cabinet keeps the AI-fixed copies, since `System\` is not versioned and they are only a local convenience. Nothing is reported upstream. The habits became rules in `.claude/rules/conventions.md`: `logfile.log` with one string, no trailing `//` in a `dllImport` declaration, and the timer functions added to the allowed globals (§3.1). To keep in mind: after a PinballY upgrade, `Scripts\System\` must come from the new build (§3.6).
+
 ### The AI fixes at a glance
 
 "Used by us?" means: does any of our code reach the changed lines (grep of `main.js`, `common/`, `addons/`, details in §5).
