@@ -2,8 +2,8 @@
 // Challenges family: Achievements for completing 1, 5, 10, 25, 50 and 100
 // Challenges. Reads the active Profile's completed count from the
 // Challenge module, also shown as Achievement Progress; writes nothing.
-// None for Guest, which has no Challenge; achievements_engine.js leaves the
-// family out when the Challenges Add-on is disabled.
+// achievements_engine.js leaves the family out when the Challenges Add-on
+// is disabled.
 // ============================================================
 
 import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT } from "../common/achievements.js";
@@ -15,12 +15,8 @@ import lang from "../common/i18n.js";
 const CHALLENGE_THRESHOLDS = [1, 5, 10, 25, 50, 100];
 
 export function buildChallengeAchievements(challenges) {
-    if (challenges.getRecord() === null) return [];
-
     const { achievements: TEXT } = lang;
-    // The list is rebuilt at each check, but a Profile switch may still
-    // come between building and reading.
-    const getCompletedCount = () => (challenges.getRecord() || { completed: 0 }).completed;
+    const getCompletedCount = () => challenges.getRecord().completed;
 
     return CHALLENGE_THRESHOLDS.map(count => countedAchievement({
         id: `challengesCompleted:${count}`,

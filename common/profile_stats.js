@@ -121,7 +121,7 @@ export function createProfileStats(host, { profileStore, achievementList, tableO
         const favouriteManufacturer = findFavourite(visibleTables, game => game.manufacturer || null);
         const favouriteDecade = findFavourite(visibleTables, game => getDecadeStartYear(game.year));
         const achievements = achievementList.countAll();
-        // Null for Guest, which has no Challenge.
+        // Without the Challenges Add-on, no Challenges line.
         const challengeRecord = challenges && challenges.getRecord();
         const info = title => ({ title, cmd: -1 });
         // An empty list is left out: the player never opens an empty menu.

@@ -1,6 +1,6 @@
 // ============================================================
 // The Challenges Add-on started by main.js on the fake PinballY globals:
-// for a non-Guest active Profile, the week's Challenge is drawn at startup,
+// for the active Profile, the week's Challenge is drawn at startup,
 // locked in cabinet.json, and the Challenge Card is drawn under the badge;
 // a game of at least a minute counts in the Profile's profile.json.
 // ============================================================

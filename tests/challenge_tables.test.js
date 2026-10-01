@@ -4,7 +4,7 @@
 // Tables and a real Random Game module: the filter sits in the main menu
 // right under "All Tables", and choosing it puts on the wheel the visible
 // tables that would move the Challenge forward, or every table back when
-// there is none (other templates, Guest, no Challenge, completed).
+// there is none (other templates, not followed yet, no Challenge, completed).
 // ============================================================
 
 import { test } from "node:test";
@@ -40,11 +40,13 @@ const LONG_AGO = played("2026-03-21T20:00:00");
 const challengeOf = (template, param = null, target = 3) => ({ week: WEEK, template, param, target });
 
 // challenge: the week's Challenge, already locked in cabinet.json and
-// followed by Alice; plays: Alice's play records.
+// followed by Alice; plays: Alice's play records. Bob has never shown up
+// to follow it.
 function setUp({ challenge, active = "Alice", plays = {}, now = MONDAY } = {}) {
     const fake = createFakePinballYHost({ now, tables: TABLES });
     fake.installGlobals();
     fake.addFolder(`${PROFILES}\\Alice`);
+    fake.addFolder(`${PROFILES}\\Bob`);
     fake.addFile(`${PROFILES}\\Alice\\profile.json`, JSON.stringify({
         plays,
         challenge: { firstWeek: WEEK, week: WEEK, games: [], completed: false, completedCount: 0, judgedWeek: "", history: [] },
@@ -152,8 +154,8 @@ test("the other templates offer no table", () => {
     }
 });
 
-test("Guest, no Challenge and a completed Challenge offer no table", () => {
-    assert.ok(offersNothing(setUp({ challenge: challengeOf("manufacturerTables", "Stern"), active: "guest" }).fake), "Guest");
+test("a Challenge not followed yet, no Challenge and a completed Challenge offer no table", () => {
+    assert.ok(offersNothing(setUp({ challenge: challengeOf("manufacturerTables", "Stern"), active: "Bob" }).fake), "not followed");
     assert.ok(offersNothing(setUp({ challenge: { week: WEEK, template: "", param: null, target: 0 } }).fake), "no Challenge");
 
     const { fake } = setUp({ challenge: challengeOf("manufacturerTables", "Stern", 2) });
@@ -209,11 +211,11 @@ test("once the Table of the Day counted today, the wheel goes back to every tabl
     assert.equal(fake.currentFilterId(), "All");
 });
 
-test("after a switch to Guest, the wheel goes back to every table", async () => {
+test("after a switch to a Profile not following the Challenge yet, the wheel goes back to every table", async () => {
     const { fake, store } = setUp({ challenge: challengeOf("manufacturerTables", "Stern") });
     chooseFilter(fake);
 
-    store.switchTo("guest");
+    store.switchTo("Bob");
     fake.fire("wheelmode");
 
     assert.equal(fake.currentFilterId(), "All");

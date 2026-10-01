@@ -176,17 +176,16 @@ test("a game counts from 60 seconds on a visible table, and progress counts dist
     assert.deepEqual(games.map(game => [game.configId, game.seconds]), [["Table 1", 60], ["Table 1", 300], ["Table 3", 90]]);
 });
 
-test("with Guest active nothing is drawn, until another Profile shows up", () => {
-    const { fake, store } = setUp({ active: "guest", randoms: [0, 0, 0.99] });
-    assert.equal(cabinetChallenge(fake), undefined);
-    assert.ok(!cardShown(fake));
+test("with Guest as the only Profile, the week's Challenge is drawn and shown to Guest", () => {
+    const { fake } = setUp({ profiles: [], active: "guest", randoms: [0, 0, 0.99] });
 
-    store.switchTo("Alice");
     assert.equal(cabinetChallenge(fake).current.template, "differentTables");
-    assert.ok(cardShown(fake));
+    assert.ok(cardShows(fake, TEXT.progress(0, 4, TEXT.daysLeft(7))));
+    play(fake, TABLES[0], 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 4, TEXT.daysLeft(7))));
 });
 
-test("each Profile has its own progress, and Guest has no Challenge", () => {
+test("each Profile has its own progress, Guest included", () => {
     const { fake, store } = setUp({ randoms: [0, 0, 0.99] });
     play(fake, TABLES[0], 90);
 
@@ -194,12 +193,15 @@ test("each Profile has its own progress, and Guest has no Challenge", () => {
     assert.ok(cardShows(fake, TEXT.progress(0, 4, TEXT.daysLeft(7))), "Bob starts from zero");
 
     store.switchTo("guest");
-    assert.ok(!cardShown(fake), "no card for Guest");
+    assert.ok(cardShows(fake, TEXT.progress(0, 4, TEXT.daysLeft(7))), "Guest starts from zero");
     play(fake, TABLES[1], 90);
-    assert.equal(readJson(fake, profileFile("guest")).challenge, undefined, "nothing counted for Guest");
+    play(fake, TABLES[2], 90);
+    assert.ok(cardShows(fake, TEXT.progress(2, 4, TEXT.daysLeft(7))));
 
     store.switchTo("Alice");
     assert.ok(cardShows(fake, TEXT.progress(1, 4, TEXT.daysLeft(7))));
+    store.switchTo("guest");
+    assert.ok(cardShows(fake, TEXT.progress(2, 4, TEXT.daysLeft(7))), "Guest keeps its own progress");
 });
 
 test("a game started on Sunday night counts for the week it started in", () => {
@@ -486,8 +488,7 @@ test("a previous week without a Challenge gets no verdict", () => {
 
 // Every Challenge a draw can give on this collection, as "template:param:target"
 // for the lowest and highest target, by walking the random source through
-// each template and option; options go to setUp. The draw is asked for
-// directly, since Guest never needs one.
+// each template and option; options go to setUp.
 function drawable(tables, options = {}) {
     const steps = Array.from({ length: 20 }, (_, index) => index / 20);
     const drawn = new Set();

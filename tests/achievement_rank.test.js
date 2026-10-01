@@ -35,7 +35,6 @@ const { BRONZE, SILVER, GOLD, PLATINUM } = ACHIEVEMENT_RANK;
 
 test("every Achievement has an Achievement Rank deduced from its ladder or group", async () => {
     const fake = createFakePinballYHost({ now: new Date(2026, 8, 23, 10, 0, 0), tables: TABLES });
-    // Alice, since Guest has no Challenges Achievements.
     fake.addFolder(`${PROFILES_FOLDER}\\Alice`);
     fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "Alice" }));
     // Never uninstalled: node --test runs each test file in its own process.

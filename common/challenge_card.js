@@ -2,8 +2,8 @@
 // Challenge Card: the week's Challenge and the active Profile's progress
 // (title, bar, value / target, days left), always in view under the
 // Profile badge at the top right of the wheel screen, on its own drawing
-// layer (see docs/adr/0003). Always the same size; hidden for Guest, when
-// there is no Challenge and while a game runs. When there is something new
+// layer (see docs/adr/0003). Always the same size; hidden when there is
+// no Challenge and while a game runs. When there is something new
 // (a Challenge to follow, a Profile switch, progress after a game) its
 // content changes in place and it lights up once. Once the Challenge is
 // completed, it says so until the end of the week. The first time a

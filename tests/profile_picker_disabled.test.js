@@ -17,7 +17,9 @@ test("turning the Profile picker off removes its main-menu and startup prompt en
     fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({ version: 1, activeProfile: "guest" }));
     // Never uninstalled: node --test runs each test file in its own process.
     fake.installGlobals();
-    for (const key of Object.keys(config.addOns)) config.addOns[key] = key !== "profilePicker";
+    // Not the Challenges Add-on either: it locks the week's Challenge in
+    // cabinet.json at startup, for Guest too.
+    for (const key of Object.keys(config.addOns)) config.addOns[key] = !["profilePicker", "challenges"].includes(key);
     config.language = "en";
 
     const { default: lang } = await import("../common/i18n.js");

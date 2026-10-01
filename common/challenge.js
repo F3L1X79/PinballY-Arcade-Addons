@@ -8,9 +8,10 @@
 // Profile; the Table of the Day on different days or days played, never
 // more than the days left; games on the Table of the Week, on the same
 // table or launched as Random Games; minutes on one table or in total),
-// and locked in cabinet.json with the previous one; each non-Guest
-// Profile follows it in its own profile.json ("challenge"), where the games that count are
-// kept with their facts, progress being recomputed from them. The game
+// and locked in cabinet.json with the previous one; each Profile, Guest
+// included, follows it in its own profile.json ("challenge"), where the
+// games that count are kept with their facts, progress being recomputed
+// from them. The game
 // that first reaches the target completes the Challenge: the Profile's
 // completed count goes up and a Challenge Toast is submitted. When a
 // Profile first shows up in a later week, the previous Challenge is judged
@@ -263,12 +264,10 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
     // switch, back from a game): draws the week's Challenge if needed, judges
     // the previous one once and starts following the week's. Returns whether
     // the card has something new, and the verdict to show first, if any.
-    // Guest needs no Challenge: none is drawn for it.
     function showUp({ switched = false } = {}) {
         const profile = profileStore.getActiveProfile();
         const progressed = progressedProfile === profile.name;
         progressedProfile = null;
-        if (profile.isGuest) return { hasNews: false, verdict: null };
         const current = getCurrent();
         const state = readProfileChallenge(profile.data);
         // Only the last Challenge before the week's is ever judged: after an
@@ -292,10 +291,9 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
     }
 
     // The active Profile's view of the week's Challenge, or null when it
-    // has none to show (Guest, no Challenge, not followed yet).
+    // has none to show (no Challenge, not followed yet).
     function getActiveView() {
         const profile = profileStore.getActiveProfile();
-        if (profile.isGuest) return null;
         const current = getCurrent();
         if (!current) return null;
         const state = readProfileChallenge(profile.data);
@@ -309,19 +307,17 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
     }
 
     // The active Profile's completed Challenges out of every Challenge it
-    // completed or missed; null for Guest. Read from the completed count,
+    // completed or missed. Read from the completed count,
     // not the verdicts, so it agrees with the Challenges Achievements and
     // counts this week's Challenge as soon as it is completed.
     function getRecord() {
-        const profile = profileStore.getActiveProfile();
-        if (profile.isGuest) return null;
-        const state = readProfileChallenge(profile.data);
+        const state = readProfileChallenge(profileStore.getActiveProfile().data);
         const missed = state.history.filter(verdict => !verdict.completed).length;
         return { completed: state.completedCount, total: state.completedCount + missed };
     }
 
-    // The active Profile's Challenge Tables, in collection order; none for
-    // Guest, without a Challenge to follow, once it is completed, or for
+    // The active Profile's Challenge Tables, in collection order; none
+    // without a Challenge to follow, once it is completed, or for
     // the templates that have none.
     function getTablesToPlay() {
         const view = getActiveView();
@@ -363,10 +359,10 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         };
     }
 
-    // Fires on table launch; Guest's games are never noted.
+    // Fires on table launch.
     host.on("gamestarted", safeHandler(SCRIPT_NAME, ev => {
         const profile = profileStore.getActiveProfile();
-        if (!ev.game || profile.isGuest) return;
+        if (!ev.game) return;
         const start = host.now();
         startedGames.set(ev.game.configId, { profileName: profile.name, start, facts: factsOf(ev.game, start) });
     }));

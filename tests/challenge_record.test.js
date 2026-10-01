@@ -4,7 +4,7 @@
 // unlock on the Profile's completed count and show their Achievement
 // Progress; Profile Stats shows "Challenges completed:
 // X/Y", counting the week's Challenge as soon as it is completed. Guest
-// has neither.
+// has its own record, empty here.
 // ============================================================
 
 import { test } from "node:test";
@@ -127,11 +127,15 @@ test("completed Challenges unlock the Challenges Achievements and fill the Profi
     const nextWeek = statsLines();
     assert.ok(nextWeek.includes(STATS.challengesCompleted(5, 6)), nextWeek.join(" / "));
 
-    // Guest has no Challenge: neither the Achievements nor the line.
+    // Guest has its own record, Alice's completed Challenges left out.
     getProfileStore().switchTo("guest");
     await settle();
-    assert.deepEqual(challengeRows(), []);
-    assert.ok(!statsLines().some(line => line && line.startsWith(STATS.challengesCompleted(0, 0).split(":")[0])));
+    // A target of 1 shows no Achievement Progress.
+    assert.deepEqual(challengeRows(), [
+        `${ACHIEVEMENT.challengesCompletedTitles[1]} null`,
+        ...[5, 10, 25, 50, 100].map(count => withProgress(count, 0)),
+    ]);
+    assert.ok(statsLines().includes(STATS.challengesCompleted(0, 0)));
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });
