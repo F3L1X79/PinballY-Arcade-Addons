@@ -4,8 +4,8 @@
 // feasible templates other than the previous Challenge's (tables of a
 // manufacturer or decade, different tables, manufacturers or decades,
 // never the community tables' manufacturer as an option; tables never
-// played or not played for six months, reachable by every non-Guest
-// Profile; the Table of the Day on different days or days played, never
+// played or not played for six months, reachable by every Profile that
+// sets the bar; the Table of the Day on different days or days played, never
 // more than the days left; games on the Table of the Week, on the same
 // table or launched as Random Games; minutes on one table or in total),
 // and locked in cabinet.json with the previous one; each Profile, Guest
@@ -100,12 +100,10 @@ function groupOptions(tables, keyOf) {
         .map(([param, count]) => ({ param, max: countTarget(count) }));
 }
 
-// The least, across non-Guest Profiles, of visible tables whose play record
-// matches: a target every Profile can reach. With no such Profile yet,
-// the visible collection size.
+// The least, across the Profiles that set the bar, of visible tables whose
+// play record matches: a target each of them can reach.
 function leastAcrossProfiles(context, matches) {
     const { visibleTables, profilePlays } = context;
-    if (profilePlays.length === 0) return visibleTables.length;
     return Math.min(...profilePlays.map(plays =>
         visibleTables.filter(table => matches(plays[table.configId] || NO_PLAY)).length));
 }
@@ -210,8 +208,13 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
     // Every template but the previous Challenge's with a feasible option;
     // one of them, then one of its options, then a target in its range.
     function draw(week, previous) {
-        const profilePlays = profileStore.listProfiles()
-            .filter(profile => !profile.isGuest)
+        const profiles = profileStore.listProfiles();
+        // Guest is the visitors' seat and may draw a target it cannot reach,
+        // unless it is the only one playing: no other Profile, or no picker
+        // to switch away from it.
+        const guestSetsTheBar = profiles.every(profile => profile.isGuest) || config.addOns.profilePicker === false;
+        const profilePlays = profiles
+            .filter(profile => guestSetsTheBar || !profile.isGuest)
             .map(profile => profileStore.getPlaysOf(profile.name));
         const now = host.now();
         const context = { visibleTables: host.getVisibleTables(), profilePlays, now, daysLeft: daysLeftInWeek(now) };

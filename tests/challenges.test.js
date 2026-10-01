@@ -17,6 +17,7 @@ import { createRandomGame } from "../common/random_game.js";
 import { createChallenges, CHALLENGE_TEMPLATE_IDS } from "../common/challenge.js";
 import { createChallengeCard, CHALLENGE_CARD_Z_INDEX, CHALLENGE_VERDICT_MS } from "../common/challenge_card.js";
 import { createAchievementToasts } from "../common/achievement_toast.js";
+import config from "../common/config.js";
 import lang from "../common/i18n.js";
 
 // Monday 21 September 2026, 20:00; its week is keyed "2026-09-21".
@@ -621,8 +622,8 @@ test("a manufacturer or decade template is never drawn when its max is below 2",
 // Tables 1 to 9, the 7th hidden. Alice never played 5, 6, 8 and 9, and last
 // played 3 and 4 (and the hidden 7) more than six months ago; Bob never
 // played 3, 4, 6, 8 and 9, and last played 1, 2 and 5 more than six months
-// ago. Guest played them all this week: were it counted, neither template
-// would be feasible.
+// ago. Guest played them all this week: while Guest sets the bar, neither
+// template is feasible.
 const PLAYED_TABLES = Array.from({ length: 9 }, (_, index) =>
     ({ ...table(index + 1, `Maker ${index + 1}`, 1950 + 10 * index), isHidden: index === 6 }));
 const played = lastPlayed => ({ count: 1, seconds: 600, lastPlayed });
@@ -634,27 +635,66 @@ const PLAYS = {
     Bob: { "Table 1": LONG_AGO, "Table 2": LONG_AGO, "Table 5": LONG_AGO, "Table 7": RECENTLY },
     guest: Object.fromEntries(PLAYED_TABLES.map(game => [game.configId, played("2026-09-21T10:00:00")])),
 };
+const GUEST_ALONE = { profiles: [], active: "guest" };
+// Guest never played tables 1, 2 and 3, and last played 4 and 5 more than six months ago.
+const GUEST_SOME = {
+    guest: { ...PLAYS.guest, "Table 1": undefined, "Table 2": undefined, "Table 3": undefined,
+        "Table 4": LONG_AGO, "Table 5": LONG_AGO },
+};
 
-test("neverPlayedTables: the target reaches only what every non-Guest Profile can", () => {
+// Runs check with the Profile picker turned off in addOns.
+function withPickerOff(check) {
+    const previous = config.addOns.profilePicker;
+    config.addOns.profilePicker = false;
+    try {
+        check();
+    } finally {
+        config.addOns.profilePicker = previous;
+    }
+}
+
+test("neverPlayedTables: with the picker on and other Profiles, Guest's plays are left out", () => {
     // Alice never played 4 visible tables, Bob 5.
     assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS }),
         ["neverPlayedTables:null:2", "neverPlayedTables:null:4"]);
-
-    // With no Profile but Guest, the visible collection size.
-    assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS, profiles: [], active: "guest" }),
-        ["neverPlayedTables:null:2", "neverPlayedTables:null:5"]);
 });
 
-test("dustyTables: the target reaches only what every non-Guest Profile can, never played tables excluded", () => {
+test("neverPlayedTables: Guest sets the bar when it is the only one playing", () => {
+    // Guest alone: it played every table, then 3 of them never.
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS, ...GUEST_ALONE }), []);
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: GUEST_SOME, ...GUEST_ALONE }),
+        ["neverPlayedTables:null:2", "neverPlayedTables:null:3"]);
+
+    // Picker off: Guest joins Alice and Bob.
+    withPickerOff(() => {
+        assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS }), []);
+        assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: { ...PLAYS, ...GUEST_SOME } }),
+            ["neverPlayedTables:null:2", "neverPlayedTables:null:3"]);
+    });
+});
+
+test("dustyTables: with the picker on and other Profiles, Guest's plays are left out, never played tables excluded", () => {
     // Alice's hidden table 7 does not count: 2 for her, 3 for Bob.
     assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS }), ["dustyTables:null:2"]);
-
-    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS, profiles: [], active: "guest" }),
-        ["dustyTables:null:2", "dustyTables:null:5"]);
 
     // Bob left out, Alice alone has a single dusty table.
     const aliceOneDusty = { Alice: { ...PLAYS.Alice, "Table 4": RECENTLY } };
     assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: aliceOneDusty, profiles: ["Alice"] }), []);
+});
+
+test("dustyTables: Guest sets the bar when it is the only one playing", () => {
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS, ...GUEST_ALONE }), []);
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: GUEST_SOME, ...GUEST_ALONE }),
+        ["dustyTables:null:2"]);
+    // A single dusty table for Guest: below 2.
+    const guestOneDusty = { guest: { ...GUEST_SOME.guest, "Table 5": RECENTLY } };
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: guestOneDusty, ...GUEST_ALONE }), []);
+
+    withPickerOff(() => {
+        assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS }), []);
+        assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: { ...PLAYS, ...GUEST_SOME } }),
+            ["dustyTables:null:2"]);
+    });
 });
 
 test("neverPlayedTables counts distinct tables never played when the game started", () => {
