@@ -197,6 +197,14 @@ test("persisted files and Achievement IDs stay byte-identical", async () => {
     const weekTable = await playLastLaunch(fake, 45);
     await closeEveryDialog(fake);
 
+    // Main menu again: the Table of the Week, played for a minute this time,
+    // so its Period counts.
+    fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
+    fake.selectMenuItem(lang.customMenuLabels.tableOfTheWeek);
+    await settle();
+    await playLastLaunch(fake, 60);
+    await closeEveryDialog(fake);
+
     // Main menu again: a Random Game, played for a minute.
     fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
     fake.selectMenuItem(lang.customMenuLabels.randomGame);
@@ -216,7 +224,8 @@ test("persisted files and Achievement IDs stay byte-identical", async () => {
     const expectedPlays = structuredClone(SEEDED_PLAYS);
     for (const [game, seconds, lastPlayed] of [
         [dayTable, 61 * 60, "2026-09-23T11:01:00"],
-        [randomTable, 60, "2026-09-23T11:02:45"],
+        [weekTable, 60, "2026-09-23T11:02:45"],
+        [randomTable, 60, "2026-09-23T11:03:45"],
     ]) {
         const play = expectedPlays[game.configId];
         expectedPlays[game.configId] = { count: play.count + 1, seconds: play.seconds + seconds, lastPlayed };

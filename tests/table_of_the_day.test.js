@@ -28,6 +28,14 @@ const CABINET_FILE = `${PROFILES}\\cabinet.json`;
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 const readJson = (fake, path) => JSON.parse(fake.readFile(path));
 
+// A game of the given length; a Play from a minute on.
+function playFor(fake, game, seconds = 60) {
+    fake.gameStarted(game);
+    fake.advanceTime(seconds * 1000);
+    fake.gameOver(game);
+}
+const playLastLaunch = (fake, seconds) => playFor(fake, fake.launches().at(-1), seconds);
+
 // lock: the Table of the Day stored in cabinet.json; streak: Guest's day
 // Streak stored in its profile.json.
 function createTableOfTheDay({ tables = PLAYED_TABLES, lock, streak } = {}) {
@@ -77,7 +85,7 @@ test("offers the previous day's table again when it is the only visible table, a
     });
 
     tableOfTheDay.launch();
-    fake.gameStarted(fake.launches()[0]);
+    playFor(fake, fake.launches()[0]);
 
     assert.deepEqual(fake.launches().map(game => game.configId), [onlyTable.configId]);
     assert.equal(tableOfTheDay.getStreak(), 2);
@@ -118,7 +126,7 @@ test("launches the Table of the Day", () => {
     assert.deepEqual(fake.launches().map(game => game.configId), [tableOfTheDay.getTable().configId]);
 });
 
-test("counts the day in the Streak when the Table of the Day starts playing", () => {
+test("counts the day in the Streak when a Play of the Table of the Day ends", () => {
     const { fake, tableOfTheDay } = createTableOfTheDay();
     assert.equal(tableOfTheDay.getStreak(), 0);
 
@@ -126,7 +134,54 @@ test("counts the day in the Streak when the Table of the Day starts playing", ()
     assert.equal(tableOfTheDay.getStreak(), 0, "a launch alone does not count");
 
     fake.gameStarted(fake.launches()[0]);
+    assert.equal(tableOfTheDay.getStreak(), 0, "a game only counts once it is a Play");
+
+    fake.advanceTime(60 * 1000);
+    fake.gameOver(fake.launches()[0]);
     assert.equal(tableOfTheDay.getStreak(), 1);
+});
+
+test("a game under a minute on the Table of the Day neither starts nor extends a Streak, nor adds to Periods Played", () => {
+    const { fake, tableOfTheDay } = createTableOfTheDay({
+        streak: { current: 3, longest: 3, lastPeriod: "2026-09-22", periodsPlayed: 3 },
+    });
+
+    tableOfTheDay.launch();
+    playLastLaunch(fake, 59);
+
+    assert.equal(tableOfTheDay.getStreak(), 3, "today can still extend the Streak");
+    assert.equal(tableOfTheDay.getPeriodsPlayed(), 3);
+    fake.advanceTime(DAY_MS);
+    assert.equal(tableOfTheDay.getStreak(), 0, "the short game did not count for the day");
+});
+
+test("a Play started at 23:58 and ended after midnight counts for the day it started", () => {
+    const { fake, tableOfTheDay } = createTableOfTheDay({
+        lock: { configId: "Theatre of Magic (Bally 1995)", period: "2026-09-23" },
+        streak: { current: 3, longest: 3, lastPeriod: "2026-09-22", periodsPlayed: 3 },
+    });
+    fake.setNow(new Date(2026, 8, 23, 23, 58, 0));
+
+    tableOfTheDay.launch();
+    playLastLaunch(fake, 10 * 60);
+
+    assert.deepEqual(readJson(fake, profileFile("guest")).streaks.tableOfTheDay,
+        { current: 4, longest: 4, lastPeriod: "2026-09-23", periodsPlayed: 4 });
+});
+
+test("a Play counts for the Profile active when it started, even after a switch during the game", () => {
+    const { fake, profileStore, tableOfTheDay } = createTableOfTheDay();
+    fake.addFolder(`${PROFILES}\\Alice`);
+    profileStore.switchTo("Alice");
+
+    tableOfTheDay.launch();
+    fake.gameStarted(fake.launches()[0]);
+    profileStore.switchTo("guest");
+    fake.advanceTime(60 * 1000);
+    fake.gameOver(fake.launches()[0]);
+
+    assert.equal(tableOfTheDay.getStreak(), 0);
+    assert.equal(readJson(fake, profileFile("Alice")).streaks.tableOfTheDay.current, 1);
 });
 
 test("counts the Table of the Day picked by hand on the wheel, but not another table", () => {
@@ -135,12 +190,11 @@ test("counts the Table of the Day picked by hand on the wheel, but not another t
     const otherTable = PLAYED_TABLES.find(game => game.configId !== todayTable.configId);
 
     fake.playGame(otherTable);
-    fake.gameStarted(otherTable);
-    fake.gameOver(otherTable);
+    playFor(fake, otherTable);
     assert.equal(tableOfTheDay.getStreak(), 0);
 
     fake.playGame(todayTable);
-    fake.gameStarted(todayTable);
+    playFor(fake, todayTable);
     assert.equal(tableOfTheDay.getStreak(), 1);
 });
 
@@ -150,8 +204,7 @@ test("counts several plays in one day once", () => {
 
     for (let play = 0; play < 3; play++) {
         tableOfTheDay.launch();
-        fake.gameStarted(todayTable);
-        fake.gameOver(todayTable);
+        playFor(fake, todayTable);
         fake.advanceTime(HOUR_MS);
     }
 
@@ -172,8 +225,7 @@ test("grows the Streak on consecutive days and resets it after a skipped day", (
     const playToday = () => {
         tableOfTheDay.launch();
         const launches = fake.launches();
-        fake.gameStarted(launches[launches.length - 1]);
-        fake.gameOver(launches[launches.length - 1]);
+        playFor(fake, launches[launches.length - 1]);
     };
 
     playToday();
@@ -198,7 +250,7 @@ test("does not count yesterday's table played today before today's is picked", (
     const yesterdayTable = fake.getGameInfo("Theatre of Magic (Bally 1995)");
 
     fake.playGame(yesterdayTable);
-    fake.gameStarted(yesterdayTable);
+    playFor(fake, yesterdayTable);
 
     assert.equal(tableOfTheDay.getStreak(), 0);
 });
@@ -210,7 +262,7 @@ test("reads and extends a Streak stored in the active Profile", () => {
     assert.equal(tableOfTheDay.getStreak(), 29);
 
     tableOfTheDay.launch();
-    fake.gameStarted(fake.launches()[0]);
+    playFor(fake, fake.launches()[0]);
 
     assert.equal(tableOfTheDay.getStreak(), 30);
     assert.deepEqual(readJson(fake, profileFile("guest")).streaks.tableOfTheDay,
@@ -221,7 +273,7 @@ test("counts the Table of the Day played by hand before anyone asked for it toda
     const { fake, tableOfTheDay } = createTableOfTheDay({ tables: [PLAYED_TABLES[0]] });
 
     fake.playGame(PLAYED_TABLES[0]);
-    fake.gameStarted(PLAYED_TABLES[0]);
+    playFor(fake, PLAYED_TABLES[0]);
 
     assert.equal(tableOfTheDay.getStreak(), 1);
 });
@@ -243,8 +295,7 @@ test("counts a day once in Periods Played, however many times the Table of the D
     for (let play = 0; play < 3; play++) {
         tableOfTheDay.launch();
         const launches = fake.launches();
-        fake.gameStarted(launches[launches.length - 1]);
-        fake.gameOver(launches[launches.length - 1]);
+        playFor(fake, launches[launches.length - 1]);
         fake.advanceTime(HOUR_MS);
     }
 
@@ -257,8 +308,7 @@ test("counts non-consecutive days in Periods Played, while the longest Streak ke
     const playToday = () => {
         tableOfTheDay.launch();
         const launches = fake.launches();
-        fake.gameStarted(launches[launches.length - 1]);
-        fake.gameOver(launches[launches.length - 1]);
+        playFor(fake, launches[launches.length - 1]);
     };
 
     playToday();
@@ -292,8 +342,7 @@ test("two Profiles see the same Table of the Day, and a play extends only the ac
     profileStore.switchTo("Alice");
     const aliceTable = tableOfTheDay.getTable();
     tableOfTheDay.launch();
-    fake.gameStarted(aliceTable);
-    fake.gameOver(aliceTable);
+    playFor(fake, aliceTable);
 
     profileStore.switchTo("Bob");
     assert.equal(tableOfTheDay.getTable().configId, aliceTable.configId);

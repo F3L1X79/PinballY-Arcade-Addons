@@ -5,9 +5,11 @@
 // TABLE_OF_THE_WEEK) and the Profile store; the add-ons share one instance
 // of each through getTableOfTheDay() and getTableOfTheWeek(). The table is
 // the same for the whole household and locked in cabinet.json; the Streak
-// and Periods Played belong to the active Profile (its profile.json). A
-// Period counts when its table starts playing ("gamestarted"), however it
-// was launched, for the Profile active then. While the table is an Adult
+// and Periods Played belong to a Profile (its profile.json). A Period
+// counts only through a Play of its table, however it was launched: the
+// table is noted at "gamestarted", and the Profile store's Play
+// announcement (onPlay) records the Period the Play started in for the
+// Profile active then. While the table is an Adult
 // Table, it is not offered to a Child Profile, and cabinet.json keeps that
 // Period next to the lock so the child's Streak goes on across it.
 // ============================================================
@@ -86,7 +88,8 @@ export function createPeriodTable(host, definition, profileStore) {
         const lock = { ...NO_LOCK, ...profileStore.getCabinetData()[name] };
         return Array.isArray(lock.adultPeriods) ? lock : { ...lock, adultPeriods: [] };
     };
-    const getStreakRecord = () => ({ ...NO_STREAK, ...profileStore.getProfileData().streaks[name] });
+    const streakRecordOf = data => ({ ...NO_STREAK, ...data.streaks[name] });
+    const getStreakRecord = () => streakRecordOf(profileStore.getProfileData());
 
     // Also keeps the Period among the adult Periods exactly while its table
     // is an Adult Table, which follows a table tagged or untagged mid-Period.
@@ -147,10 +150,11 @@ export function createPeriodTable(host, definition, profileStore) {
         return isKeptFromChild(game) ? null : game;
     }
 
-    // Whether currentPeriod follows lastPeriod in a Streak: for a Child
-    // Profile, the adult Periods between them are skipped, not missed.
-    function followsInStreak(lastPeriod, currentPeriod) {
-        const skipped = profileStore.isChild() ? getLock().adultPeriods : [];
+    // Whether currentPeriod follows lastPeriod in the Streak of the named
+    // Profile (the active one by default): for a Child Profile, the adult
+    // Periods between them are skipped, not missed.
+    function followsInStreak(lastPeriod, currentPeriod, profileName) {
+        const skipped = profileStore.isChild(profileName) ? getLock().adultPeriods : [];
         let period = getPreviousPeriodKey(currentPeriod);
         while (period !== lastPeriod && skipped.includes(period)) period = getPreviousPeriodKey(period);
         return period === lastPeriod;
@@ -164,19 +168,18 @@ export function createPeriodTable(host, definition, profileStore) {
     const getLongestStreak = () => getStreakRecord().longest;
     const getPeriodsPlayed = () => getStreakRecord().periodsPlayed;
 
-    function recordPeriodPlayed(currentPeriod) {
-        const { current, longest, lastPeriod, periodsPlayed } = getStreakRecord();
-        if (lastPeriod === currentPeriod) return;
-
-        const newStreak = followsInStreak(lastPeriod, currentPeriod) ? current + 1 : 1;
+    function recordPeriodPlayed(playedPeriod, profileName) {
         profileStore.updateProfileData(data => {
+            const { current, longest, lastPeriod, periodsPlayed } = streakRecordOf(data);
+            if (lastPeriod === playedPeriod) return;
+            const newStreak = followsInStreak(lastPeriod, playedPeriod, profileName) ? current + 1 : 1;
             data.streaks[name] = {
                 current: newStreak,
                 longest: Math.max(longest, newStreak),
-                lastPeriod: currentPeriod,
+                lastPeriod: playedPeriod,
                 periodsPlayed: periodsPlayed + 1,
             };
-        });
+        }, profileName);
     }
 
     function getStreak() {
@@ -189,14 +192,30 @@ export function createPeriodTable(host, definition, profileStore) {
         return current;
     }
 
+    // The Period each started game would count for, by table: by the time
+    // its Play is announced, the Period may have changed.
+    const startedPeriods = new Map();
+
     // Fires when a launched table's first window opens (never after a failed
     // launch). Picks this Period's table if nobody asked for it yet (e.g.
     // PinballY left open past midnight), so a table picked by hand on the
     // wheel is compared with this Period's table, never a stale pick.
     host.on("gamestarted", safeHandler(SCRIPT_NAME, ev => {
+        if (!ev.game) return;
         const periodTable = getTable();
-        if (!ev.game || !periodTable || ev.game.configId !== periodTable.configId) return;
-        recordPeriodPlayed(getPeriodKey(host.now()));
+        if (periodTable && ev.game.configId === periodTable.configId) {
+            startedPeriods.set(ev.game.configId, getPeriodKey(host.now()));
+        } else {
+            startedPeriods.delete(ev.game.configId);
+        }
+    }));
+
+    // Fires on "gameover" for a Play only; a shorter game leaves its noted
+    // Period behind, replaced at that table's next "gamestarted".
+    profileStore.onPlay(safeHandler(SCRIPT_NAME, ({ profileName, configId }) => {
+        const playedPeriod = startedPeriods.get(configId);
+        startedPeriods.delete(configId);
+        if (playedPeriod !== undefined) recordPeriodPlayed(playedPeriod, profileName);
     }));
 
     return { getTable, isOffered, getOfferedTable, launch, getStreak, getLongestStreak, getPeriodsPlayed };

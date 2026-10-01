@@ -3,7 +3,7 @@
 // with the fake PinballY host and the Profile store: the table is kept from
 // Monday to Sunday (locked in cabinet.json), replaced after the
 // Sunday-to-Monday rollover, and the active Profile's week Streak counts
-// once per week when the Table of the Week starts playing.
+// once per week through a Play of the Table of the Week.
 // Run with "node --test" from the project folder.
 // ============================================================
 
@@ -42,11 +42,13 @@ function createTableOfTheWeek({ now = MONDAY, tables = TABLES, lock, streak } = 
     return { fake, tableOfTheWeek: createPeriodTable(fake, TABLE_OF_THE_WEEK, createProfileStore(fake)) };
 }
 
-function playLastLaunch(fake) {
-    const launches = fake.launches();
-    fake.gameStarted(launches[launches.length - 1]);
-    fake.gameOver(launches[launches.length - 1]);
+// A game of the given length; a Play from a minute on.
+function playFor(fake, game, seconds = 60) {
+    fake.gameStarted(game);
+    fake.advanceTime(seconds * 1000);
+    fake.gameOver(game);
 }
+const playLastLaunch = (fake, seconds) => playFor(fake, fake.launches().at(-1), seconds);
 
 test("keeps the same Table of the Week from Monday to Sunday", () => {
     const { fake, tableOfTheWeek } = createTableOfTheWeek();
@@ -114,7 +116,7 @@ test("launches the Table of the Week", () => {
     assert.deepEqual(fake.launches().map(game => game.configId), [tableOfTheWeek.getTable().configId]);
 });
 
-test("counts the week in the Streak when the Table of the Week starts playing, however launched", () => {
+test("counts the week in the Streak through a Play of the Table of the Week, however launched", () => {
     const { fake, tableOfTheWeek } = createTableOfTheWeek();
     const weekTable = tableOfTheWeek.getTable();
 
@@ -123,8 +125,36 @@ test("counts the week in the Streak when the Table of the Week starts playing, h
     assert.equal(tableOfTheWeek.getStreak(), 0, "a failed launch does not count");
 
     fake.playGame(weekTable);
-    fake.gameStarted(weekTable);
+    playFor(fake, weekTable);
     assert.equal(tableOfTheWeek.getStreak(), 1);
+});
+
+test("a game under a minute on the Table of the Week neither starts nor extends a Streak, nor adds to Periods Played", () => {
+    const { fake, tableOfTheWeek } = createTableOfTheWeek({
+        streak: { current: 3, longest: 3, lastPeriod: "2026-09-14", periodsPlayed: 3 },
+    });
+
+    tableOfTheWeek.launch();
+    playLastLaunch(fake, 59);
+
+    assert.equal(tableOfTheWeek.getStreak(), 3, "this week can still extend the Streak");
+    assert.equal(tableOfTheWeek.getPeriodsPlayed(), 3);
+    fake.setNow(NEXT_MONDAY);
+    assert.equal(tableOfTheWeek.getStreak(), 0, "the short game did not count for the week");
+});
+
+test("a Play started on Sunday night and ended on Monday counts for the week it started", () => {
+    const { fake, tableOfTheWeek } = createTableOfTheWeek({
+        now: new Date(2026, 8, 27, 23, 50, 0),
+        lock: { configId: "Attack from Mars (Bally 1995)", period: "2026-09-21" },
+        streak: { current: 3, longest: 3, lastPeriod: "2026-09-14", periodsPlayed: 3 },
+    });
+
+    tableOfTheWeek.launch();
+    playLastLaunch(fake, 30 * 60);
+
+    assert.deepEqual(readJson(fake, GUEST_FILE).streaks.tableOfTheWeek,
+        { current: 4, longest: 4, lastPeriod: "2026-09-21", periodsPlayed: 4 });
 });
 
 test("counts several plays in one week once", () => {

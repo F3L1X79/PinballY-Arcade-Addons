@@ -1,7 +1,8 @@
 ﻿// ============================================================
 // The startup prompt and the custom main menu entry, started through
 // main.js on the fake PinballY globals, show and launch the same Table of
-// the Day, and a play launched from either counts once in the day Streak.
+// the Day, and a Play launched from either counts once in the day Streak,
+// while a game under a minute does not count.
 // ============================================================
 
 import { test } from "node:test";
@@ -39,12 +40,15 @@ test("the startup prompt and the main menu show and launch the same Table of the
     fake.selectMenuItem(lang.startupPrompt.tableOfTheDay);
     const [promptLaunch] = fake.launches();
     fake.gameStarted(promptLaunch);
+    fake.advanceTime(59 * 1000);
     fake.gameOver(promptLaunch);
+    assert.equal(getTableOfTheDay().getStreak(), 0, "a game under a minute is not a Play");
 
     fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
     fake.selectMenuItem(lang.customMenuLabels.tableOfTheDay);
     const menuLaunch = fake.launches()[1];
     fake.gameStarted(menuLaunch);
+    fake.advanceTime(60 * 1000);
     fake.gameOver(menuLaunch);
 
     assert.equal(promptLaunch.configId, "Medieval Madness (Williams 1997)");
