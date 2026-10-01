@@ -3,7 +3,8 @@
 // globals, plays a scripted session on a fixture collection, and locks
 // every Achievement ID produced, and the Guest profile.json (play record,
 // Streaks and Periods Played, Random Games played, session stats and
-// Notified list) and cabinet.json (active Profile, Period Table locks)
+// Notified list) and cabinet.json (active Profile, Period Table locks and
+// their adult Periods)
 // written by the Profile store; no PinballY settings key is written. The
 // Admin and Child Profile marks (isAdmin, isChild) keep their keys through a rewrite. A
 // second test locks the Challenges' saved data: the week's lock in
@@ -372,6 +373,24 @@ test("the Child Profile mark keeps its key in profile.json", () => {
 
     assert.equal(store.isChild(), true);
     assert.equal(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`)).isChild, true);
+});
+
+test("the adult Periods of a Period Table keep their key next to its lock in cabinet.json", () => {
+    const adultTable = { ...TABLES[0], categories: ["NSFW"] };
+    const fake = createFakePinballYHost({ now: NOW, tables: [adultTable] });
+    fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({
+        version: 1,
+        activeProfile: "guest",
+        tableOfTheDay: { configId: adultTable.configId, period: "2026-09-22", adultPeriods: ["2026-09-22"] },
+    }));
+    const store = createProfileStore(fake);
+    createPeriodTable(fake, TABLE_OF_THE_DAY, store).getTable();
+
+    assert.deepEqual(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\cabinet.json`)).tableOfTheDay, {
+        configId: adultTable.configId,
+        period: "2026-09-23",
+        adultPeriods: ["2026-09-22", "2026-09-23"],
+    });
 });
 
 test("the Challenge template ids stay byte-identical", () => {

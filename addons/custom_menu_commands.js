@@ -2,10 +2,11 @@
 // Adds the launch section entries (table setup, table of the day, table of
 // the week, random table) to PinballY's main menu through the main menu
 // module, which places them right after "Play" and runs the matching action
-// when one is selected. Once the household has an Admin Profile, only the Admin
-// Profiles see "Table Setup" there and PinballY's "Operator Menu" in the
-// Exit menu (listens to "menuopen"); the coin door service button still
-// opens the Operator Menu for anyone.
+// when one is selected. A Child Profile does not get a Period Table's
+// entry while it is an Adult Table. Once the household has an Admin
+// Profile, only the Admin Profiles see "Table Setup" there and PinballY's
+// "Operator Menu" in the Exit menu (listens to "menuopen"); the coin door
+// service button still opens the Operator Menu for anyone.
 // ============================================================
 
 import { safeHandler } from "../common/safe_handler.js";
@@ -35,8 +36,8 @@ export default function init() {
             shownWhen: showsSetupEntries,
         },
         { name: "RandomGameStart", label: MENU_LABELS.randomGame, position: MAIN_MENU_POSITION.RANDOM_GAME, action: randomGame.launch },
-        { name: "tableOfTheDay", label: MENU_LABELS.tableOfTheDay, position: MAIN_MENU_POSITION.TABLE_OF_THE_DAY, action: tableOfTheDay.launch },
-        { name: "tableOfTheWeek", label: MENU_LABELS.tableOfTheWeek, position: MAIN_MENU_POSITION.TABLE_OF_THE_WEEK, action: tableOfTheWeek.launch },
+        { name: "tableOfTheDay", label: MENU_LABELS.tableOfTheDay, position: MAIN_MENU_POSITION.TABLE_OF_THE_DAY, action: tableOfTheDay.launch, shownWhen: tableOfTheDay.isOffered },
+        { name: "tableOfTheWeek", label: MENU_LABELS.tableOfTheWeek, position: MAIN_MENU_POSITION.TABLE_OF_THE_WEEK, action: tableOfTheWeek.launch, shownWhen: tableOfTheWeek.isOffered },
     ];
 
     const mainMenu = getMainMenu();

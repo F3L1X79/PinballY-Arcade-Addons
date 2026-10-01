@@ -64,7 +64,7 @@ To keep the setup entries for yourself, add `"isAdmin": true` at the top level o
 
 ### Child Profile
 
-To keep the Adult Tables away from a child, tag them in PinballY with the category `NSFW` (or name your own category with `ADULT_CATEGORY` in `.env.local`, spelt exactly as in PinballY), then add `"isChild": true` at the top level of the child's `profiles\<name>\profile.json`, PinballY closed. While that Profile is active, those tables are on the wheel under no filter, the Random Game never draws one, and starting up never leaves the wheel on one; switching to another Profile brings them back at once. Guest is never a Child Profile, so adult visitors see the whole collection. This is no parental control: nothing asks for a password.
+To keep the Adult Tables away from a child, tag them in PinballY with the category `NSFW` (or name your own category with `ADULT_CATEGORY` in `.env.local`, spelt exactly as in PinballY), then add `"isChild": true` at the top level of the child's `profiles\<name>\profile.json`, PinballY closed. While that Profile is active, those tables are on the wheel under no filter, the Random Game never draws one, and starting up never leaves the wheel on one; switching to another Profile brings them back at once. The Table of the Day and the Table of the Week stay the same for the whole household: while one is an Adult Table, the child gets neither its main menu entry nor its startup choice, and that day or week neither extends nor breaks the child's Streak. Guest is never a Child Profile, so adult visitors see the whole collection. This is no parental control: nothing asks for a password.
 
 ### Menu Cleanup
 

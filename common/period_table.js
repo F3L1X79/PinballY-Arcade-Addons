@@ -7,12 +7,15 @@
 // the same for the whole household and locked in cabinet.json; the Streak
 // and Periods Played belong to the active Profile (its profile.json). A
 // Period counts when its table starts playing ("gamestarted"), however it
-// was launched, for the Profile active then.
+// was launched, for the Profile active then. While the table is an Adult
+// Table, it is not offered to a Child Profile, and cabinet.json keeps that
+// Period next to the lock so the child's Streak goes on across it.
 // ============================================================
 
 import { safeHandler } from "./safe_handler.js";
 import { createPinballYHost } from "./pinbally_host.js";
 import { getProfileStore } from "./profile_store.js";
+import { isAdultTable } from "./adult_tables.js";
 
 const SCRIPT_NAME = "PeriodTable";
 
@@ -68,24 +71,41 @@ export const TABLE_OF_THE_WEEK = {
     pickTable: pickPurelyRandom,
 };
 
-const NO_LOCK = Object.freeze({ configId: "", period: "" });
+const NO_LOCK = Object.freeze({ configId: "", period: "", adultPeriods: [] });
+// A Child Profile's Streak only skips the adult Periods since its last
+// play: two months of days, or more than a year of weeks, is more than
+// any realistic gap.
+const MAX_ADULT_PERIODS = 60;
 const NO_STREAK = Object.freeze({ current: 0, longest: 0, lastPeriod: "", periodsPlayed: 0 });
 
 export function createPeriodTable(host, definition, profileStore) {
     const { name, getPeriodKey, getPreviousPeriodKey, pickTable } = definition;
 
     // A record missing a field (hand-edited file) gets it empty, never NaN.
-    const getLock = () => ({ ...NO_LOCK, ...profileStore.getCabinetData()[name] });
+    const getLock = () => {
+        const lock = { ...NO_LOCK, ...profileStore.getCabinetData()[name] };
+        return Array.isArray(lock.adultPeriods) ? lock : { ...lock, adultPeriods: [] };
+    };
     const getStreakRecord = () => ({ ...NO_STREAK, ...profileStore.getProfileData().streaks[name] });
 
+    // Also keeps the Period among the adult Periods exactly while its table
+    // is an Adult Table, which follows a table tagged or untagged mid-Period.
     function getTable() {
         const currentPeriod = getPeriodKey(host.now());
-        const { period: lockedPeriod, configId: lockedConfigId } = getLock();
+        const game = getLockedTable(currentPeriod) || pickNewTable(currentPeriod);
+        markAdultPeriod(currentPeriod, game !== null && isAdultTable(game));
+        return game;
+    }
 
-        if (lockedPeriod === currentPeriod && lockedConfigId) {
-            const lockedGame = host.getGameInfo(lockedConfigId);
-            if (lockedGame && !lockedGame.isHidden) return lockedGame;
-        }
+    function getLockedTable(currentPeriod) {
+        const { period: lockedPeriod, configId: lockedConfigId } = getLock();
+        if (lockedPeriod !== currentPeriod || !lockedConfigId) return null;
+        const lockedGame = host.getGameInfo(lockedConfigId);
+        return lockedGame && !lockedGame.isHidden ? lockedGame : null;
+    }
+
+    function pickNewTable(currentPeriod) {
+        const { period: lockedPeriod, configId: lockedConfigId, adultPeriods } = getLock();
 
         // A new Period never repeats the previous Period's table, unless it
         // is the only visible one. The pick reads PinballY's own play stats,
@@ -97,9 +117,43 @@ export function createPeriodTable(host, definition, profileStore) {
         const newPick = pickTable(otherTables.length > 0 ? otherTables : visibleTables);
 
         profileStore.updateCabinetData(cabinet => {
-            cabinet[name] = { configId: newPick.configId, period: currentPeriod };
+            cabinet[name] = withAdultPeriods({ configId: newPick.configId, period: currentPeriod }, adultPeriods);
         });
         return newPick;
+    }
+
+    // The key is left out of the lock until there is a Period to keep.
+    const withAdultPeriods = (lock, adultPeriods) => (adultPeriods.length > 0 ? { ...lock, adultPeriods } : lock);
+
+    function markAdultPeriod(period, isAdult) {
+        const { adultPeriods } = getLock();
+        if (adultPeriods.includes(period) === isAdult) return;
+        const updated = isAdult
+            ? [...adultPeriods, period].slice(-MAX_ADULT_PERIODS)
+            : adultPeriods.filter(adultPeriod => adultPeriod !== period);
+        profileStore.updateCabinetData(cabinet => {
+            const { adultPeriods: _, ...lock } = cabinet[name];
+            cabinet[name] = withAdultPeriods(lock, updated);
+        });
+    }
+
+    // Not offered to a Child Profile while it is an Adult Table. Like
+    // getTable(), it may pick this Period's table and lock it.
+    const isKeptFromChild = game => game !== null && isAdultTable(game) && profileStore.isChild();
+    const isOffered = () => !isKeptFromChild(getTable());
+    // This Period's table, or null when it is not offered to the active Profile.
+    function getOfferedTable() {
+        const game = getTable();
+        return isKeptFromChild(game) ? null : game;
+    }
+
+    // Whether currentPeriod follows lastPeriod in a Streak: for a Child
+    // Profile, the adult Periods between them are skipped, not missed.
+    function followsInStreak(lastPeriod, currentPeriod) {
+        const skipped = profileStore.isChild() ? getLock().adultPeriods : [];
+        let period = getPreviousPeriodKey(currentPeriod);
+        while (period !== lastPeriod && skipped.includes(period)) period = getPreviousPeriodKey(period);
+        return period === lastPeriod;
     }
 
     function launch() {
@@ -114,7 +168,7 @@ export function createPeriodTable(host, definition, profileStore) {
         const { current, longest, lastPeriod, periodsPlayed } = getStreakRecord();
         if (lastPeriod === currentPeriod) return;
 
-        const newStreak = lastPeriod === getPreviousPeriodKey(currentPeriod) ? current + 1 : 1;
+        const newStreak = followsInStreak(lastPeriod, currentPeriod) ? current + 1 : 1;
         profileStore.updateProfileData(data => {
             data.streaks[name] = {
                 current: newStreak,
@@ -131,7 +185,7 @@ export function createPeriodTable(host, definition, profileStore) {
 
         // The stored counter is only reset on the next play, so a Streak whose
         // last Period is older than the previous one is already broken.
-        if (lastPeriod !== currentPeriod && lastPeriod !== getPreviousPeriodKey(currentPeriod)) return 0;
+        if (lastPeriod !== currentPeriod && !followsInStreak(lastPeriod, currentPeriod)) return 0;
         return current;
     }
 
@@ -145,7 +199,7 @@ export function createPeriodTable(host, definition, profileStore) {
         recordPeriodPlayed(getPeriodKey(host.now()));
     }));
 
-    return { getTable, launch, getStreak, getLongestStreak, getPeriodsPlayed };
+    return { getTable, isOffered, getOfferedTable, launch, getStreak, getLongestStreak, getPeriodsPlayed };
 }
 
 let sharedTableOfTheDay = null;
