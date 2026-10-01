@@ -17,7 +17,7 @@ The identity a player picks so that their plays and Achievements count for them;
 _Avoid_: account, user, login
 
 **Guest**:
-The Profile that always exists and cannot be removed; it is the active Profile until another one is picked, and whenever the Profile picker is turned off.
+The Profile that always exists and cannot be removed; it is the active Profile until another one is picked, and whenever the Profile picker is turned off. Its plays, Achievements and Challenge progress stay its own when a player who played as Guest creates a Profile: nothing moves over.
 _Avoid_: default user, anonymous
 
 **Admin Profile**:
@@ -93,11 +93,11 @@ The distinct non-empty manufacturers of the tables that started playing during o
 ### Challenges
 
 **Challenge**:
-An easy play goal set for one week, the same for every Profile except Guest, who has none, such as playing five different Stern tables; each Profile's own progress counts only games of at least one minute on visible tables, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
+An easy play goal set for one week, the same for every Profile, Guest included, such as playing five different Stern tables; each Profile's own progress counts only games of at least one minute on visible tables, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
 _Avoid_: quest, goal, mission, Achievement (an Achievement is a permanent milestone)
 
 **Challenge Card**:
-The small card under the Profile badge, at the top right of the wheel screen, that keeps the week's Challenge and the active Profile's progress always in view; when there is something new, such as progress or the previous week's verdict, its content changes in place. Never shown for Guest.
+The small card at the top right of the wheel screen, under the Profile badge when there is one, that keeps the week's Challenge and the active Profile's progress always in view; when there is something new, such as progress or the previous week's verdict, its content changes in place.
 _Avoid_: challenge widget, challenge popup, status line
 
 **Challenge Tables**:

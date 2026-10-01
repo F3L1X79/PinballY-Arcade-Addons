@@ -309,17 +309,18 @@
             <h3>Challenges pour Guest</h3>
             <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span></div>
           </div>
-          <p>Guest suit lui aussi le Challenge de la semaine, avec sa Challenge Card et les Achievements de la famille Challenges. Sans Profile créé, Guest est le seul Profile : aujourd'hui, ce joueur ne voit jamais les Challenges. Guest reste hors de l'Unlock Rate, qui compare des personnes.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Première impression des nouveaux venus : tôt dans la file. À griller avec le <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a>. Flow Matt : <code>/grill-with-docs</code> → <code>/to-tickets</code> → <code>/implement</code></div>
+          <p>Guest suit le Challenge de la semaine comme les autres Profiles : Challenge Card, Challenge Toast, Challenge Tables, verdict, ligne des Profile Stats et famille d'Achievements Challenges. Il reste hors de l'Unlock Rate, qui compare des personnes. Sans badge (Profile picker désactivé), la Challenge Card remonte dans le coin en haut à droite.</p>
+          <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="here">tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Première impression des nouveaux venus : tôt dans la file. Séparé du <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a>, qui viendra après. Flow Matt : <code>/to-tickets</code> → <code>/implement</code></div>
           <details>
-            <summary>Questions ouvertes (3)</summary>
+            <summary>Décisions du grill (4)</summary>
             <ul>
-              <li>Tirage quand Guest est le seul Profile : les modèles « tables jamais jouées » lisent les parties des Profiles hors Guest, il faut alors compter celles de Guest.</li>
-              <li>Quand d'autres Profiles existent, les parties de Guest comptent-elles aussi dans ce tirage ?</li>
-              <li>Quand un vrai Profile est créé, la progression de Guest reste-t-elle à Guest (a priori oui, comme ses Achievements) ?</li>
+              <li>Tout l'ensemble Challenge pour Guest ; l'Unlock Rate l'exclut toujours.</li>
+              <li>Tirage (« tables jamais jouées », « tables délaissées ») : les parties de Guest comptent seulement quand aucun autre Profile n'existe ou que le Profile picker est désactivé. Sinon les vrais joueurs fixent la barre, et Guest accepte un objectif parfois inatteignable.</li>
+              <li>Quand un vrai Profile est créé, la progression de Guest reste à Guest : aucun transfert.</li>
+              <li>Pas de badge, carte dans le coin : la règle ne dépend pas du Profile (en pratique, seul Guest est concerné).</li>
             </ul>
-            <p class="ctx">Aujourd'hui Guest a déjà ses Achievements, ses Profile Stats et ses Streaks ; il n'a ni Challenge, ni Challenge Card, ni place dans l'Unlock Rate, ni marque. Code concerné : <code>common/challenge.js</code>, <code>common/challenge_card.js</code>, <code>achievements/challenges.js</code>, et le glossaire (Challenge, Challenge Card).</p>
+            <p class="ctx">Code concerné : <code>common/challenge.js</code> (les exclusions de Guest, le tirage), <code>common/challenge_card.js</code> (position), <code>achievements/challenges.js</code>, <code>common/profile_stats.js</code>. Glossaire à jour (Challenge, Challenge Card, Guest).</p>
           </details>
         </div>
       </li>
