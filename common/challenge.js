@@ -27,7 +27,7 @@
 
 import { safeHandler } from "./safe_handler.js";
 import { createPinballYHost } from "./pinbally_host.js";
-import { getProfileStore } from "./profile_store.js";
+import { getProfileStore, MIN_PLAY_SECONDS } from "./profile_store.js";
 import { getTableOfTheDay, getTableOfTheWeek, formatDateKey, getWeekKey } from "./period_table.js";
 import { getRandomGame } from "./random_game.js";
 import { getDecadeStartYear } from "./decade.js";
@@ -38,8 +38,6 @@ import lang from "./i18n.js";
 
 const SCRIPT_NAME = "Challenges";
 
-// A shorter game never counts: launching and quitting a table is not playing it.
-const MIN_GAME_SECONDS = 60;
 const COUNT_RANGE = Object.freeze({ min: 2, max: 5 });
 const ENDURANCE_MINUTES = Object.freeze({ min: 15, max: 30 });
 const MARATHON_MINUTES = Object.freeze({ min: 40, max: 80 });
@@ -382,7 +380,7 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         startedGames.delete(ev.game.configId);
         const seconds = Math.round((host.now().getTime() - started.start.getTime()) / 1000);
         const table = host.getGameInfo(ev.game.configId);
-        if (seconds < MIN_GAME_SECONDS || !table || !isVisibleTo(table, profileStore, started.profileName)) return;
+        if (seconds < MIN_PLAY_SECONDS || !table || !isVisibleTo(table, profileStore, started.profileName)) return;
 
         const week = getWeekKey(started.start);
         const { current, previous } = getLocks();

@@ -66,7 +66,7 @@ Translations live in `lang/<code>.js`. English is the fallback, and missing keys
 
 ## Progress and reset
 
-Each Profile's progress lives in `Scripts\profiles\<Profile>\profile.json`: its plays, Streaks, Random Games, session stats, Challenge progress and the list of Notified Achievements. `Scripts\profiles\cabinet.json` holds what the household shares: the active Profile, the Table of the Day, the Table of the Week and the week's Challenge. Every save keeps the previous version as `*.bak.json`, and a missing or broken file comes back from it.
+Each Profile's progress lives in `Scripts\profiles\<Profile>\profile.json`: its plays, Streaks, Random Games, session stats, Challenge progress and the list of Notified Achievements. Next to it, `play-log-<year>.json` holds its Play Log: every Play (a game of at least one minute) started that year, with its start, table and seconds. `Scripts\profiles\cabinet.json` holds what the household shares: the active Profile, the Table of the Day, the Table of the Week and the week's Challenge. Every save keeps the previous version as `*.bak.json`, and a missing or broken file comes back from it.
 
 Every Achievement counts the plays recorded for the active Profile since installation; PinballY's own statistics are not used.
 

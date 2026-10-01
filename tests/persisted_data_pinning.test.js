@@ -10,9 +10,9 @@
 // second test locks the Challenges' saved data: the week's lock in
 // cabinet.json, a Profile's "challenge" record and its counted games in
 // profile.json, and the template ids. A third locks a verdict on the
-// previous Challenge in a Profile's history, and a last one the Challenges
-// Achievement IDs. These strings are players'
-// saved progress: this test must keep passing unchanged.
+// previous Challenge in a Profile's history, another the Challenges
+// Achievement IDs, and one the Play Log's year file name and keys. These
+// strings are players' saved progress: this test must keep passing unchanged.
 // ============================================================
 
 import { test } from "node:test";
@@ -373,6 +373,20 @@ test("the Child Profile mark keeps its key in profile.json", () => {
 
     assert.equal(store.isChild(), true);
     assert.equal(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`)).isChild, true);
+});
+
+test("the Play Log keeps its file name and keys", () => {
+    const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
+    createProfileStore(fake);
+    fake.gameStarted(TABLES[0]);
+    fake.advanceTime(90 * 1000);
+    fake.gameOver(TABLES[0]);
+
+    const playLog = JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\guest\\play-log-2026.json`));
+    assert.deepEqual(Object.keys(playLog), ["version", "plays"]);
+    assert.equal(playLog.version, 1);
+    assert.deepEqual(playLog.plays, [{ start: "2026-09-23T10:00:00", configId: TABLES[0].configId, seconds: 90 }]);
+    assert.deepEqual(Object.keys(playLog.plays[0]), ["start", "configId", "seconds"]);
 });
 
 test("the adult Periods of a Period Table keep their key next to its lock in cabinet.json", () => {

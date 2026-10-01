@@ -11,7 +11,10 @@
 // through every rewrite, never written. A Profile Reset erases a Profile's
 // play-based data, after keeping a dated copy of its former profile.json.
 // Listens to "gamestarted" / "gameover" to record every finished game for
-// the Profile active when it started; at startup, creates the Guest folder
+// the Profile active when it started. Each Play (a game of at least a
+// minute) also goes to that Profile's Play Log: one play-log-<year>.json
+// per year of the Plays' start (ADR 0007), saved like profile.json, read
+// only when a Play is added or asked for. At startup, creates the Guest folder
 // and writes cabinet.json when they are missing. Tells its listeners of
 // every switch (onSwitch) and every saved change of a Profile's data
 // (onUpdate).
@@ -28,6 +31,7 @@ const GUEST_NAME = "guest";
 // session stat needs no bump, since a missing one is read as empty.
 const PROFILE_VERSION = 1;
 const CABINET_VERSION = 1;
+const PLAY_LOG_VERSION = 1;
 // Still images only: PinballY keeps an animated image locked while it shows it.
 const AVATAR_FILES = ["avatar.png", "avatar.jpg"];
 
@@ -62,6 +66,10 @@ const emptyProfileData = () => ({
 // Set by hand (ADR 0006), never by the add-ons: kept through a Profile Reset.
 const MARK_NAMES = ["isAdmin", "isChild"];
 const NO_PLAY = Object.freeze({ count: 0, seconds: 0, lastPlayed: "" });
+
+// A shorter game is a launch by mistake, not a Play.
+export const MIN_PLAY_SECONDS = 60;
+const playLogBaseName = year => `play-log-${year}`;
 
 export function createProfileStore(host) {
     const scriptsFolder = `${host.getProgramFolder().replace(/\\+$/, "")}\\Scripts`;
@@ -209,13 +217,43 @@ export function createProfileStore(host) {
 
     const publicProfile = ({ name, isGuest, avatarPath }) => ({ name, isGuest, avatarPath });
 
+    // The named Profile, the active one without listing the folders.
+    function profileNamed(profileName) {
+        if (sameName(profileName, activeProfile.name)) return activeProfile;
+        const profile = findProfile(profileName);
+        if (!profile) throw new Error(`No Profile named "${profileName}".`);
+        return profile;
+    }
+
     // The named Profile and its data: the active one's from memory, another
     // one's read afresh from its file.
     function profileWithData(profileName) {
+        // Checked here too, so the active Profile's data is never re-read.
         if (sameName(profileName, activeProfile.name)) return { profile: activeProfile, data: activeData };
-        const profile = findProfile(profileName);
-        if (!profile) throw new Error(`No Profile named "${profileName}".`);
+        const profile = profileNamed(profileName);
         return { profile, data: readProfileData(profile) };
+    }
+
+    // The Plays of the Profile's year file, an empty list when it has none.
+    // A file without a "plays" list is set aside like a broken one, since
+    // the next Play would overwrite what may be a hand edit.
+    function readPlayLog(profile, year) {
+        const baseName = playLogBaseName(year);
+        const label = `${profile.name}\\${baseName}.json`;
+        const saved = loadJson(profile.folder, baseName, label);
+        if (!saved) return [];
+        if (Array.isArray(saved.plays)) return saved.plays;
+        log(`${label} has no "plays" list; kept aside as ${setAside(profile.folder, baseName)}, starting from zero.`);
+        return [];
+    }
+
+    // Read and rewritten whole: only the year of the Play's start is touched.
+    function addToPlayLog(profileName, configId, startDate, seconds) {
+        const profile = profileNamed(profileName);
+        const year = startDate.getFullYear();
+        const plays = readPlayLog(profile, year);
+        plays.push({ start: toLocalIsoString(startDate), configId, seconds });
+        saveJson(profile.folder, playLogBaseName(year), { version: PLAY_LOG_VERSION, plays });
     }
 
     // Changes the data of the named Profile (the active one by default) and
@@ -323,7 +361,8 @@ export function createProfileStore(host) {
     }));
 
     // Fires on table exit: one play, and its seconds when its start is
-    // known, as PinballY counts them.
+    // known, as PinballY counts them, in the table totals; a Play in the Play
+    // Log too.
     host.on("gameover", safeHandler(SCRIPT_NAME, ev => {
         const { configId } = ev.game;
         const now = host.now();
@@ -339,6 +378,9 @@ export function createProfileStore(host) {
                 lastPlayed: toLocalIsoString(now),
             };
         }, running ? running.profileName : activeProfile.name);
+
+        if (!running || seconds < MIN_PLAY_SECONDS) return;
+        addToPlayLog(running.profileName, configId, new Date(running.startMs), seconds);
     }));
 
     return {
@@ -353,6 +395,9 @@ export function createProfileStore(host) {
         hasPlayed: (configId) => (activeData.plays[configId] || NO_PLAY).count > 0,
         // Every play record of the named Profile, by table.
         getPlaysOf: (profileName) => profileWithData(profileName).data.plays,
+        // The Plays of the named Profile's Play Log started in that year, in
+        // the order they ended; an empty list when the year has none.
+        getPlayLogOf: (profileName, year) => readPlayLog(profileNamed(profileName), year),
         // The IDs of the Achievements the named Profile was Notified of.
         getNotifiedOf: (profileName) => profileWithData(profileName).data.notified,
         updateProfileData,
