@@ -1,5 +1,5 @@
 // ============================================================
-// Secret Achievements (the Rage Quit and the Grand Return), started
+// Secret Achievements (the Rage Quit, the World Tour and the Grand Return), started
 // through main.js on the fake PinballY globals: while missing, their rows
 // show "???" and their hint, never their real title or description, with
 // their muted rank emblem and the Avatars of the other Profiles that have
@@ -87,12 +87,12 @@ test("a Secret Achievement keeps its title and description out of sight until Un
     // Missing: "???" and the hint, never the real texts.
     const rows = openList();
     const secretRows = rows.filter(row => row.title === LIST_TEXT.secretTitle);
-    assert.deepEqual(secretRows.map(row => row.description), [TEXT.rageQuitHint(), TEXT.grandReturnHint()]);
+    assert.deepEqual(secretRows.map(row => row.description), [TEXT.rageQuitHint(), TEXT.worldTourHint(), TEXT.grandReturnHint()]);
     const shownTexts = rows.flatMap(row => [row.title, row.description]);
     for (const text of [rageQuit.title, rageQuit.description, grandReturn.title, grandReturn.description]) {
         assert.ok(!shownTexts.includes(text), `"${text}" stays out of sight`);
     }
-    const [rageQuitRow, grandReturnRow] = secretRows;
+    const [rageQuitRow, , grandReturnRow] = secretRows;
     for (const row of secretRows) {
         assert.equal(row.unlocked, false);
         assert.equal(row.emblem, MUTED_GOLD_EMBLEM, "its muted Gold emblem");
@@ -133,7 +133,7 @@ test("a Secret Achievement keeps its title and description out of sight until Un
     assert.ok(unlockedRageQuit, "its row shows its real title");
     assert.equal(unlockedRageQuit.description, rageQuit.description);
     assert.equal(unlockedRageQuit.unlocked, true);
-    assert.deepEqual(rowsAfter.filter(row => row.title === LIST_TEXT.secretTitle).map(row => row.description), [TEXT.grandReturnHint()]);
+    assert.deepEqual(rowsAfter.filter(row => row.title === LIST_TEXT.secretTitle).map(row => row.description), [TEXT.worldTourHint(), TEXT.grandReturnHint()]);
     assert.ok(headerCountsEvery(rowsAfter));
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);

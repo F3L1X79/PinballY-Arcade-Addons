@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // Production PinballY host: the single seam through which the deepened
 // modules reach PinballY (settings, clock, timers, visible tables, wheel
-// selection, filter and metafilters, game list events, main window menus / UI mode / events / drawing layers,
+// selection, filter and metafilters, game list and settings events, main window menus / UI mode / events / drawing layers,
 // StyledText, commands and running them, table launch, program and pack folders,
 // monitor count, backglass window, sound playback (one-off or on players
 // in turn), logfile.log, and the few file operations the Profile store
@@ -130,6 +130,8 @@ export function createPinballYHost() {
             getBool: (key, defaultValue) => optionSettings.getBool(key, defaultValue),
             set: (key, value) => { optionSettings.set(key, value); },
         },
+        // The settings' own events, such as "settingsreload".
+        onSettingsEvent: (eventName, handler) => { optionSettings.on(eventName, handler); },
 
         now: () => new Date(),
         setTimeout: (callback, ms) => setTimeout(callback, ms),

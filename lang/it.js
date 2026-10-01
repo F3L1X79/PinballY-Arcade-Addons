@@ -257,6 +257,7 @@ export default {
         // A Secret Achievement's hint, shown instead of its description while it is missing.
         rageQuitHint: () => "Some tables just aren't your day...", // TODO: translation pass
         grandReturnHint: () => "Old friends are always glad to see you again...", // TODO: translation pass
+        worldTourHint: () => "Some journeys are made without ever pressing Start...", // TODO: translation pass
         randomGamesTitles: {
             10: "E perché no?",
             25: "Testa o croce",

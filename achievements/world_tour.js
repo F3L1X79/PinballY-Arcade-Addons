@@ -3,7 +3,9 @@
 // selected in one go, without launching any. Unlocked by the active
 // Profile's worldTour flag, set by the World Tour tracker
 // (common/world_tour.js); a missing flag reads as false. No Achievement
-// Progress. Called by achievements_engine.js at each check; no side effects.
+// Progress. A Secret Achievement: the Achievement List shows its hint
+// while it is missing. Called by achievements_engine.js at each check; no
+// side effects.
 // ============================================================
 
 import { ACHIEVEMENT_FAMILY, standaloneAchievement } from "../common/achievements.js";
@@ -18,6 +20,7 @@ export function buildWorldTourAchievements() {
         family: ACHIEVEMENT_FAMILY.COLLECTION,
         getTitle: () => TEXT.worldTourTitle(),
         getDescription: () => TEXT.worldTourDescription(),
+        getHint: () => TEXT.worldTourHint(),
         checkUnlocked: () => getProfileStore().getProfileData().worldTour === true,
     })];
 }

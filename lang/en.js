@@ -178,6 +178,7 @@ export default {
         // A Secret Achievement's hint, shown instead of its description while it is missing.
         rageQuitHint: () => "Some tables just aren't your day...",
         grandReturnHint: () => "Old friends are always glad to see you again...",
+        worldTourHint: () => "Some journeys are made without ever pressing Start...",
         randomGamesTitles: {
             10: "Why Not?",
             25: "Heads or Tails",

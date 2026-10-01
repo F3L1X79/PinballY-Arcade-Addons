@@ -2,8 +2,9 @@
 // World Tour Achievement, started through main.js on the fake PinballY
 // globals: on "All Tables", Guest selects every table of the wheel, going
 // back and forth and jumping ahead, the starting table counting as seen;
-// the toast shows the moment the last table is selected, without any game.
-// The add-ons' own wheel moves never count, the Achievement stays Unlocked,
+// the toast shows the moment the last table is selected, without any game,
+// with its real title. A Secret Achievement: while missing, its row shows
+// "???" and its hint. The add-ons' own wheel moves never count, the Achievement stays Unlocked,
 // and a Profile Reset erases it.
 // ============================================================
 
@@ -46,7 +47,9 @@ test("selecting every table of All Tables unlocks the World Tour at once, for go
     const worldTourRow = () => {
         fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
         fake.selectMenuItem(lang.achievementList.menuEntry);
-        const row = readRows(fake, lang.achievementList).find(candidate => candidate.title === TEXT.worldTourTitle());
+        // A Secret Achievement: its row shows "???" and its hint while missing.
+        const row = readRows(fake, lang.achievementList).find(candidate =>
+            candidate.title === TEXT.worldTourTitle() || candidate.description === TEXT.worldTourHint());
         pressAndGlide(fake, "Exit");
         assert.equal(fake.getUIMode(), "wheel");
         return row;
@@ -65,7 +68,10 @@ test("selecting every table of All Tables unlocks the World Tour at once, for go
     fake.moveWheel(3);
     fake.moveWheel(1);
     assert.equal(worldTourToasts().length, 0, "Cyclone, skipped by the letter jump, is still missing");
-    assert.equal(worldTourRow().unlocked, false);
+    const missingRow = worldTourRow();
+    assert.equal(missingRow.unlocked, false);
+    assert.equal(missingRow.title, lang.achievementList.secretTitle);
+    assert.equal(missingRow.description, TEXT.worldTourHint());
 
     fake.moveWheel(-2);
     assert.equal(worldTourToasts().length, 1, "the toast shows the moment the last table is selected");
@@ -76,7 +82,10 @@ test("selecting every table of All Tables unlocks the World Tour at once, for go
     fake.moveWheel(1);
     fake.moveWheel(1);
     assert.equal(worldTourToasts().length, 1, "announced once");
-    assert.equal(worldTourRow().unlocked, true, "it stays Unlocked");
+    const unlockedRow = worldTourRow();
+    assert.equal(unlockedRow.unlocked, true, "it stays Unlocked");
+    assert.equal(unlockedRow.title, TEXT.worldTourTitle());
+    assert.equal(unlockedRow.description, TEXT.worldTourDescription());
 
     getProfileStore().resetProfile("guest");
     assert.equal(worldTourRow().unlocked, false, "a Profile Reset erases it");

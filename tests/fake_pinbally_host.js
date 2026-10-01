@@ -4,8 +4,10 @@
 // the date (a manual clock that also runs the host's timers), the monitor
 // count, the table list, the wheel selection (and its filter, and the
 // player's wheel moves) and the
-// layout size, seed settings, fire PinballY events, apply the metafilters
-// to the wheel selection and a filter's games, open the Exit menu
+// layout size, seed settings, fire PinballY events (the settings' own
+// included), apply the metafilters
+// to the wheel selection and a filter's games, enter and leave attract
+// mode, open the Exit menu
 // or main menu with their native items, pick menu items, play launched games, and inspect shown menus, launches, written settings keys,
 // drawing layers, what was drawn, sounds played (and on which player), the
 // backglass window shown or hidden, and the lower status line (which can
@@ -611,6 +613,7 @@ export function createFakePinballYHost({
         showMenu,
         on,
         onGameListEvent: on,
+        onSettingsEvent: on,
         createDrawingLayer,
         createStyledText: (options) => new FakeStyledText(options, (text) => { logLines.push(text); }),
         allocateCommand,
@@ -789,6 +792,18 @@ export function createFakePinballYHost({
             else if (!item.stayOpen) host.closeMenu();
         },
 
+        // The cabinet enters attract mode after a while on its own: PinballY
+        // then moves the wheel itself ("gameselect" outside wheel mode).
+        enterAttractMode() {
+            uiMode = "attract";
+            fire("attractmodestart");
+        },
+        // A button press ends attract mode, back to the wheel.
+        exitAttractMode() {
+            fire("attractmodeend");
+            returnToWheel();
+        },
+
         launches: () => [...launchList],
         gameStarted(game) {
             uiMode = "running";
@@ -836,6 +851,8 @@ export function createFakePinballYHost({
                     getFloat: settings.getFloat,
                     getBool: settings.getBool,
                     set: settings.set,
+                    // "settingsreload", fired with fire() like the main window's events.
+                    on,
                 },
                 gameList: {
                     getAllGames: () => [...allTables],
