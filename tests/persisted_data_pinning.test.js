@@ -281,7 +281,7 @@ test("the Challenges' saved data stays byte-identical", () => {
     fake.gameOver(game);
 
     assert.deepEqual(JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\cabinet.json`)).challenge, {
-        current: { week: "2026-09-21", template: "differentTables", param: null, target: 2 },
+        current: { week: "2026-09-21", template: "differentTables", param: null, target: 4 },
         previous: null,
     });
     const { challenge } = JSON.parse(fake.readFile(`${PROFILES_FOLDER}\\Alice\\profile.json`));

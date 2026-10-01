@@ -7,8 +7,12 @@
 // played or not played for six months, reachable by every Profile that
 // sets the bar; the Table of the Day on different days or days played, never
 // more than the days left; games on the Table of the Week, on the same
-// table or launched as Random Games; minutes on one table or in total),
-// and locked in cabinet.json with the previous one; each Profile, Guest
+// table or launched as Random Games; minutes on one table or in total).
+// Its target is the same for every Profile, drawn in its template's own
+// range and capped by what can be reached (visible tables, tables of the
+// group, the least across the Profiles that set the bar, days left); a
+// cap below the range's minimum makes that option infeasible. It is
+// locked in cabinet.json with the previous one; each Profile, Guest
 // included, follows it in its own profile.json ("challenge"), where the
 // games that count are kept with their facts, progress being recomputed
 // from them. The game
@@ -38,9 +42,13 @@ import lang from "./i18n.js";
 
 const SCRIPT_NAME = "Challenges";
 
-const COUNT_RANGE = Object.freeze({ min: 2, max: 5 });
-const ENDURANCE_MINUTES = Object.freeze({ min: 15, max: 30 });
-const MARATHON_MINUTES = Object.freeze({ min: 40, max: 80 });
+// Each template's target range: a casual play goal, never a trivial one.
+const targetRange = (min, max) => Object.freeze({ min, max });
+const MANY = targetRange(4, 8);
+const SOME = targetRange(3, 6);
+const FEW = targetRange(3, 5);
+const ENDURANCE_MINUTES = targetRange(20, 45);
+const MARATHON_MINUTES = targetRange(60, 120);
 const DUSTY_DAYS = 183;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -78,26 +86,21 @@ const isKnown = value => value !== "" && value !== null;
 const distinctKnown = values => distinct(values.filter(isKnown));
 const manufacturerOf = table => table.manufacturer || "";
 const decadeOf = table => getDecadeStartYear(table.year);
-const countTarget = max => Math.min(COUNT_RANGE.max, max);
-// One option without a parameter, its target up to max (at most 5), or
-// none when fewer than 2 would be reachable.
-const countOption = max => (max >= COUNT_RANGE.min ? [{ param: null, max: countTarget(max) }] : []);
+// A single option without a parameter, its target capped at max.
+const cappedOptions = max => [{ param: null, max }];
 // Without a visible table there is no Period Table and no game that counts.
 const isPlayable = context => context.visibleTables.length > 0;
-const countOptionWhenPlayable = (context, max) => countOption(isPlayable(context) ? max : 0);
-const minutesOptionWhenPlayable = (context, range) => (isPlayable(context) ? [{ param: null, ...range }] : []);
+const optionsWhenPlayable = (context, max = Infinity) => cappedOptions(isPlayable(context) ? max : 0);
 
-// One option per value of keyOf shared by at least 2 tables, its target up
-// to that value's table count.
+// One option per known value of keyOf, its target capped at that value's
+// table count.
 function groupOptions(tables, keyOf) {
     const counts = new Map();
     for (const table of tables) {
         const key = keyOf(table);
         if (isKnown(key)) counts.set(key, (counts.get(key) || 0) + 1);
     }
-    return [...counts]
-        .filter(([, count]) => count >= COUNT_RANGE.min)
-        .map(([param, count]) => ({ param, max: countTarget(count) }));
+    return [...counts].map(([param, count]) => ({ param, max: count }));
 }
 
 // The least, across the Profiles that set the bar, of visible tables whose
@@ -109,18 +112,21 @@ function leastAcrossProfiles(context, matches) {
 }
 
 // Template ids are players' saved data (cabinet.json, history): never rename one.
-// options(context): the feasible { param, min?, max } choices, none when infeasible.
-// Targets are counts, or minutes for endurance and marathon.
+// range: the target's { min, max }, counts, or minutes for endurance and marathon.
+// options(context): the { param, max } choices, max capping the target; an
+// option whose cap is below range.min is not feasible.
 // progress(games, param): the value compared with the target.
 // tablesToPlay(context): the Challenge Tables, visible tables that would move
 // the Challenge forward; only for the templates where that makes sense.
 // differentTables stays first: a scripted draw of 0 picks it.
 const TEMPLATES = Object.freeze({
     differentTables: {
-        options: context => countOption(context.visibleTables.length),
+        range: MANY,
+        options: context => cappedOptions(context.visibleTables.length),
         progress: games => distinctTables(games),
     },
     manufacturerTables: {
+        range: SOME,
         // The community tables' manufacturer is not a real one.
         options: context => groupOptions(
             context.visibleTables.filter(table => manufacturerOf(table) !== config.communityTablesManufacturer), manufacturerOf),
@@ -129,31 +135,37 @@ const TEMPLATES = Object.freeze({
             notCounted(visibleTables.filter(table => manufacturerOf(table) === param), games),
     },
     decadeTables: {
+        range: SOME,
         options: context => groupOptions(context.visibleTables, decadeOf),
         progress: (games, decade) => distinctTables(games.filter(game => game.decade === decade)),
         tablesToPlay: ({ visibleTables, games, param }) =>
             notCounted(visibleTables.filter(table => decadeOf(table) === param), games),
     },
     differentManufacturers: {
-        options: context => countOption(distinctKnown(context.visibleTables.map(manufacturerOf))),
+        range: SOME,
+        options: context => cappedOptions(distinctKnown(context.visibleTables.map(manufacturerOf))),
         progress: games => distinctKnown(games.map(game => game.manufacturer)),
     },
     differentDecades: {
-        options: context => countOption(distinctKnown(context.visibleTables.map(decadeOf))),
+        range: FEW,
+        options: context => cappedOptions(distinctKnown(context.visibleTables.map(decadeOf))),
         progress: games => distinctKnown(games.map(game => game.decade)),
     },
     neverPlayedTables: {
-        options: context => countOption(leastAcrossProfiles(context, wasNeverPlayed)),
+        range: FEW,
+        options: context => cappedOptions(leastAcrossProfiles(context, wasNeverPlayed)),
         progress: games => distinctTables(games.filter(game => game.wasNeverPlayed)),
         tablesToPlay: ({ visibleTables, playOf }) => visibleTables.filter(table => wasNeverPlayed(playOf(table))),
     },
     dustyTables: {
-        options: context => countOption(leastAcrossProfiles(context, play => wasDusty(play, context.now))),
+        range: FEW,
+        options: context => cappedOptions(leastAcrossProfiles(context, play => wasDusty(play, context.now))),
         progress: games => distinctTables(games.filter(game => game.wasDusty)),
         tablesToPlay: ({ visibleTables, playOf, now }) => visibleTables.filter(table => wasDusty(playOf(table), now)),
     },
     tableOfTheDayDays: {
-        options: context => countOptionWhenPlayable(context, context.daysLeft),
+        range: FEW,
+        options: context => optionsWhenPlayable(context, context.daysLeft),
         progress: games => distinctDays(games.filter(game => game.isTableOfTheDay)),
         tablesToPlay: ({ visibleTables, games, now, getDayTable }) => {
             const today = formatDateKey(now);
@@ -162,30 +174,36 @@ const TEMPLATES = Object.freeze({
         },
     },
     tableOfTheWeekGames: {
-        options: context => countOptionWhenPlayable(context, COUNT_RANGE.max),
+        range: MANY,
+        options: context => optionsWhenPlayable(context),
         progress: games => games.filter(game => game.isTableOfTheWeek).length,
         tablesToPlay: ({ visibleTables, getWeekTable }) => onlyTable(visibleTables, getWeekTable()),
     },
     activeDays: {
-        options: context => countOptionWhenPlayable(context, context.daysLeft),
+        range: FEW,
+        options: context => optionsWhenPlayable(context, context.daysLeft),
         progress: games => distinctDays(games),
     },
     // The table of the player's choice: the one with the most minutes.
     endurance: {
-        options: context => minutesOptionWhenPlayable(context, ENDURANCE_MINUTES),
+        range: ENDURANCE_MINUTES,
+        options: context => optionsWhenPlayable(context),
         progress: games => wholeMinutes(bestTableTotal(games, totalSeconds)),
     },
     marathon: {
-        options: context => minutesOptionWhenPlayable(context, MARATHON_MINUTES),
+        range: MARATHON_MINUTES,
+        options: context => optionsWhenPlayable(context),
         progress: games => wholeMinutes(totalSeconds(games)),
     },
     randomGames: {
-        options: context => countOptionWhenPlayable(context, COUNT_RANGE.max),
+        range: SOME,
+        options: context => optionsWhenPlayable(context),
         progress: games => games.filter(game => game.randomGame).length,
     },
     // The table of the player's choice: the one with the most games.
     sameTableGames: {
-        options: context => countOptionWhenPlayable(context, COUNT_RANGE.max),
+        range: MANY,
+        options: context => optionsWhenPlayable(context),
         progress: games => bestTableTotal(games, tableGames => tableGames.length),
     },
 });
@@ -206,7 +224,8 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
     const progressOf = (challenge, games) => TEMPLATES[challenge.template].progress(games, challenge.param);
 
     // Every template but the previous Challenge's with a feasible option;
-    // one of them, then one of its options, then a target in its range.
+    // one of them, then one of its feasible options, then a target in the
+    // template's range, at most the option's cap.
     function draw(week, previous) {
         const profiles = profileStore.listProfiles();
         // Guest is the visitors' seat and may draw a target it cannot reach,
@@ -220,12 +239,16 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         const context = { visibleTables: host.getVisibleTables(), profilePlays, now, daysLeft: daysLeftInWeek(now) };
         const candidates = Object.entries(TEMPLATES)
             .filter(([id]) => !previous || previous.template !== id)
-            .map(([id, template]) => ({ id, options: template.options(context) }))
+            .map(([id, template]) => ({
+                id,
+                range: template.range,
+                options: template.options(context).filter(option => option.max >= template.range.min),
+            }))
             .filter(candidate => candidate.options.length > 0);
         if (candidates.length === 0) return { week, template: NO_TEMPLATE, param: null, target: 0 };
-        const { id, options } = candidates[randomIndex(candidates.length)];
+        const { id, range: { min, max }, options } = candidates[randomIndex(candidates.length)];
         const option = options[randomIndex(options.length)];
-        return { week, template: id, param: option.param, target: randomInt(option.min || COUNT_RANGE.min, option.max) };
+        return { week, template: id, param: option.param, target: randomInt(min, Math.min(max, option.max)) };
     }
 
     // The week's Challenge, drawn on its first need in the week; null when

@@ -23,6 +23,8 @@ import lang from "../common/i18n.js";
 // Monday 21 September 2026, 20:00; its week is keyed "2026-09-21".
 const MONDAY = new Date(2026, 8, 21, 20, 0, 0);
 const TUESDAY = new Date(2026, 8, 22, 20, 0, 0);
+const WEDNESDAY = new Date(2026, 8, 23, 20, 0, 0);
+const FRIDAY = new Date(2026, 8, 25, 20, 0, 0);
 const SATURDAY = new Date(2026, 8, 26, 20, 0, 0);
 const SUNDAY_NIGHT = new Date(2026, 8, 27, 23, 59, 0);
 const NEXT_MONDAY = new Date(2026, 8, 28, 20, 0, 0);
@@ -95,7 +97,7 @@ function play(fake, game, seconds) {
 }
 
 test("the week's Challenge is drawn once, locked in cabinet.json and shown on the card", () => {
-    // Template, option, then the highest target: min(5, 4 visible tables).
+    // Template, option, then the highest target: min(8, 4 visible tables).
     const { fake } = setUp({ randoms: [0, 0, 0.99] });
 
     assert.deepEqual(cabinetChallenge(fake), {
@@ -119,13 +121,13 @@ test("the Challenge stays the same all week, even when tables are hidden or adde
     assert.ok(cardShows(fake, TEXT.progress(0, 4, TEXT.lastDay)));
 });
 
-test("the target stays between 2 and the number of visible tables, at most 5", () => {
-    const low = setUp({ randoms: [0, 0, 0] });
-    assert.equal(cabinetChallenge(low.fake).current.target, 2);
-
-    const eightTables = [...TABLES, table(5, "Stern", 2020), table(6, "Stern", 2021), table(7, "Data East", 1990), table(8, "Bally", 1980)];
-    const high = setUp({ tables: eightTables, randoms: [0, 0, 0.99] });
-    assert.equal(cabinetChallenge(high.fake).current.target, 5);
+test("differentTables draws its target between 4 and 8, at most the number of visible tables", () => {
+    const nineTables = [...TABLES, table(5, "Stern", 2020), table(6, "Stern", 2021), table(7, "Data East", 1990),
+        table(8, "Bally", 1980), table(9, "Williams", 1985)];
+    assert.deepEqual(drawnOf(nineTables, "differentTables"), ["differentTables:null:4", "differentTables:null:8"]);
+    assert.deepEqual(drawnOf([...TABLES, table(5, "Stern", 2020)], "differentTables"),
+        ["differentTables:null:4", "differentTables:null:5"]);
+    assert.deepEqual(drawnOf(TABLES.slice(0, 3), "differentTables"), [], "3 visible tables: below 4");
 });
 
 test("with no visible table there is no Challenge and no card", () => {
@@ -142,14 +144,14 @@ test("a new week draws a new Challenge, never with the previous template", () =>
     fake.setNow(NEXT_MONDAY);
     fake.fire("wheelmode");
 
-    // The first candidate left once differentTables is out: the 1990s,
-    // the only decade with 2 visible tables.
+    // The first candidate left once differentTables is out: no manufacturer
+    // or decade has 3 visible tables, but there are 4 manufacturers.
     assert.deepEqual(cabinetChallenge(fake), {
-        current: { week: "2026-09-28", template: "decadeTables", param: 1990, target: 2 },
+        current: { week: "2026-09-28", template: "differentManufacturers", param: null, target: 3 },
         previous: lastWeek,
     });
     fake.advanceTime(CHALLENGE_VERDICT_MS);
-    assert.ok(cardShows(fake, TEXT.titles.decadeTables(2, 1990)));
+    assert.ok(cardShows(fake, TEXT.titles.differentManufacturers(3)));
 });
 
 test("a game counts from 60 seconds on a visible table, and progress counts distinct tables", () => {
@@ -283,13 +285,15 @@ test("without a Profile badge, the card sits in the top right corner, whatever t
 });
 
 test("reaching the target completes the Challenge once: completed count, Challenge Toast, completed card", () => {
-    // Target 2.
+    // Target 4.
     const { fake } = setUp({ randoms: [0, 0, 0] });
-    const title = TEXT.titles.differentTables(2);
+    const title = TEXT.titles.differentTables(4);
 
     play(fake, TABLES[0], 90);
-    assert.equal(profileChallenge(fake, "Alice").completed, false);
     play(fake, TABLES[1], 90);
+    play(fake, TABLES[2], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, false);
+    play(fake, TABLES[3], 90);
 
     const challenge = profileChallenge(fake, "Alice");
     assert.equal(challenge.completed, true);
@@ -297,7 +301,7 @@ test("reaching the target completes the Challenge once: completed count, Challen
     assert.deepEqual(toastsDrawn(fake), [[TEXT.toastHeader.toLocaleUpperCase(), title, TEXT.toastDescription(1)].join(" | ")]);
     assert.ok(cardShows(fake, TEXT.completed));
 
-    play(fake, TABLES[2], 90);
+    play(fake, TABLES[0], 90);
     fake.advanceTime(ONE_TOAST_MS);
     assert.equal(profileChallenge(fake, "Alice").completedCount, 1, "completed once");
     assert.equal(toastsDrawn(fake).length, 1, "one Challenge Toast");
@@ -305,11 +309,10 @@ test("reaching the target completes the Challenge once: completed count, Challen
 
 test("the card shows the Challenge completed until the end of the week", () => {
     const { fake, store } = setUp({ randoms: [0, 0, 0] });
-    play(fake, TABLES[0], 90);
-    play(fake, TABLES[1], 90);
+    for (const game of TABLES) play(fake, game, 90);
 
     store.switchTo("Bob");
-    assert.ok(cardShows(fake, TEXT.progress(0, 2, TEXT.daysLeft(7))), "Bob has not completed it");
+    assert.ok(cardShows(fake, TEXT.progress(0, 4, TEXT.daysLeft(7))), "Bob has not completed it");
     store.switchTo("Alice");
     fake.setNow(SUNDAY_NIGHT);
     fake.fire("wheelmode");
@@ -318,11 +321,9 @@ test("the card shows the Challenge completed until the end of the week", () => {
 
 test("each Profile completes the Challenge on its own", () => {
     const { fake, store } = setUp({ randoms: [0, 0, 0] });
-    play(fake, TABLES[0], 90);
-    play(fake, TABLES[1], 90);
+    for (const game of TABLES) play(fake, game, 90);
     store.switchTo("Bob");
-    play(fake, TABLES[2], 90);
-    play(fake, TABLES[3], 90);
+    for (const game of TABLES) play(fake, game, 90);
 
     assert.equal(profileChallenge(fake, "Alice").completedCount, 1);
     assert.equal(profileChallenge(fake, "Bob").completedCount, 1);
@@ -332,18 +333,19 @@ test("each Profile completes the Challenge on its own", () => {
 
 test("a game started on Sunday night completes that week's Challenge", () => {
     const { fake } = setUp({ now: new Date(2026, 8, 27, 22, 0, 0), randoms: [0, 0, 0] });
-    play(fake, TABLES[0], 90);
+    for (const game of TABLES.slice(0, 3)) play(fake, game, 90);
 
     fake.setNow(SUNDAY_NIGHT);
-    fake.gameStarted(TABLES[1]);
+    fake.gameStarted(TABLES[3]);
     fake.advanceTime(5 * MINUTE_MS);
-    fake.gameOver(TABLES[1]);
+    fake.gameOver(TABLES[3]);
 
     assert.equal(profileChallenge(fake, "Alice").completedCount, 1);
     assert.equal(toastsDrawn(fake).length, 1);
 });
 
-// Last week's Challenge (target 2) and this week's (target 3), already drawn.
+// Last week's Challenge (target 2) and this week's (target 3), already
+// locked in cabinet.json, both below their template's range: they are kept.
 const TWO_WEEKS_LOCKED = {
     current: { week: NEXT_WEEK, template: "differentTables", param: null, target: 3 },
     previous: { week: WEEK, template: "differentTables", param: null, target: 2 },
@@ -365,15 +367,15 @@ test("a missed Challenge gets its verdict once, on the card, with the value reac
     fake.fire("wheelmode");
 
     const challenge = profileChallenge(fake, "Alice");
-    assert.deepEqual(challenge.history, [{ week: WEEK, template: "differentTables", param: null, target: 2, reached: 1, completed: false }]);
+    assert.deepEqual(challenge.history, [{ week: WEEK, template: "differentTables", param: null, target: 4, reached: 1, completed: false }]);
     assert.equal(challenge.judgedWeek, WEEK);
     assert.ok(cardShows(fake, verdictHeader));
-    assert.ok(cardShows(fake, TEXT.titles.differentTables(2)));
-    assert.ok(cardShows(fake, TEXT.missed(1, 2)));
+    assert.ok(cardShows(fake, TEXT.titles.differentTables(4)));
+    assert.ok(cardShows(fake, TEXT.missed(1, 4)));
 
     fake.advanceTime(CHALLENGE_VERDICT_MS + ONE_TOAST_MS);
     assert.deepEqual(toastsDrawn(fake), [], "no toast for a missed Challenge");
-    assert.ok(cardShows(fake, TEXT.titles.decadeTables(2, 1990)), "the verdict gives way to this week's Challenge");
+    assert.ok(cardShows(fake, TEXT.titles.differentManufacturers(3)), "the verdict gives way to this week's Challenge");
 
     fake.fire("wheelmode");
     assert.ok(!cardShows(fake, verdictHeader), "the verdict is shown once");
@@ -437,17 +439,17 @@ test("a Profile that never saw the previous Challenge gets no verdict", () => {
 
 test("a game across Monday midnight completes the old week's Challenge: the toast and the verdict both show", () => {
     const { fake } = setUp({ now: new Date(2026, 8, 27, 22, 0, 0), randoms: [0, 0, 0] });
-    play(fake, TABLES[0], 90);
+    for (const game of TABLES.slice(0, 3)) play(fake, game, 90);
 
     fake.setNow(SUNDAY_NIGHT);
-    fake.gameStarted(TABLES[1]);
+    fake.gameStarted(TABLES[3]);
     fake.setNow(NEXT_MONDAY);
-    fake.gameOver(TABLES[1]);
+    fake.gameOver(TABLES[3]);
 
     const challenge = profileChallenge(fake, "Alice");
     assert.equal(challenge.completedCount, 1);
     assert.deepEqual(challenge.history,
-        [{ week: WEEK, template: "differentTables", param: null, target: 2, reached: 2, completed: true }]);
+        [{ week: WEEK, template: "differentTables", param: null, target: 4, reached: 4, completed: true }]);
     assert.ok(cardShows(fake, verdictHeader));
     assert.ok(cardShows(fake, TEXT.completed));
     fake.advanceTime(ONE_TOAST_MS);
@@ -496,6 +498,16 @@ test("a previous week without a Challenge gets no verdict", () => {
     assert.deepEqual(profileChallenge(fake, "Alice").history, []);
 });
 
+test("a Challenge locked in cabinet.json keeps its target, even below its template's range", () => {
+    const { fake } = setUp({ saved: { cabinet: { current: TWO_WEEKS_LOCKED.previous, previous: null } } });
+
+    assert.ok(cardShows(fake, TEXT.progress(0, 2, TEXT.daysLeft(7))));
+    play(fake, TABLES[0], 90);
+    play(fake, TABLES[1], 90);
+    assert.equal(profileChallenge(fake, "Alice").completed, true);
+    assert.deepEqual(cabinetChallenge(fake).current, TWO_WEEKS_LOCKED.previous);
+});
+
 // Every Challenge a draw can give on this collection, as "template:param:target"
 // for the lowest and highest target, by walking the random source through
 // each template and option; options go to setUp.
@@ -537,19 +549,21 @@ const MANUFACTURER_TABLES = [
     table(20, "Bally", 1980), table(21, "", 1995), table(22, "", 1996),
 ];
 
-test("manufacturerTables: one option per manufacturer with 2 visible tables, never the community tables' one", () => {
-    assert.deepEqual(drawnOf(MANUFACTURER_TABLES, "manufacturerTables"), [
-        "manufacturerTables:Stern:2", "manufacturerTables:Stern:3",
-        "manufacturerTables:Williams:2",
-    ]);
+test("manufacturerTables: one option per manufacturer with 3 visible tables, never the community tables' one", () => {
+    // Stern has 3 visible tables, Williams only 2.
+    assert.deepEqual(drawnOf(MANUFACTURER_TABLES, "manufacturerTables"), ["manufacturerTables:Stern:3"]);
 
-    // Only the community tables' manufacturer has 2 tables: no option.
-    const communityOnly = [table(11, "VPX Community", 2021), table(12, "VPX Community", 2022), table(18, "Williams", 1992)];
+    const sixStern = [...MANUFACTURER_TABLES, table(23, "Stern", 2023), table(24, "Stern", 2024), table(25, "Stern", 2025)];
+    assert.deepEqual(drawnOf(sixStern, "manufacturerTables"), ["manufacturerTables:Stern:3", "manufacturerTables:Stern:6"]);
+
+    // Only the community tables' manufacturer has 3 tables: no option.
+    const communityOnly = [table(11, "VPX Community", 2021), table(12, "VPX Community", 2022), table(13, "VPX Community", 2023),
+        table(18, "Williams", 1992)];
     assert.deepEqual(drawnOf(communityOnly, "manufacturerTables"), []);
 });
 
 test("manufacturerTables counts the manufacturer's distinct tables", () => {
-    const { fake } = setUpDrawn(MANUFACTURER_TABLES, "manufacturerTables", { option: 0, options: 2, target: 0.99 });
+    const { fake } = setUpDrawn(MANUFACTURER_TABLES, "manufacturerTables", { target: 0.99 });
     assert.deepEqual(cabinetChallenge(fake).current, { week: WEEK, template: "manufacturerTables", param: "Stern", target: 3 });
     assert.ok(cardShows(fake, TEXT.titles.manufacturerTables(3, "Stern")));
 
@@ -564,29 +578,36 @@ test("manufacturerTables counts the manufacturer's distinct tables", () => {
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
-test("decadeTables: one option per decade with 2 visible tables, counting its distinct tables", () => {
+test("decadeTables: one option per decade with 3 visible tables, counting its distinct tables", () => {
+    // The 1990s have 4 visible tables, the 2020s 5; the 2010s and 1980s one each.
     assert.deepEqual(drawnOf(MANUFACTURER_TABLES, "decadeTables"), [
-        "decadeTables:1990:2", "decadeTables:1990:4",
-        "decadeTables:2020:2", "decadeTables:2020:5",
+        "decadeTables:1990:3", "decadeTables:1990:4",
+        "decadeTables:2020:3", "decadeTables:2020:5",
     ]);
 
     const { fake } = setUpDrawn(MANUFACTURER_TABLES, "decadeTables", { option: 1, options: 2, target: 0 });
-    assert.deepEqual(cabinetChallenge(fake).current, { week: WEEK, template: "decadeTables", param: 1990, target: 2 });
-    assert.ok(cardShows(fake, TEXT.titles.decadeTables(2, 1990)));
+    assert.deepEqual(cabinetChallenge(fake).current, { week: WEEK, template: "decadeTables", param: 1990, target: 3 });
+    assert.ok(cardShows(fake, TEXT.titles.decadeTables(3, 1990)));
 
     play(fake, MANUFACTURER_TABLES[7], 90);
     play(fake, MANUFACTURER_TABLES[7], 90);
     play(fake, MANUFACTURER_TABLES[9], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))));
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))));
     play(fake, MANUFACTURER_TABLES[10], 90);
+    play(fake, MANUFACTURER_TABLES[11], 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
 test("differentManufacturers: up to the visible tables' distinct manufacturers, counting distinct manufacturers played", () => {
-    // Stern, Williams and Bally: target 2 or 3.
+    // Stern, Williams and Bally: target 3.
     const tables = [table(1, "Stern", 2016), table(2, "Stern", 2020), table(3, "Williams", 1992), table(4, "Bally", 1995),
         table(5, "", 1996), { ...table(6, "Gottlieb", 1978), isHidden: true }];
-    assert.deepEqual(drawnOf(tables, "differentManufacturers"), ["differentManufacturers:null:2", "differentManufacturers:null:3"]);
+    assert.deepEqual(drawnOf(tables, "differentManufacturers"), ["differentManufacturers:null:3"]);
+    const sevenMakers = [...tables, table(7, "Gottlieb", 1978), table(8, "Data East", 1990), table(9, "Sega", 1996),
+        table(10, "Spooky", 2019)];
+    assert.deepEqual(drawnOf(sevenMakers, "differentManufacturers"),
+        ["differentManufacturers:null:3", "differentManufacturers:null:6"]);
+    assert.deepEqual(drawnOf(tables.slice(0, 3), "differentManufacturers"), [], "Stern and Williams: below 3");
 
     const { fake } = setUpDrawn(tables, "differentManufacturers", { target: 0.99 });
     assert.ok(cardShows(fake, TEXT.titles.differentManufacturers(3)));
@@ -600,36 +621,38 @@ test("differentManufacturers: up to the visible tables' distinct manufacturers, 
 });
 
 test("differentDecades: up to the visible tables' distinct decades, counting distinct decades played", () => {
-    // The 2010s, 1990s and 1970s: target 2 or 3.
+    // The 2010s, 1990s and 1970s: target 3.
     const tables = [table(1, "Stern", 2016), table(2, "Stern", 2017), table(3, "Williams", 1992), table(4, "Bally", 1978),
         table(5, "Gottlieb", 0), { ...table(6, "Gottlieb", 1965), isHidden: true }];
-    assert.deepEqual(drawnOf(tables, "differentDecades"), ["differentDecades:null:2", "differentDecades:null:3"]);
+    assert.deepEqual(drawnOf(tables, "differentDecades"), ["differentDecades:null:3"]);
+    const sixDecades = [...tables, table(7, "Gottlieb", 1965), table(8, "Bally", 1985), table(9, "Stern", 2020)];
+    assert.deepEqual(drawnOf(sixDecades, "differentDecades"), ["differentDecades:null:3", "differentDecades:null:5"]);
 
     const { fake } = setUpDrawn(tables, "differentDecades", { target: 0 });
-    assert.ok(cardShows(fake, TEXT.titles.differentDecades(2)));
+    assert.ok(cardShows(fake, TEXT.titles.differentDecades(3)));
     play(fake, tables[0], 90);
     play(fake, tables[1], 90);
     play(fake, tables[4], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "two 2010s tables and one without a year: 1");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "two 2010s tables and one without a year: 1");
     play(fake, tables[2], 90);
+    play(fake, tables[3], 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
-test("a manufacturer or decade template is never drawn when its max is below 2", () => {
-    // One manufacturer, one decade, each table its own; nobody played yet.
-    const oneEach = [table(1, "Stern", 2016), table(2, "Williams", 1992)];
-    assert.deepEqual(drawableTemplates(oneEach), ["activeDays", "differentDecades", "differentManufacturers",
-        "differentTables", "endurance", "marathon", "neverPlayedTables", "randomGames", "sameTableGames",
-        "tableOfTheDayDays", "tableOfTheWeekGames"]);
+test("a manufacturer or decade with fewer than 3 visible tables is never drawn", () => {
+    // Two manufacturers and two decades, 2 tables each; nobody played yet.
+    const twoEach = [table(1, "Stern", 2016), table(2, "Stern", 2017), table(3, "Williams", 1992), table(4, "Williams", 1993)];
+    assert.deepEqual(drawableTemplates(twoEach), ["activeDays", "differentTables", "endurance", "marathon",
+        "neverPlayedTables", "randomGames", "sameTableGames", "tableOfTheDayDays", "tableOfTheWeekGames"]);
 
-    const sameEra = [table(1, "Stern", 2016), table(2, "Stern", 2017)];
-    assert.deepEqual(drawableTemplates(sameEra), ["activeDays", "decadeTables", "differentTables", "endurance",
+    const sameEra = [table(1, "Stern", 2016), table(2, "Stern", 2017), table(3, "Stern", 2018)];
+    assert.deepEqual(drawableTemplates(sameEra), ["activeDays", "decadeTables", "endurance",
         "manufacturerTables", "marathon", "neverPlayedTables", "randomGames", "sameTableGames",
         "tableOfTheDayDays", "tableOfTheWeekGames"]);
 });
 
 // Tables 1 to 9, the 7th hidden. Alice never played 5, 6, 8 and 9, and last
-// played 3 and 4 (and the hidden 7) more than six months ago; Bob never
+// played 2, 3 and 4 (and the hidden 7) more than six months ago; Bob never
 // played 3, 4, 6, 8 and 9, and last played 1, 2 and 5 more than six months
 // ago. Guest played them all this week: while Guest sets the bar, neither
 // template is feasible.
@@ -640,15 +663,15 @@ const RECENTLY = played("2026-06-13T20:00:00");
 // 184 days before MONDAY.
 const LONG_AGO = played("2026-03-21T20:00:00");
 const PLAYS = {
-    Alice: { "Table 1": RECENTLY, "Table 2": RECENTLY, "Table 3": LONG_AGO, "Table 4": LONG_AGO, "Table 7": LONG_AGO },
+    Alice: { "Table 1": RECENTLY, "Table 2": LONG_AGO, "Table 3": LONG_AGO, "Table 4": LONG_AGO, "Table 7": LONG_AGO },
     Bob: { "Table 1": LONG_AGO, "Table 2": LONG_AGO, "Table 5": LONG_AGO, "Table 7": RECENTLY },
     guest: Object.fromEntries(PLAYED_TABLES.map(game => [game.configId, played("2026-09-21T10:00:00")])),
 };
 const GUEST_ALONE = { profiles: [], active: "guest" };
-// Guest never played tables 1, 2 and 3, and last played 4 and 5 more than six months ago.
+// Guest never played tables 1, 2 and 3, and last played 4, 5 and 6 more than six months ago.
 const GUEST_SOME = {
     guest: { ...PLAYS.guest, "Table 1": undefined, "Table 2": undefined, "Table 3": undefined,
-        "Table 4": LONG_AGO, "Table 5": LONG_AGO },
+        "Table 4": LONG_AGO, "Table 5": LONG_AGO, "Table 6": LONG_AGO },
 };
 
 // Runs check with the Profile picker turned off in addOns.
@@ -665,74 +688,80 @@ function withPickerOff(check) {
 test("neverPlayedTables: with the picker on and other Profiles, Guest's plays are left out", () => {
     // Alice never played 4 visible tables, Bob 5.
     assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS }),
-        ["neverPlayedTables:null:2", "neverPlayedTables:null:4"]);
+        ["neverPlayedTables:null:3", "neverPlayedTables:null:4"]);
+
+    // Alice never played only 2 visible tables: below 3.
+    const aliceTwoNever = { ...PLAYS, Alice: { ...PLAYS.Alice, "Table 5": RECENTLY, "Table 6": RECENTLY } };
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: aliceTwoNever }), []);
 });
 
 test("neverPlayedTables: Guest sets the bar when it is the only one playing", () => {
     // Guest alone: it played every table, then 3 of them never.
     assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS, ...GUEST_ALONE }), []);
     assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: GUEST_SOME, ...GUEST_ALONE }),
-        ["neverPlayedTables:null:2", "neverPlayedTables:null:3"]);
+        ["neverPlayedTables:null:3"]);
 
     // Picker off: Guest joins Alice and Bob.
     withPickerOff(() => {
         assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: PLAYS }), []);
         assert.deepEqual(drawnOf(PLAYED_TABLES, "neverPlayedTables", { plays: { ...PLAYS, ...GUEST_SOME } }),
-            ["neverPlayedTables:null:2", "neverPlayedTables:null:3"]);
+            ["neverPlayedTables:null:3"]);
     });
 });
 
 test("dustyTables: with the picker on and other Profiles, Guest's plays are left out, never played tables excluded", () => {
-    // Alice's hidden table 7 does not count: 2 for her, 3 for Bob.
-    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS }), ["dustyTables:null:2"]);
+    // Alice's hidden table 7 does not count: 3 for her, 3 for Bob.
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS }), ["dustyTables:null:3"]);
 
-    // Bob left out, Alice alone has a single dusty table.
-    const aliceOneDusty = { Alice: { ...PLAYS.Alice, "Table 4": RECENTLY } };
-    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: aliceOneDusty, profiles: ["Alice"] }), []);
+    // Bob left out, Alice alone has two dusty tables: below 3.
+    const aliceTwoDusty = { Alice: { ...PLAYS.Alice, "Table 4": RECENTLY } };
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: aliceTwoDusty, profiles: ["Alice"] }), []);
 });
 
 test("dustyTables: Guest sets the bar when it is the only one playing", () => {
     assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS, ...GUEST_ALONE }), []);
     assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: GUEST_SOME, ...GUEST_ALONE }),
-        ["dustyTables:null:2"]);
-    // A single dusty table for Guest: below 2.
-    const guestOneDusty = { guest: { ...GUEST_SOME.guest, "Table 5": RECENTLY } };
-    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: guestOneDusty, ...GUEST_ALONE }), []);
+        ["dustyTables:null:3"]);
+    // Two dusty tables for Guest: below 3.
+    const guestTwoDusty = { guest: { ...GUEST_SOME.guest, "Table 5": RECENTLY } };
+    assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: guestTwoDusty, ...GUEST_ALONE }), []);
 
     withPickerOff(() => {
         assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: PLAYS }), []);
         assert.deepEqual(drawnOf(PLAYED_TABLES, "dustyTables", { plays: { ...PLAYS, ...GUEST_SOME } }),
-            ["dustyTables:null:2"]);
+            ["dustyTables:null:3"]);
     });
 });
 
 test("neverPlayedTables counts distinct tables never played when the game started", () => {
     const { fake } = setUpDrawn(PLAYED_TABLES, "neverPlayedTables", { target: 0 }, { plays: PLAYS });
-    assert.ok(cardShows(fake, TEXT.titles.neverPlayedTables(2)));
+    assert.ok(cardShows(fake, TEXT.titles.neverPlayedTables(3)));
 
     play(fake, PLAYED_TABLES[4], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the game that plays it for the first time counts");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "the game that plays it for the first time counts");
     play(fake, PLAYED_TABLES[4], 90);
     play(fake, PLAYED_TABLES[0], 90);
     play(fake, PLAYED_TABLES[2], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the same table again, and tables already played: 1");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "the same table again, and tables already played: 1");
 
     play(fake, PLAYED_TABLES[5], 90);
+    play(fake, PLAYED_TABLES[7], 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
 test("dustyTables counts distinct tables last played more than six months before the game started", () => {
     const { fake } = setUpDrawn(PLAYED_TABLES, "dustyTables", { target: 0 }, { plays: PLAYS });
-    assert.ok(cardShows(fake, TEXT.titles.dustyTables(2)));
+    assert.ok(cardShows(fake, TEXT.titles.dustyTables(3)));
 
     play(fake, PLAYED_TABLES[2], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the game that dusts it off counts");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "the game that dusts it off counts");
     play(fake, PLAYED_TABLES[2], 90);
     play(fake, PLAYED_TABLES[0], 90);
     play(fake, PLAYED_TABLES[4], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the same table again, a recent one, a never played one: 1");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "the same table again, a recent one, a never played one: 1");
 
     play(fake, PLAYED_TABLES[3], 90);
+    play(fake, PLAYED_TABLES[1], 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
@@ -741,86 +770,96 @@ test("a single visible table leaves only the templates that one table can satisf
         ["activeDays", "endurance", "marathon", "randomGames", "sameTableGames", "tableOfTheDayDays", "tableOfTheWeekGames"]);
 });
 
-test("tableOfTheDayDays and activeDays never ask for more days than are left in the week, today included", () => {
+test("tableOfTheDayDays and activeDays draw 3 to 5 days, never more than are left in the week, today included", () => {
     const newTemplates = drawn => drawn.filter(key => /^(tableOfTheDayDays|activeDays|tableOfTheWeekGames):/.test(key));
     assert.deepEqual(newTemplates(drawable(TABLES)), [
-        "activeDays:null:2", "activeDays:null:5", "tableOfTheDayDays:null:2", "tableOfTheDayDays:null:5",
-        "tableOfTheWeekGames:null:2", "tableOfTheWeekGames:null:5",
+        "activeDays:null:3", "activeDays:null:5", "tableOfTheDayDays:null:3", "tableOfTheDayDays:null:5",
+        "tableOfTheWeekGames:null:4", "tableOfTheWeekGames:null:8",
     ]);
-    assert.deepEqual(newTemplates(drawable(TABLES, { now: SATURDAY })), [
-        "activeDays:null:2", "tableOfTheDayDays:null:2", "tableOfTheWeekGames:null:2", "tableOfTheWeekGames:null:5",
+    assert.deepEqual(newTemplates(drawable(TABLES, { now: FRIDAY })), [
+        "activeDays:null:3", "tableOfTheDayDays:null:3", "tableOfTheWeekGames:null:4", "tableOfTheWeekGames:null:8",
     ]);
-    assert.deepEqual(newTemplates(drawable(TABLES, { now: SUNDAY_NIGHT })),
-        ["tableOfTheWeekGames:null:2", "tableOfTheWeekGames:null:5"], "Sunday: one day left, the day-based templates drop out");
+    assert.deepEqual(newTemplates(drawable(TABLES, { now: SATURDAY })),
+        ["tableOfTheWeekGames:null:4", "tableOfTheWeekGames:null:8"], "Saturday: two days left, the day-based templates drop out");
 });
 
 test("tableOfTheDayDays counts distinct days on which the game was that day's Table of the Day", () => {
     const { fake, tableOfTheDay } = setUpDrawn(TABLES, "tableOfTheDayDays", { target: 0 });
-    assert.ok(cardShows(fake, TEXT.titles.tableOfTheDayDays(2)));
+    assert.ok(cardShows(fake, TEXT.titles.tableOfTheDayDays(3)));
 
     const mondayTable = tableOfTheDay.getTable();
     play(fake, mondayTable, 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))));
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))));
     play(fake, mondayTable, 90);
     play(fake, TABLES.find(game => game.configId !== mondayTable.configId), 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "the same day again, another table: 1");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "the same day again, another table: 1");
 
     fake.setNow(TUESDAY);
     fake.fire("wheelmode");
     const tuesdayTable = tableOfTheDay.getTable();
     assert.notEqual(tuesdayTable.configId, mondayTable.configId);
     play(fake, mondayTable, 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(6))), "yesterday's Table of the Day: nothing");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(6))), "yesterday's Table of the Day: nothing");
     play(fake, tuesdayTable, 90);
+    assert.ok(cardShows(fake, TEXT.progress(2, 3, TEXT.daysLeft(6))));
+
+    fake.setNow(WEDNESDAY);
+    fake.fire("wheelmode");
+    play(fake, tableOfTheDay.getTable(), 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
 test("tableOfTheWeekGames counts every game on the Table of the Week", () => {
     const { fake, tableOfTheWeek } = setUpDrawn(TABLES, "tableOfTheWeekGames", { target: 0 });
-    assert.ok(cardShows(fake, TEXT.titles.tableOfTheWeekGames(2)));
+    assert.ok(cardShows(fake, TEXT.titles.tableOfTheWeekGames(4)));
 
     const weekTable = tableOfTheWeek.getTable();
     play(fake, TABLES.find(game => game.configId !== weekTable.configId), 90);
     play(fake, weekTable, 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))));
-    play(fake, weekTable, 90);
+    assert.ok(cardShows(fake, TEXT.progress(1, 4, TEXT.daysLeft(7))));
+    for (let game = 0; game < 3; game++) play(fake, weekTable, 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true, "the same table again counts");
 });
 
 test("activeDays counts distinct days played", () => {
     const { fake } = setUpDrawn(TABLES, "activeDays", { target: 0 });
-    assert.ok(cardShows(fake, TEXT.titles.activeDays(2)));
+    assert.ok(cardShows(fake, TEXT.titles.activeDays(3)));
 
     play(fake, TABLES[0], 90);
     play(fake, TABLES[1], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "two games the same day: 1");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "two games the same day: 1");
 
     fake.setNow(TUESDAY);
     fake.fire("wheelmode");
     play(fake, TABLES[0], 30);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(6))), "a short game doesn't make a day");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(6))), "a short game doesn't make a day");
+    play(fake, TABLES[0], 90);
+    assert.ok(cardShows(fake, TEXT.progress(2, 3, TEXT.daysLeft(6))));
+
+    fake.setNow(WEDNESDAY);
+    fake.fire("wheelmode");
     play(fake, TABLES[0], 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
-test("endurance and marathon targets are drawn in their minute ranges, randomGames and sameTableGames in [2, 5]", () => {
+test("endurance and marathon targets are drawn in their minute ranges, randomGames in [3, 6], sameTableGames in [4, 8]", () => {
     const newTemplates = drawable(TABLES).filter(key => /^(endurance|marathon|randomGames|sameTableGames):/.test(key));
     assert.deepEqual(newTemplates, [
-        "endurance:null:15", "endurance:null:30", "marathon:null:40", "marathon:null:80",
-        "randomGames:null:2", "randomGames:null:5", "sameTableGames:null:2", "sameTableGames:null:5",
+        "endurance:null:20", "endurance:null:45", "marathon:null:120", "marathon:null:60",
+        "randomGames:null:3", "randomGames:null:6", "sameTableGames:null:4", "sameTableGames:null:8",
     ]);
 });
 
 test("endurance counts the best table's total, in whole minutes", () => {
     const { fake } = setUpDrawn(TABLES, "endurance", { target: 0 });
-    assert.ok(cardShows(fake, TEXT.titles.endurance(15)));
+    assert.ok(cardShows(fake, TEXT.titles.endurance(20)));
 
     play(fake, TABLES[0], 10 * 60);
     play(fake, TABLES[1], 12 * 60);
-    play(fake, TABLES[0], 4 * 60 + 59);
+    play(fake, TABLES[0], 9 * 60 + 59);
     play(fake, TABLES[0], 59);
-    assert.ok(cardShows(fake, TEXT.progress(14, 15, TEXT.daysLeft(7))),
-        "14 min 59 s on the first table, a game under a minute left out: 14");
+    assert.ok(cardShows(fake, TEXT.progress(19, 20, TEXT.daysLeft(7))),
+        "19 min 59 s on the first table, a game under a minute left out: 19");
 
     play(fake, TABLES[0], 60);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
@@ -828,32 +867,31 @@ test("endurance counts the best table's total, in whole minutes", () => {
 
 test("marathon counts the sum of every game, in whole minutes", () => {
     const { fake } = setUpDrawn(TABLES, "marathon", { target: 0 });
-    assert.ok(cardShows(fake, TEXT.titles.marathon(40)));
+    assert.ok(cardShows(fake, TEXT.titles.marathon(60)));
 
-    play(fake, TABLES[0], 15 * 60);
-    play(fake, TABLES[1], 15 * 60);
-    play(fake, TABLES[2], 9 * 60 + 30);
-    assert.ok(cardShows(fake, TEXT.progress(39, 40, TEXT.daysLeft(7))));
+    play(fake, TABLES[0], 20 * 60);
+    play(fake, TABLES[1], 20 * 60);
+    play(fake, TABLES[2], 19 * 60 + 30);
+    assert.ok(cardShows(fake, TEXT.progress(59, 60, TEXT.daysLeft(7))));
 
     play(fake, TABLES[3], 60);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
 test("sameTableGames counts the best table's games", () => {
-    const { fake } = setUpDrawn(TABLES, "sameTableGames", { target: 0.99 });
-    assert.ok(cardShows(fake, TEXT.titles.sameTableGames(5)));
+    const { fake } = setUpDrawn(TABLES, "sameTableGames", { target: 0 });
+    assert.ok(cardShows(fake, TEXT.titles.sameTableGames(4)));
 
     for (const game of [TABLES[0], TABLES[1], TABLES[1], TABLES[2], TABLES[1], TABLES[0]]) play(fake, game, 90);
-    assert.ok(cardShows(fake, TEXT.progress(3, 5, TEXT.daysLeft(7))));
+    assert.ok(cardShows(fake, TEXT.progress(3, 4, TEXT.daysLeft(7))));
 
-    play(fake, TABLES[1], 90);
     play(fake, TABLES[1], 90);
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });
 
 test("randomGames counts the games the Random Game module launched", async () => {
     const { fake, randomGame } = setUpDrawn(TABLES, "randomGames", { target: 0 });
-    assert.ok(cardShows(fake, TEXT.titles.randomGames(2)));
+    assert.ok(cardShows(fake, TEXT.titles.randomGames(3)));
     const playRandomGame = async () => {
         await randomGame.launch();
         play(fake, fake.launches().at(-1), 90);
@@ -861,13 +899,14 @@ test("randomGames counts the games the Random Game module launched", async () =>
 
     await playRandomGame();
     play(fake, TABLES[0], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "a game the player picked doesn't count");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "a game the player picked doesn't count");
 
     await randomGame.launch();
     fake.launchError(fake.launches().at(-1));
     play(fake, TABLES[1], 90);
-    assert.ok(cardShows(fake, TEXT.progress(1, 2, TEXT.daysLeft(7))), "nor one picked after a Random Game failed to launch");
+    assert.ok(cardShows(fake, TEXT.progress(1, 3, TEXT.daysLeft(7))), "nor one picked after a Random Game failed to launch");
 
+    await playRandomGame();
     await playRandomGame();
     assert.equal(profileChallenge(fake, "Alice").completed, true);
 });

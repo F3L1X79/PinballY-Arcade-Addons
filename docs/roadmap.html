@@ -226,8 +226,8 @@
   <section>
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
-      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne.</p>
-      <span class="next">Ensuite : <code>/implement</code> du <a href="#challenge-balance">rééquilibrage des Challenges</a>, ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a></span>
+      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne.</p>
+      <span class="next">Ensuite : <code>/grill-with-docs</code> de l'<a href="#nested-install">installation non invasive</a></span>
     </div>
   </section>
 
@@ -252,24 +252,6 @@
     </div>
 
     <ol class="queue">
-
-      <li draggable="true" tabindex="0" class="item tr-play" id="challenge-balance" data-track="play" data-rank="bronze">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Rééquilibrer la difficulté des Challenges</h3>
-            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
-          </div>
-          <p>« Jouer 2 tables différentes » en une semaine, c'est trop léger. Chaque modèle reçoit sa propre plage, fixe : 4 à 8 pour les tables différentes, les parties sur la Table of the Week ou sur une même table ; 3 à 6 pour les tables d'un fabricant ou d'une décennie, les fabricants différents et les Random Games ; 3 à 5 pour les décennies différentes, les tables jamais jouées ou oubliées, les jours de Table of the Day et les jours joués ; 20 à 45 min pour l'endurance, 60 à 120 min pour le marathon.</p>
-          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span>tickets</span><i>›</i><span class="here">implement</span></div>
-          <div class="links">Ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>. L'objectif adapté à l'activité de la maison est reporté (<a href="#challenge-adaptive">n° <span data-ref="challenge-adaptive"></span></a>)</div>
-          <details>
-            <summary>Contexte</summary>
-            <p class="ctx">Grillé le 01/10/2026 : le Challenge devient un objectif « casual » (glossaire), le même pour toute la maison, comme aujourd'hui. Les plafonds restent (tables visibles, tables du fabricant, jours restants…) ; quand un plafond tombe sous le minimum du modèle, l'option n'est pas faisable et le tirage l'écarte. Plages dans <code>common/challenge.js</code> (<code>COUNT_RANGE</code>, <code>ENDURANCE_MINUTES</code>, <code>MARATHON_MINUTES</code>), à rendre propres à chaque modèle. Les Challenges déjà tirés gardent leur objectif, enregistré dans <code>cabinet.json</code> ; les Achievements de la famille Challenges comptent les Challenges réussis, sans dépendre de l'objectif.</p>
-          </details>
-        </div>
-      </li>
 
       <li draggable="true" tabindex="0" class="item tr-share" id="nested-install" data-track="share" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
@@ -546,7 +528,7 @@
           </div>
           <p>Calculer l'objectif du Challenge d'après ce que la maison a joué les dernières semaines (la mesure du modèle appliquée aux Plays du Play Log, un peu au-dessus de la semaine typique), avec les plages fixes comme plancher et comme repli tant que le journal est trop court.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Lit le Play Log (livré) ; part des plages du <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a></div>
+          <div class="links">Lit le Play Log (livré) ; part des plages fixes par modèle de <code>common/challenge.js</code> (livrées, ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>)</div>
           <details>
             <summary>Questions ouvertes (3)</summary>
             <ul>
@@ -663,7 +645,6 @@
 
           <div class="ax row">Moyen</div>
           <div class="cell sweet">
-            <a class="chip tr-play" href="#challenge-balance"><b></b>Difficulté des Challenges</a>
             <a class="chip tr-play" href="#world-tour"><b></b>Tour du monde</a>
                         <a class="chip tr-play" href="#hidden-achievements"><b></b>Succès cachés</a>
             <a class="chip tr-play" href="#challenge-confetti"><b></b>Confettis</a>
