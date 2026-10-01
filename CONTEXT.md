@@ -42,7 +42,7 @@ _Avoid_: welcome toast, login message
 
 **Play**:
 A game of at least one minute on a table, which counts for the Profile active when it started. A shorter game is a launch by mistake and counts for nothing, except for the Rage Quit Achievement, which notices a game given up early without making it a Play.
-_Avoid_: session (a session stat is about one game, Play or not), launch (a launch becomes a Play only after a minute)
+_Avoid_: session (the session stats count only Plays, except the Rage Quit flag), launch (a launch becomes a Play only after a minute)
 
 **Play Log**:
 The dated list of a Profile's Plays: when each started, which table, and how long it lasted, kept year by year. It starts empty on the day it is introduced: earlier games are known only by their totals. Shown to no one yet; it feeds later summaries such as a yearly one.
@@ -73,7 +73,7 @@ The Period Table whose Period is a day; prefers tables never played, otherwise t
 The Period Table whose Period is a week; picked purely at random.
 
 **Last Played Table**:
-The table the active Profile played most recently, across the whole collection, however it was launched.
+The table of the active Profile's most recent Play, across the whole collection, however it was launched.
 
 **Random Game**:
 A table drawn at random from the current wheel selection and launched right away; never the Last Played Table, unless it is the only one in the selection.
@@ -88,20 +88,20 @@ The tables the household has added to PinballY's favourites, offered as a wheel 
 _Avoid_: Favorites, favourites filter
 
 **Streak**:
-The number of consecutive Periods in which the active Profile actually played the Period Table during its Period, however it was launched. A Period whose Period Table is an Adult Table neither extends nor breaks a Child Profile's Streak.
+The number of consecutive Periods in which the active Profile made a Play on the Period Table that started during its Period, however it was launched. A Period whose Period Table is an Adult Table neither extends nor breaks a Child Profile's Streak.
 _Avoid_: combo, chain
 
 **Periods Played**:
-The total number of Periods, consecutive or not, in which the active Profile actually played the Period Table during its Period, however it was launched. Never lower than the longest Streak.
+The total number of Periods, consecutive or not, in which the active Profile made a Play on the Period Table that started during its Period, however it was launched. Never lower than the longest Streak.
 _Avoid_: exploration count, total streak
 
 **Day's Manufacturers**:
-The distinct non-empty manufacturers of the tables that started playing during one calendar day, however they were launched, hidden tables included.
+The distinct non-empty manufacturers of the tables of the Plays started during one calendar day, however they were launched, hidden tables included.
 
 ### Challenges
 
 **Challenge**:
-An easy play goal set for one week, the same for every Profile, Guest included, such as playing five different Stern tables; each Profile's own progress counts only games of at least one minute on tables it can see, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
+An easy play goal set for one week, the same for every Profile, Guest included, such as playing five different Stern tables; each Profile's own progress counts only Plays on tables it can see, started during the week, and the Challenge is completed or missed when the week ends. Shown as "Défi" in French.
 _Avoid_: quest, goal, mission, Achievement (an Achievement is a permanent milestone)
 
 **Challenge Card**:

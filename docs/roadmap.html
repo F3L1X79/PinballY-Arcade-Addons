@@ -280,17 +280,11 @@
             <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span></div>
           </div>
           <p>Seules les Plays comptent, partout : cumuls par table (Last Played Table, Hall of Fame, Profile Stats, complétion, Play Time), Streak et Periods Played, Random Games, Day's Manufacturers, Grand Return. Une partie plus courte est un lancement par erreur. Seule exception, le Rage Quit, gardé tel quel.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span class="here">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
           <div class="links">Juste après le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a>, qui applique déjà la règle</div>
           <details>
-            <summary>Questions ouvertes (4)</summary>
-            <ul>
-              <li>Streak, Random Games, Day's Manufacturers et Grand Return se comptent aujourd'hui au <code>gamestarted</code> : les déplacer au <code>gameover</code> d'une partie d'au moins une minute ?</li>
-              <li>La Table of the Day doit-elle être jouée une minute pendant sa Period, même si la partie se termine après minuit ?</li>
-              <li>Les session stats (<code>shortestSeconds</code>, plus courte partie) gardent-elles les parties courtes, comme le Rage Quit ?</li>
-              <li>Les cumuls déjà enregistrés gardent leurs parties courtes passées (impossible de les retrouver) : on l'accepte ?</li>
-            </ul>
-            <p class="ctx">Décidé pendant le grilling du Play Log (01/10/2026), défini par le terme Play de <code>CONTEXT.md</code>. Les Challenges appliquent déjà la règle (<code>MIN_GAME_SECONDS</code> dans <code>common/challenge.js</code>), à partager. Tant qu'elle n'est pas généralisée, les cumuls d'une table lancée par erreur ne suivent plus exactement le Play Log.</p>
+            <summary>Contexte</summary>
+            <p class="ctx">Grillé le 01/10/2026 : le Profile store décide une seule fois si une partie est une Play et l'annonce aux autres modules (ADR 0008, qui remplace en partie l'ADR 0001). Une partie au début inconnu ne compte plus ; une Play compte pour la Period et le jour de son début ; <code>shortestSeconds</code> ne garde que les Plays ; aucun recalcul du passé. La Table of the Day (« jamais jouée ») et le Rating Prompt, qui lisent les compteurs partagés de PinballY, restent hors du chantier. Les descriptions d'Achievements passent de « Lancer » à « Jouer » (<code>fr</code>, <code>en</code>). Termes du glossaire mis à jour.</p>
           </details>
         </div>
       </li>
@@ -612,8 +606,10 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
-          <summary>01/10 <span class="count">(3)</span></summary>
+          <summary>01/10 <span class="count">(4)</span></summary>
           <ol>
+            <li><strong>Le Profile store annonce chaque Play</strong>
+              <span>Cinq modules mesuraient chacun la durée d'une partie. La règle de la minute ne vit plus qu'à un endroit, et les autres s'abonnent à l'annonce (ADR 0008).</span></li>
             <li><strong>Une partie de moins d'une minute ne compte pas</strong>
               <span>Personne n'éprouve une table en moins d'une minute : c'est un lancement par erreur. Le terme Play le dit ; le Play Log l'applique, sa généralisation est un chantier à part, juste après. Le Rage Quit reste tel quel.</span></li>
             <li><strong>Le Play Log, un fichier par année</strong>

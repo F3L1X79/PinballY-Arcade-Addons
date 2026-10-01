@@ -1,5 +1,5 @@
 ---
-status: partly superseded by ADR-0004
+status: partly superseded by ADR-0004 and ADR-0008
 ---
 
 # Keep the Achievements and session tracking as they are
