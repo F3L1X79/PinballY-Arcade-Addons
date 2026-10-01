@@ -234,7 +234,7 @@
   <!-- ===== Queue ===== -->
   <section>
     <p class="eyebrow">File d'attente <span class="count" id="queue-count"></span></p>
-    <p class="lede"><strong>Pourquoi cet ordre :</strong> finir ce qui est en cours, lancer tôt ce qui accumule des données, préparer l'arrivée de nouveaux joueurs, enchaîner les petits chantiers (les nouveaux Secret Achievements tant que le mécanisme est frais), puis la Maîtrise des tables (grosse nouveauté, visible sur la roue), l'écran d'accueil dessiné (le premier écran vu), la fiche joueur et ce qui s'appuie dessus. Traductions et Distribution à la fin, quand les textes et les fonctionnalités sont stables.</p>
+    <p class="lede"><strong>Pourquoi cet ordre :</strong> finir ce qui est en cours, lancer tôt ce qui accumule des données, préparer l'arrivée de nouveaux joueurs, enchaîner les petits chantiers (les nouveaux Secret Achievements tant que le mécanisme est frais), puis la Maîtrise des tables (grosse nouveauté, visible sur la roue), les records par Profile et leurs rivalités (tôt, car l'auteur d'un record ne se retrouve pas après coup), l'écran d'accueil dessiné (le premier écran vu), la fiche joueur et ce qui s'appuie dessus. Traductions et Distribution à la fin, quand les textes et les fonctionnalités sont stables.</p>
     <p class="lede">Glisse une ligne, ou utilise ▲ ▼ (ou <kbd>ALT</kbd> + flèches sur la ligne surlignée), pour changer la priorité. Ton ordre reste dans ce navigateur : copie-le et colle-le-moi pour que je l'écrive dans le fichier.</p>
 
     <div class="toolbar">
@@ -368,6 +368,54 @@
               <li>Où voir toutes ses tables avant la fiche joueur : une liste à part, ou rien d'autre que la roue au début ?</li>
             </ul>
             <p class="ctx">Fusion du « Féru d'une table » et de l'idée d'XP par table (30/09/2026). Pas d'Achievement : ils doubleraient le toast de maîtrise, et la famille Play Time récompense déjà le temps de jeu. Un Achievement de synthèse (« niveau 10 sur 5 tables ») pourra venir plus tard si le niveau du joueur paraît trop pauvre. Le temps est plus juste que le nombre de parties ; il est déjà suivi par Profile (<code>plays[configId].seconds</code>). Les noms éventuels passent par <code>lang/</code>. Remontée le 01/10/2026 avant l'écran d'accueil.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-play" id="profile-records" data-track="play" data-rank="gold">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Records par Profile : qui a fait les high scores</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen-gros</span></div>
+          </div>
+          <p>Après une Play, relire les high scores de la table (<code>getHighScores()</code> / <code>highscoresready</code>, encore inutilisés) et attribuer au Profile actif tout record qui vient d'apparaître. De là, des Achievements (premier record, record sur 10 tables, battre le record d'un autre Profile) et les records de chacun dans les Profile Stats.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/research</code> (quelles tables de la borne donnent leurs scores, et sous quelle forme) → <code>/grill-with-docs</code> → <code>/prototype</code> (lecture des scores sur la borne) → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Avant les <a href="#profile-rivalries">rivalités (n° <span data-ref="profile-rivalries"></span>)</a></div>
+          <details>
+            <summary>Questions ouvertes (5)</summary>
+            <ul>
+              <li>Couverture : PINemHi ne lit que les tables à ROM VPinMAME et Future Pinball. Les tables VPX originales et les électromécaniques n'ont rien, sauf un fichier <code>.pinballyHighScores</code> écrit par leur script. Combien de tables de la borne sont concernées ?</li>
+              <li>Seul le tableau des meilleurs scores existe (4 ou 5 lignes et le Grand Champion), jamais le score de chaque partie : une partie moyenne ne laisse aucune trace. Est-ce assez pour en faire une fonctionnalité ?</li>
+              <li>Les lignes sont du texte prévu pour le DMD, au format propre à chaque ROM : comment en extraire les scores de façon fiable ?</li>
+              <li>Attribution : un nouveau score après la Play revient au Profile actif, quelles que soient les initiales tapées. Et les scores déjà présents à l'installation : à personne ?</li>
+              <li>Quand lire : PinballY vide le cache des scores au lancement et les redemande quand la table est resélectionnée, au retour sur la roue. Faut-il attendre ce <code>highscoresready</code> ou appeler <code>getHighScores()</code> dès <code>gameover</code> ?</li>
+            </ul>
+            <p class="ctx">Proposé le 01/10/2026. À lancer tôt : l'auteur d'un record ne se retrouve pas après coup, chaque record battu avant reste anonyme.</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="profile-rivalries" data-track="profiles" data-rank="silver">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Rivalités : « Bob t'a pris ton record »</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span></div>
+          </div>
+          <p>Quand un Profile bat le record d'un autre, celui-ci l'apprend à son prochain passage, dans sa Profile Greeting : « Bob t'a pris le record de Medieval Madness ». De quoi donner envie d'y retourner.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/grill-with-docs</code> → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. S'appuie sur les <a href="#profile-records">records par Profile (n° <span data-ref="profile-records"></span>)</a></div>
+          <details>
+            <summary>Questions ouvertes (3)</summary>
+            <ul>
+              <li>Où l'annoncer : dans la Profile Greeting seulement, ou aussi en toast non bloquant quand la table repasse sur la roue ?</li>
+              <li>Plusieurs records perdus d'un coup : un seul message qui les résume, ou un par table ?</li>
+              <li>Child Profile et Guest : participent-ils aux rivalités ? Guest n'a ni Avatar ni vrai joueur derrière.</li>
+            </ul>
+            <p class="ctx">Proposé le 01/10/2026, avec les records par Profile.</p>
           </details>
         </div>
       </li>
@@ -681,6 +729,8 @@
           </div>
           <div class="cell">
             <a class="chip tr-profiles" href="#stats"><b></b>Stats des autres</a>
+            <a class="chip tr-play" href="#profile-records"><b></b>Records par Profile</a>
+            <a class="chip tr-profiles" href="#profile-rivalries"><b></b>Rivalités</a>
             <a class="chip tr-share" href="#language-menu"><b></b>Menu des langues</a>
             <a class="chip tr-share" href="#translations"><b></b>Traductions</a>
           </div>
