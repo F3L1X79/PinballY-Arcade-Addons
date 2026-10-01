@@ -234,7 +234,7 @@
   <!-- ===== Queue ===== -->
   <section>
     <p class="eyebrow">File d'attente <span class="count" id="queue-count"></span></p>
-    <p class="lede"><strong>Pourquoi cet ordre :</strong> finir ce qui est en cours, lancer tôt ce qui accumule des données, préparer l'arrivée de nouveaux joueurs, enchaîner les petits Achievements (un seul grilling), puis la fiche joueur, la Maîtrise des tables et ce qui s'appuie dessus. Traductions et Distribution à la fin, quand les textes et les fonctionnalités sont stables.</p>
+    <p class="lede"><strong>Pourquoi cet ordre :</strong> finir ce qui est en cours, lancer tôt ce qui accumule des données, préparer l'arrivée de nouveaux joueurs, enchaîner les petits Achievements (un seul grilling), puis l'écran d'accueil dessiné (le premier écran vu), la fiche joueur, la Maîtrise des tables et ce qui s'appuie dessus. Traductions et Distribution à la fin, quand les textes et les fonctionnalités sont stables.</p>
     <p class="lede">Glisse une ligne, ou utilise ▲ ▼ (ou <kbd>ALT</kbd> + flèches sur la ligne surlignée), pour changer la priorité. Ton ordre reste dans ce navigateur : copie-le et colle-le-moi pour que je l'écrive dans le fichier.</p>
 
     <div class="toolbar">
@@ -322,6 +322,32 @@
               <li>Rien pour les Achievements, pour garder la fête rare ? Et pour un Challenge réussi par Guest, une fois qu'il aura les siens ?</li>
             </ul>
             <p class="ctx">Idée du 30/09/2026. Le Challenge Toast (<code>common/achievement_toast.js</code>) attend déjà la fin de la partie et l'événement <code>wheelmode</code> ; les confettis partiraient avec lui. Les calques passent par le dessin d'avance (<code>common/drawing_ahead.js</code>).</p>
+          </details>
+        </div>
+      </li>
+
+      <li draggable="true" tabindex="0" class="item tr-profiles" id="startup-screen" data-track="profiles" data-rank="gold">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Écran d'accueil dessiné, à la place du startup prompt natif</h3>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen-gros</span><span class="tag">UI</span></div>
+          </div>
+          <p>Le startup prompt est le premier écran vu, et le seul écran important encore en menu natif : il paraît austère à côté de l'Achievement List, du Toast et de la Challenge Card. Il deviendrait un écran dessiné en Steamball sur la roue assombrie : en haut, l'Avatar, un salut selon l'heure (« Bonsoir, Alex ! ») et le nom ; au milieu, la Table of the Day et la Table of the Week avec leur logo de roue, leur Streak (« joue-la pour garder ta série ! ») et une coche si elle est déjà jouée ; en bas, les choix actuels (rester sur la dernière table, nommée, Change Player, jour, semaine, au hasard), parcourus aux flippers comme le Profile picker, Exit valant « rester ».</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/grill-with-docs</code> → <code>/prototype</code> (mise en page et temps de dessin sur la borne) → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Même surface et même palette que la <a href="#stats-drawn">fiche joueur (n° <span data-ref="stats-drawn"></span>)</a></div>
+          <details>
+            <summary>Questions ouvertes (6)</summary>
+            <ul>
+              <li>Coût du dessin : c'est le premier écran, rien n'a pu être dessiné d'avance, et chaque dessin bloque la borne 20 à 45 ms. Apparition par morceaux (fond, Avatar, tables) ?</li>
+              <li>File des dialogues : <code>wheel_dialog.js</code> ne connaît que les menus natifs. Lui apprendre un dialogue « dessiné » qui garde la priorité <code>STARTUP_PROMPT</code>, ou une règle à part ? À consigner dans une ADR, comme la 0003.</li>
+              <li>Remplace-t-il aussi la Profile Greeting du démarrage, qui s'efface déjà devant le startup prompt ?</li>
+              <li>Streak : celle du jour seulement, et rien (ou un encouragement) quand elle vaut 0 ? Ton du rappel : neutre ou incitatif ?</li>
+              <li>Le Challenge : rien, puisque la Challenge Card l'affiche déjà, ou une ligne seulement quand il y a du nouveau (verdict, « plus qu'une table ! ») ?</li>
+              <li>Child Profile : quand la Period Table est une Adult Table, son bloc disparaît, comme ses boutons aujourd'hui.</li>
+            </ul>
+            <p class="ctx">Mini-brainstorming du 01/10/2026, parti d'une maquette « arcade » (salut, Avatar, Streak, Challenge, table du jour, bouton Play). Écarté de la maquette : un seul bouton Play, qui ferait perdre Change Player et les autres choix ; la barre en %, qui ne convient pas à tous les Challenges ; les emojis, peu sûrs dans le rendu de PinballY. Repli possible, sans écran dessiné : enrichir seulement les textes du dialogue natif (salut selon l'heure, Streak, coche, dernière table nommée, phrase générique retirée).</p>
           </details>
         </div>
       </li>
@@ -631,6 +657,7 @@
           <div class="cell sweet">
           </div>
           <div class="cell">
+            <a class="chip tr-profiles" href="#startup-screen"><b></b>Écran d'accueil</a>
           </div>
           <div class="cell">
             <a class="chip tr-share" href="#distrib"><b></b>Distribution</a>
