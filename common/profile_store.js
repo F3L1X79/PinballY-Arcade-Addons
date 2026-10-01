@@ -52,7 +52,7 @@ function toLocalIsoString(date) {
 // For a file name, where ":" is not allowed: "2026-09-24_21-10-00".
 const toFileDate = date => toLocalIsoString(date).replace("T", "_").replace(/:/g, "-");
 
-// The session stats: shortestSeconds stays 0 until a first timed game.
+// The session stats: shortestSeconds stays 0 until a first Play.
 const emptySessions = () => ({
     longestSeconds: 0,
     shortestSeconds: 0,

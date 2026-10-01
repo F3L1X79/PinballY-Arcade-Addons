@@ -1,8 +1,9 @@
 // ============================================================
 // The grand return, started through main.js on the fake PinballY globals:
-// replaying a table after a 30-day break announces nothing, replaying one
-// after a 31-day break announces the grand return, whose description
-// gives the 31 days.
+// replaying a table after a 30-day break announces nothing, a game under a
+// minute after a 31-day break announces nothing either, and a Play after
+// that break announces the grand return, whose description gives the 31
+// days.
 // ============================================================
 
 import { test } from "node:test";
@@ -13,6 +14,8 @@ import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 const SESSION_MS = 5 * 60 * 1000;
+// Under a minute, and too short for a rage quit.
+const SHORT_GAME_MS = 20 * 1000;
 
 // Without manufacturer or year, so with the collection milestones already
 // Notified, the grand return is the only Achievement these plays can unlock.
@@ -58,10 +61,10 @@ test("the grand return needs a 31-day break and says so", async () => {
     await import("../main.js");
     await settle();
 
-    async function play(game) {
+    async function play(game, sessionMs = SESSION_MS) {
         fake.gameStarted(game);
         await settle();
-        fake.advanceTime(SESSION_MS);
+        fake.advanceTime(sessionMs);
         fake.gameOver(game);
         await settle();
         // The texts of every Achievement Toast so far.
@@ -69,6 +72,7 @@ test("the grand return needs a 31-day break and says so", async () => {
     }
 
     assert.deepEqual(await play(THIRTY_DAYS_AGO), [], "no Achievement after a 30-day break");
+    assert.deepEqual(await play(THIRTY_ONE_DAYS_AGO, SHORT_GAME_MS), [], "a game under a minute is no grand return");
 
     const [toast, ...others] = await play(THIRTY_ONE_DAYS_AGO);
     assert.deepEqual(others, []);

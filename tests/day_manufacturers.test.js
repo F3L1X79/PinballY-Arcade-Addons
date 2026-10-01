@@ -1,10 +1,11 @@
 // ============================================================
 // Multi-manufacturer day Achievements, started through main.js on the fake
-// PinballY globals: tables of three different manufacturers started the
-// same day unlock the first one, even after a very short session; a table
-// with no manufacturer and a repeated manufacturer don't count; a new
-// calendar day starts over, and the Achievement stays Unlocked in the
-// Achievement List, the next ones showing the day's record.
+// PinballY globals: tables of three different manufacturers played the
+// same day unlock the first one; a game under a minute, a table with no
+// manufacturer and a repeated manufacturer don't count; a Play started
+// before midnight counts for the day it started; a new calendar day starts
+// over, and the Achievement stays Unlocked in the Achievement List, the
+// next ones showing the day's record.
 // ============================================================
 
 import { test } from "node:test";
@@ -16,7 +17,7 @@ import { readRows } from "./achievement_list_reader.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 const SESSION_MS = 5 * 60 * 1000;
-const VERY_SHORT_SESSION_MS = 1000;
+const SHORT_GAME_MS = 59 * 1000;
 
 // Never counted as played and never replayed, so the Day's Manufacturers
 // are the only thing these plays can unlock.
@@ -90,9 +91,11 @@ test("three manufacturers in one calendar day unlock the first multi-manufacture
     assert.deepEqual(await play(OTHER_WILLIAMS), [], "the same manufacturer counts once");
     assert.deepEqual(await play(HOMEBREW), [], "a table with no manufacturer doesn't count");
     assert.deepEqual(await play(BALLY), []);
-    assert.deepEqual(await play(HIDDEN_STERN, VERY_SHORT_SESSION_MS), [
-        TEXT.dayManufacturersTitles[3],
-    ], "a hidden table counts, even for a very short session");
+    assert.deepEqual(await play(GOTTLIEB, SHORT_GAME_MS), [], "a game under a minute doesn't count");
+    assert.deepEqual(await play(HIDDEN_STERN), [TEXT.dayManufacturersTitles[3]], "a hidden table counts");
+
+    // Started at 23:58, ended on the next day: counts for the day it started.
+    fake.setNow(new Date(2026, 8, 23, 23, 58, 0));
     assert.deepEqual(await play(GOTTLIEB), []);
 
     // Four manufacturers yesterday: a fifth one would unlock the next

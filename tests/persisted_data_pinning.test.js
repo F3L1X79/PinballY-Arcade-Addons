@@ -245,7 +245,8 @@ test("persisted files and Achievement IDs stay byte-identical", async () => {
     assert.equal(guestProfile.randomGames, 100);
     assert.deepEqual(guestProfile.sessions, {
         longestSeconds: 61 * 60,
-        shortestSeconds: 45,
+        // The shortest Play: the 45-second game is not one.
+        shortestSeconds: 60,
         rageQuit: true,
         grandReturn: true,
         dayManufacturers: { day: "2026-09-23", list: dayManufacturers },

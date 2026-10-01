@@ -1,8 +1,9 @@
 // ============================================================
 // Session stats per Profile, through main.js on the fake PinballY globals:
 // the marathon, rage quit, grand return and Day's Manufacturers of one
-// Profile never unlock anything for another, and the grand return counts
-// only the active Profile's own previous play of the table.
+// Profile never unlock anything for another, the grand return counts only
+// the active Profile's own previous play of the table, and the shortest
+// session ignores a game under a minute.
 // ============================================================
 
 import { test } from "node:test";
@@ -84,8 +85,10 @@ test("session stats and their Achievements belong to the active Profile", async 
     await settle();
     // Never played by Alice: no grand return, though Bob played it forty days ago.
     await play(TWILIGHT, 5 * 60);
-    await play(MEDIEVAL, 45);
+    await play(MEDIEVAL, 2 * 60);
     await play(MARS, 31 * 60);
+    // A rage quit, under a minute: not Alice's shortest session.
+    await play(MARS, 45);
 
     store.switchTo("Bob");
     await settle();
@@ -99,6 +102,8 @@ test("session stats and their Achievements belong to the active Profile", async 
     const aliceSessions = readProfile(fake, "Alice").sessions;
     assert.deepEqual(aliceSessions.dayManufacturers, { day: "2026-09-23", list: ["Midway", "Williams", "Bally"] });
     assert.equal(aliceSessions.mostManufacturersInADay, 3);
+    assert.equal(aliceSessions.shortestSeconds, 2 * 60);
+    assert.equal(aliceSessions.longestSeconds, 31 * 60);
     const bobSessions = readProfile(fake, "Bob").sessions;
     assert.deepEqual(bobSessions.dayManufacturers, { day: "2026-09-23", list: ["Midway"] });
     assert.equal(bobSessions.mostManufacturersInADay, 1);
