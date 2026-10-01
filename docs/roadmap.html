@@ -307,13 +307,18 @@
         <div class="content">
           <div class="item-head">
             <h3>Challenges pour Guest</h3>
-            <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span></div>
+            <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span><span class="tag">0/3 tickets</span></div>
           </div>
           <p>Guest suit le Challenge de la semaine comme les autres Profiles : Challenge Card, Challenge Toast, Challenge Tables, verdict, ligne des Profile Stats et famille d'Achievements Challenges. Il reste hors de l'Unlock Rate, qui compare des personnes. Sans badge (Profile picker désactivé), la Challenge Card remonte dans le coin en haut à droite.</p>
-          <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="here">tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Première impression des nouveaux venus : tôt dans la file. Séparé du <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a>, qui viendra après. Flow Matt : <code>/to-tickets</code> → <code>/implement</code></div>
+          <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="done">tickets</span><i>›</i><span class="here">implement</span></div>
+          <div class="links">Première impression des nouveaux venus : tôt dans la file. Séparé du <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a>, qui viendra après. Flow Matt : <code>/implement</code> par ticket, avec <code>/clear</code> entre chaque</div>
           <details>
-            <summary>Décisions du grill (4)</summary>
+            <summary>Tickets restants (3) et décisions du grill</summary>
+            <ul>
+              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/107">#107</a> Guest suit le Challenge de la semaine</li>
+              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/108">#108</a> Le tirage compte les parties de Guest quand il joue seul</li>
+              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/109">#109</a> Challenge Card dans le coin sans badge (bloqué par #107)</li>
+            </ul>
             <ul>
               <li>Tout l'ensemble Challenge pour Guest ; l'Unlock Rate l'exclut toujours.</li>
               <li>Tirage (« tables jamais jouées », « tables délaissées ») : les parties de Guest comptent seulement quand aucun autre Profile n'existe ou que le Profile picker est désactivé. Sinon les vrais joueurs fixent la barre, et Guest accepte un objectif parfois inatteignable.</li>
