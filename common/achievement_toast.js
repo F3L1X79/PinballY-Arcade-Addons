@@ -238,6 +238,8 @@ export function createAchievementToasts(host, {
     }
 
     function showNext() {
+        // A toast gone stale while it waited (its Profile was reset) never shows.
+        while (waiting.length > 0 && waiting[0].isStale && waiting[0].isStale()) waiting.shift();
         if (!arrivalOpen || cards.length >= MAX_CARDS || waiting.length === 0) return;
         // PinballY stops redrawing its window while a game starts, runs or
         // exits, and the game covers it.
@@ -269,8 +271,10 @@ export function createAchievementToasts(host, {
     // Fires on every return to the wheel: starts the toasts that waited for a game.
     host.on("wheelmode", safeShowNext);
 
-    // toast: { kind, title, description, onShown }, kind a TOAST_KIND (an
-    // Achievement when missing), onShown running when the toast starts.
+    // toast: { kind, title, description, onShown, isStale }, kind a
+    // TOAST_KIND (an Achievement when missing), onShown running when the
+    // toast starts, isStale (optional) dropping it unshown when it returns
+    // true at its turn.
     function submit(toast) {
         waiting.push(toast);
         safeShowNext();

@@ -29,7 +29,7 @@ A Profile marked as a child's: Adult Tables are left out of everything it can pi
 _Avoid_: kid mode, parental control, family filter
 
 **Profile Reset**:
-Starting a Profile over as if it had never played: its plays, Streaks, Challenge progress and Notified Achievements are erased, while its name, Avatar and marks stay. Only an Admin Profile can reset one, and never while no Profile is an Admin Profile.
+Starting a Profile over as if it had never played: its plays, Streaks, session stats, Random Games, Challenge progress and Notified Achievements are erased, after a dated copy of its former data is kept, while its name, Avatar and marks stay. Only an Admin Profile can reset one, and never while no Profile is an Admin Profile.
 _Avoid_: fresh start, wipe, achievement reset (the Achievements come from the plays, so the plays go too)
 
 **Avatar**:

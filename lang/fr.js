@@ -366,6 +366,16 @@ export default {
         greeting: name => `Salut ${name} !`,
     },
 
+    // The Profile Reset, in PinballY's Exit menu for an Admin Profile.
+    profileReset: {
+        menuEntry: "Réinitialiser un profil",
+        listTitle: "Quel profil repart de zéro ?",
+        confirm: name => `Réinitialiser ${name} ? Ses parties, séries, défis et succès seront tous effacés.`,
+        yes: "Oui, réinitialiser",
+        no: "Non",
+        cancel: "Annuler",
+    },
+
     // The clock at the top left of the wheel screen.
     clock: {
         time: (hours, minutes) => `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,

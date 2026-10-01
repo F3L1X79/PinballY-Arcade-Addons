@@ -4,7 +4,8 @@
 // switch, and hands each newly unlocked one to the Achievement Toast
 // module, which announces it with a card in the bottom-right corner once no
 // game is running; an Achievement becomes Notified, for the Profile that
-// unlocked it, when its toast starts.
+// unlocked it, when its toast starts. A Profile Reset forgets what was
+// announced to that Profile and drops its toasts still waiting.
 // Also adds the Achievement List entry to the main menu, right after "Play",
 // and the Profile Stats entry right after it. The Challenges family and the
 // Profile Stats line on completed Challenges exist only while the
@@ -91,6 +92,10 @@ export default function init() {
     // in lower case (Profile names ignore case). They are not Notified until
     // their toast starts, so later checks find the waiting ones again.
     const submittedIdsByProfile = new Map();
+    // Profile Resets so far, by Profile name in lower case: a toast submitted
+    // before its Profile's reset is stale.
+    const resetCountByProfile = new Map();
+    const resetCountOf = profileKey => resetCountByProfile.get(profileKey) || 0;
 
     function checkForNewAchievements() {
         // A toast may start after a switch: it is credited to the Profile
@@ -99,6 +104,7 @@ export default function init() {
         const profileKey = profileName.toLowerCase();
         if (!submittedIdsByProfile.has(profileKey)) submittedIdsByProfile.set(profileKey, new Set());
         const submittedIds = submittedIdsByProfile.get(profileKey);
+        const resetCount = resetCountOf(profileKey);
         evaluateAchievements(getAllAchievements(), profileStore, (achievement) => {
             if (submittedIds.has(achievement.id)) return;
             submittedIds.add(achievement.id);
@@ -106,6 +112,7 @@ export default function init() {
                 title: achievement.getTitle(),
                 description: achievement.getDescription(),
                 onShown: () => markNotified(profileStore, profileName, achievement.id),
+                isStale: () => resetCountOf(profileKey) !== resetCount,
             });
         });
     }
@@ -123,6 +130,16 @@ export default function init() {
 
     mainWindow.on("gameover", safeHandler(SCRIPT_NAME, () => {
         setTimeout(safeCheckForNewAchievements, 0);
+    }));
+
+    // Fires after any change of a Profile's data: a reset Profile starts
+    // over, so its Achievements are announced again once unlocked again,
+    // and its toasts still waiting never show.
+    profileStore.onUpdate(safeHandler(SCRIPT_NAME, (profileName, { isReset }) => {
+        if (!isReset) return;
+        const profileKey = profileName.toLowerCase();
+        submittedIdsByProfile.delete(profileKey);
+        resetCountByProfile.set(profileKey, resetCountOf(profileKey) + 1);
     }));
 
     // Fires on every Profile switch: announces what the new Profile has

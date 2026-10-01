@@ -679,10 +679,11 @@ export function createFakePinballYHost({
                 id,
                 get items() { return menuItems; },
                 set items(newItems) { menuItems = newItems; },
+                // Like PinballY: after a command id it does not find, at the end.
                 addMenuItem(where, newItems) {
                     const toAdd = Array.isArray(newItems) ? newItems : [newItems];
                     const afterIndex = menuItems.findIndex(item => item.cmd === where.after);
-                    menuItems.splice(afterIndex + 1, 0, ...toAdd);
+                    menuItems.splice(afterIndex === -1 ? menuItems.length : afterIndex + 1, 0, ...toAdd);
                 },
                 deleteMenuItem(cmd) {
                     menuItems = menuItems.filter(item => item.cmd !== cmd);

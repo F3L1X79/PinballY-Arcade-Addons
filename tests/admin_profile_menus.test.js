@@ -19,6 +19,7 @@ const markFile = (fake, name, isAdmin) => fake.addFile(profileFile(name), JSON.s
 
 // PinballY's own separators are titled "".
 const EXIT_MENU = ["Exit PinballY", "Shut Down", "", "Operator Menu", "", "Help", "About PinballY", "", "Cancel"];
+const ADMIN_EXIT_MENU = ["Exit PinballY", "Shut Down", "", "Operator Menu", "Reset profile", "", "Help", "About PinballY", "", "Cancel"];
 const EXIT_MENU_WITHOUT_OPERATOR_MENU = ["Exit PinballY", "Shut Down", "", "Help", "About PinballY", "", "Cancel"];
 
 test("only the Admin Profiles keep the setup entries, once the household has one", async () => {
@@ -69,7 +70,7 @@ test("only the Admin Profiles keep the setup entries, once the household has one
 
     store.switchTo("Bob");
     assert.ok(mainMenuTitles().includes(TABLE_SETUP), "an Admin Profile keeps both");
-    assert.deepEqual(exitMenuTitles(), EXIT_MENU);
+    assert.deepEqual(exitMenuTitles(), ADMIN_EXIT_MENU, "and gets Reset profile");
 
     store.switchTo("guest");
     assert.ok(!mainMenuTitles().includes(TABLE_SETUP), "Guest is never an Admin Profile");

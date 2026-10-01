@@ -18,7 +18,7 @@ const markAdmin = (fake, name) =>
 // Separators, titled "" (PinballY's) or untitled (the main menu module's), read "---".
 const SEPARATOR = "---";
 const CLEANED_NATIVE_MAIN_MENU = [SEPARATOR, "Rate Table", "Add to Favorites", SEPARATOR, "All Tables", "Favorites"];
-const CLEANED_EXIT_MENU = ["Exit PinballY", "Shut Down", SEPARATOR, "Operator Menu", SEPARATOR, "Cancel"];
+const CLEANED_ADMIN_EXIT_MENU = ["Exit PinballY", "Shut Down", SEPARATOR, "Operator Menu", "Reset profile", SEPARATOR, "Cancel"];
 const CLEANED_EXIT_MENU_WITHOUT_OPERATOR_MENU = ["Exit PinballY", "Shut Down", SEPARATOR, "Cancel"];
 
 const fake = createFakePinballYHost({ now: new Date(2026, 8, 30, 20, 0, 0) });
@@ -64,12 +64,15 @@ test("turned on, Menu Cleanup lightens the menus for every Profile, Admin includ
     assert.deepEqual(mainMenuTitles(), [
         "Play", LABELS.tableSetup, LABELS.tableOfTheDay, LABELS.tableOfTheWeek, LABELS.randomGame, ...CLEANED_NATIVE_MAIN_MENU,
     ]);
-    assert.deepEqual(exitMenuTitles(), CLEANED_EXIT_MENU);
+    assert.deepEqual(exitMenuTitles(), CLEANED_ADMIN_EXIT_MENU);
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });
 
-test("no doubled, leading or trailing separator is left, titled or not", () => {
+test("no doubled, leading or trailing separator is left, titled or not", async () => {
+    // Not an Admin Profile: no Reset profile entry at the end.
+    const { getProfileStore } = await import("../common/profile_store.js");
+    getProfileStore().switchTo("Alice");
     const { Help, AboutBox, Quit } = globalThis.command;
     fake.openMenu("exit", [
         { title: "Help", cmd: Help },

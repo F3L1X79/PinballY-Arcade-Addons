@@ -22,6 +22,7 @@ The project's words (Profile, Avatar, Table of the Day, Challenge, Achievement, 
 
 - `pinbally_host`: the only way from a shared module to PinballY's globals, so that tests can run on a fake host (`tests/fake_pinbally_host.js`).
 - `profile_store`: the only module that reads and writes the `profiles` folder (see [Progress and reset](#progress-and-reset)).
+- `profile_reset_menu`: the Profile Reset's Profile list and confirmation, opened from the Exit menu.
 - `period_table`: the Table of the Day and the Table of the Week, and their Streaks.
 - `random_game`: the Random Game.
 - `wheel_dialog`: spontaneous dialogs from Add-ons, shown one at a time when the wheel is free, by priority.
@@ -69,9 +70,11 @@ Each Profile's progress lives in `Scripts\profiles\<Profile>\profile.json`: its 
 
 Every Achievement counts the plays recorded for the active Profile since installation; PinballY's own statistics are not used.
 
-To reset, close PinballY first, then:
+An Admin Profile starts a Profile over from the Exit menu ("Reset profile", see the README): its play-based data is erased, its marks stay, and its former file is kept as `profile.reset-<date>.json`.
 
-- start a Profile over: delete both its `profile.json` and `profile.bak.json` (the Avatar stays);
+To reset by hand, close PinballY first, then:
+
+- start a Profile over without an Admin Profile: delete both its `profile.json` and `profile.bak.json` (the Avatar stays, the marks go);
 - announce every Unlocked Achievement again: empty the `"notified"` list (`"notified": []`) in its `profile.json`;
 - remove a Profile: delete its folder, or rename it with a leading `_` to hide it (the `guest` folder always comes back);
 - make Guest active and draw new Period Tables: delete both `cabinet.json` and `cabinet.bak.json`.

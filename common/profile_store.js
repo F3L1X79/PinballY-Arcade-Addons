@@ -8,7 +8,8 @@
 // from its backup, or is set aside under a dated name when the backup is
 // broken too; every such problem is logged to logfile.log. A Profile's
 // marks (isAdmin, isChild), set by hand in its profile.json, are read and kept
-// through every rewrite, never written.
+// through every rewrite, never written. A Profile Reset erases a Profile's
+// play-based data, after keeping a dated copy of its former profile.json.
 // Listens to "gamestarted" / "gameover" to record every finished game for
 // the Profile active when it started; at startup, creates the Guest folder
 // and writes cabinet.json when they are missing. Tells its listeners of
@@ -58,6 +59,8 @@ const emptySessions = () => ({
 const emptyProfileData = () => ({
     version: PROFILE_VERSION, plays: {}, streaks: {}, randomGames: 0, sessions: emptySessions(), notified: [],
 });
+// Set by hand (ADR 0006), never by the add-ons: kept through a Profile Reset.
+const MARK_NAMES = ["isAdmin", "isChild"];
 const NO_PLAY = Object.freeze({ count: 0, seconds: 0, lastPlayed: "" });
 
 export function createProfileStore(host) {
@@ -120,12 +123,18 @@ export function createProfileStore(host) {
         return null;
     }
 
+    // "<name>.<label>-<date>.json", numbered when that name is taken.
+    function datedFileName(folder, name, label) {
+        const baseName = `${name}.${label}-${toFileDate(host.now())}`;
+        let datedName = `${baseName}.json`;
+        for (let copy = 2; files.fileExists(`${folder}\\${datedName}`); copy++) datedName = `${baseName}-${copy}.json`;
+        return datedName;
+    }
+
     // Renames a broken file to "<name>.broken-<date>.json" next to it, for
     // the player to repair; returns the new file name.
     function setAside(folder, name) {
-        const baseName = `${name}.broken-${toFileDate(host.now())}`;
-        let asideName = `${baseName}.json`;
-        for (let copy = 2; files.fileExists(`${folder}\\${asideName}`); copy++) asideName = `${baseName}-${copy}.json`;
+        const asideName = datedFileName(folder, name, "broken");
         files.renameFile(`${folder}\\${name}.json`, `${folder}\\${asideName}`);
         return asideName;
     }
@@ -215,15 +224,41 @@ export function createProfileStore(host) {
         const { profile, data } = profileWithData(profileName);
         change(data);
         saveProfileData(profile, data);
-        // Saved already: one failing listener must not keep the others
-        // from hearing of it.
+        tellUpdateListeners(profile.name, { isReset: false });
+    }
+
+    // The change is saved already: one failing listener must not keep the
+    // others from hearing of it.
+    function tellUpdateListeners(profileName, change) {
         for (const listener of updateListeners) {
             try {
-                listener(profile.name);
+                listener(profileName, change);
             } catch (error) {
                 logHandlerError(SCRIPT_NAME, error);
             }
         }
+    }
+
+    // The Profile Reset: the named Profile starts over as if it had never
+    // played, keeping its folder (name, Avatar) and its marks. Its former
+    // profile.json is first copied to "profile.reset-<date>.json", for a
+    // mistaken reset to be undone by hand.
+    function resetProfile(profileName) {
+        const { profile, data } = profileWithData(profileName);
+        const path = `${profile.folder}\\profile.json`;
+        let copyName = null;
+        if (files.fileExists(path)) {
+            copyName = datedFileName(profile.folder, "profile", "reset");
+            files.writeText(`${profile.folder}\\${copyName}`, files.readText(path));
+        }
+        const freshData = emptyProfileData();
+        for (const markName of MARK_NAMES) {
+            if (markName in data) freshData[markName] = data[markName];
+        }
+        saveProfileData(profile, freshData);
+        if (sameName(profile.name, activeProfile.name)) activeData = freshData;
+        log(`${profile.name} was reset${copyName ? `; its former profile.json is kept as ${copyName}` : ""}.`);
+        tellUpdateListeners(profile.name, { isReset: true });
     }
 
     function logMarkProblemOnce(problemLine) {
@@ -321,6 +356,9 @@ export function createProfileStore(host) {
         // The IDs of the Achievements the named Profile was Notified of.
         getNotifiedOf: (profileName) => profileWithData(profileName).data.notified,
         updateProfileData,
+        // Erases the named Profile's plays, Streaks, session stats, Random
+        // Games, Challenge progress and Notified Achievements.
+        resetProfile,
         // Whether the named Profile (the active one by default) is an Admin Profile.
         isAdmin,
         // Whether any Profile is an Admin Profile; re-read on every call, so a hand edit shows up.
@@ -334,7 +372,8 @@ export function createProfileStore(host) {
             saveCabinet();
         },
         onSwitch: (listener) => { switchListeners.push(listener); },
-        // listener(profileName): after any change of a Profile's data is saved.
+        // listener(profileName, { isReset }): after any change of a Profile's
+        // data is saved; isReset when the Profile was reset.
         onUpdate: (listener) => { updateListeners.push(listener); },
     };
 }

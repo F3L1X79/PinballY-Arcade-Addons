@@ -4,7 +4,8 @@
 // shows the active Profile's Hall of Fame tables, among the tables it can
 // see, in rank order, each table its own Next/Previous Page stop.
 // Registered once at init; the ranking is recomputed each time the filter
-// is activated, and on a Profile switch while the filter is on the wheel.
+// is activated, and on a Profile switch or a Profile Reset of the active
+// Profile while the filter is on the wheel.
 // ============================================================
 
 import lang from "../common/i18n.js";
@@ -48,7 +49,13 @@ export default function init() {
 
     // refreshFilter() runs the filter again, so its before() ranks the new
     // Profile's tables.
-    profileStore.onSwitch(safeHandler(SCRIPT_NAME, () => {
+    const refreshIfOnWheel = () => {
         if (gameList.getCurFilter().id === FULL_FILTER_ID) gameList.refreshFilter();
+    };
+    profileStore.onSwitch(safeHandler(SCRIPT_NAME, refreshIfOnWheel));
+    // Fires after any change of a Profile's data: only the active Profile's
+    // reset empties its ranking at once (a game only moves it).
+    profileStore.onUpdate(safeHandler(SCRIPT_NAME, (profileName, { isReset }) => {
+        if (isReset && profileName === profileStore.getActiveProfile().name) refreshIfOnWheel();
     }));
 }
