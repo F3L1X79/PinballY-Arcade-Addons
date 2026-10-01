@@ -56,15 +56,25 @@ const parentFolder = path => path.slice(0, path.lastIndexOf("\\"));
 // Records its runs and gives a plausible measure; drawing it writes each
 // run's text (without its line break) to the drawing context, where the
 // fake layer records it. Like PinballY, measuring it with no text logs a
-// layout error and gives 0 by 0.
+// layout error and gives 0 by 0, and so does a style whose size or weight
+// is given but isn't a usable number (an undefined weight included):
+// DirectWrite's CreateTextFormat rejects it.
+const LAYOUT_ERROR = "Error creating styled text layout (CreateTextFormat, HRESULT=80070057)";
+
+const isInvalidTextStyle = style => Boolean(style) && (
+    ("size" in style && !(Number.isFinite(style.size) && style.size > 0))
+    || ("weight" in style && !(Number.isFinite(style.weight) && style.weight >= 1 && style.weight <= 999)));
+
 class FakeStyledText {
     constructor(options = {}, log = () => {}) {
         this.options = options;
         this.runs = [];
         this.log = log;
+        this.invalidStyle = isInvalidTextStyle(options.textStyle);
     }
 
     add(run) {
+        if (typeof run !== "string" && isInvalidTextStyle(run)) this.invalidStyle = true;
         this.runs.push(typeof run === "string" ? { text: run } : run);
     }
 
@@ -73,8 +83,8 @@ class FakeStyledText {
     }
 
     measure(width) {
-        if (this.runs.length === 0) {
-            this.log("Error creating styled text layout (CreateTextFormat, HRESULT=80070057)");
+        if (this.runs.length === 0 || this.invalidStyle) {
+            this.log(LAYOUT_ERROR);
             return { width: 0, height: 0 };
         }
         const lines = this.text().split("\n");

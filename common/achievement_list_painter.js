@@ -170,7 +170,9 @@ export function drawRankEmblem(dc, centerX, centerY, { rank, unlocked, halo = fa
     }
 }
 
-function drawText(host, dc, runs, { x, y, width, font = FONTS.body, size, weight, color }) {
+// The weight always has a value: PinballY rejects a textStyle whose weight
+// is present but undefined ("Error creating styled text layout").
+function drawText(host, dc, runs, { x, y, width, font = FONTS.body, size, weight = 400, color }) {
     const text = host.createStyledText({ textStyle: { font, size, weight, color } });
     for (const run of runs) text.add(run);
     const measured = text.measure(width);
