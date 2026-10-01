@@ -253,6 +253,9 @@ export default {
         rageQuitDescription: (minSeconds, maxSeconds) => `Sair de uma mesa após apenas ${minSeconds} a ${maxSeconds} segundos...`,
         grandReturnTitle: () => "O grande retorno",
         grandReturnDescription: (days) => `Voltar a jogar uma mesa depois de ${days} dias ou mais.`,
+        // A Secret Achievement's hint, shown instead of its description while it is missing.
+        rageQuitHint: () => "Some tables just aren't your day...", // TODO: translation pass
+        grandReturnHint: () => "Old friends are always glad to see you again...", // TODO: translation pass
         randomGamesTitles: {
             10: "E por que não?",
             25: "Cara ou coroa",
@@ -296,6 +299,8 @@ export default {
         back: "Voltar",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
+        // A missing Secret Achievement's title.
+        secretTitle: "???",
         // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {

@@ -252,6 +252,9 @@ export default {
         rageQuitDescription: (minSeconds, maxSeconds) => `Lasciare un tavolo dopo appena ${minSeconds}-${maxSeconds} secondi...`,
         grandReturnTitle: () => "Il grande ritorno",
         grandReturnDescription: (days) => `Rigiocare un tavolo dopo ${days} o più giorni di assenza.`,
+        // A Secret Achievement's hint, shown instead of its description while it is missing.
+        rageQuitHint: () => "Some tables just aren't your day...", // TODO: translation pass
+        grandReturnHint: () => "Old friends are always glad to see you again...", // TODO: translation pass
         randomGamesTitles: {
             10: "E perché no?",
             25: "Testa o croce",
@@ -295,6 +298,8 @@ export default {
         back: "Indietro",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
+        // A missing Secret Achievement's title.
+        secretTitle: "???",
         // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {

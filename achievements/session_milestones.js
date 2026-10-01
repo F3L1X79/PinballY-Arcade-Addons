@@ -1,9 +1,10 @@
 ﻿// ============================================================
 // Achievements based on session stats: "marathon" (longest single session),
 // "rage quit" (a short session given up) and "grand return" (a table
-// replayed after a long break). Reads the active Profile's session stats,
-// recorded by session_stats_tracker.js; writes nothing. A marathon shows
-// the longest session in whole minutes as Achievement Progress.
+// replayed after a long break), the last two being Secret Achievements.
+// Reads the active Profile's session stats, recorded by
+// session_stats_tracker.js; writes nothing. A marathon shows the longest
+// session in whole minutes as Achievement Progress.
 // ============================================================
 
 import { ACHIEVEMENT_FAMILY, countedAchievement, PROGRESS_UNIT, standaloneAchievement } from "../common/achievements.js";
@@ -45,6 +46,7 @@ export function buildSessionMilestoneAchievements() {
         family: ACHIEVEMENT_FAMILY.SESSIONS,
         getTitle: () => TEXT.rageQuitTitle(),
         getDescription: () => TEXT.rageQuitDescription(RAGE_QUIT_MIN_SECONDS, RAGE_QUIT_MAX_SECONDS),
+        getHint: () => TEXT.rageQuitHint(),
         checkUnlocked: () => activeSessions().rageQuit,
     }));
 
@@ -53,6 +55,7 @@ export function buildSessionMilestoneAchievements() {
         family: ACHIEVEMENT_FAMILY.SESSIONS,
         getTitle: () => TEXT.grandReturnTitle(),
         getDescription: () => TEXT.grandReturnDescription(GRAND_RETURN_THRESHOLD_DAYS),
+        getHint: () => TEXT.grandReturnHint(),
         checkUnlocked: () => activeSessions().grandReturn,
     }));
 

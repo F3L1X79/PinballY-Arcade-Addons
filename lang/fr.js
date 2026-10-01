@@ -257,6 +257,9 @@ export default {
         rageQuitDescription: (minSeconds, maxSeconds) => `Quitter une table au bout de ${minSeconds} à ${maxSeconds} secondes...`,
         grandReturnTitle: () => "Le grand retour",
         grandReturnDescription: (days) => `Rejouer une table après ${days} jours d'absence ou plus.`,
+        // A Secret Achievement's hint, shown instead of its description while it is missing.
+        rageQuitHint: () => "Certaines tables ne sont pas de votre jour...",
+        grandReturnHint: () => "Les vieux amis sont toujours contents de vous revoir...",
         randomGamesTitles: {
             10: "Et pourquoi pas ?",
             25: "Pile ou face",
@@ -300,6 +303,8 @@ export default {
         back: "Retour",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
+        // A missing Secret Achievement's title.
+        secretTitle: "???",
         // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {

@@ -6,11 +6,12 @@
 // then the Unlocked Achievements (a toast still waiting first, then the
 // most recently Notified) and the missing ones (the highest Unlock Rate
 // first, then the furthest Achievement Progress), each part under its
-// section header. Each row shows its rank emblem (the owner's image,
-// without its halo since the colour and the rank edge already tell an
-// Unlocked row; greyed when missing; drawn when its file is missing,
-// logged once per file), when missing its Achievement Progress,
-// and its Unlock Rate: the Avatars of the other Profiles Notified of it,
+// section header. A missing Secret Achievement's row shows "???" and its
+// hint instead of its title and description. Each row shows its rank
+// emblem (the owner's image, without its halo since the colour and the
+// rank edge already tell an Unlocked row; greyed when missing; drawn when
+// its file is missing, logged once per file), when missing its
+// Achievement Progress, and its Unlock Rate: the Avatars of the other Profiles Notified of it,
 // once the household has two Profiles besides Guest.
 // Next / Prev glide the highlighted line from one Achievement to the next,
 // wrapping, with PinballY's navigation sound; the other lines are dimmed.
@@ -192,6 +193,15 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         };
     }
 
+    // A row's title and description: a missing Secret Achievement shows
+    // "???" and its hint instead.
+    function describeTexts(achievement, unlocked) {
+        if (!unlocked && typeof achievement.getHint === "function") {
+            return { title: TEXT.secretTitle, description: achievement.getHint() };
+        }
+        return { title: achievement.getTitle(), description: achievement.getDescription() };
+    }
+
     // What a row shows of its Unlock Rate: the Avatars of the other Profiles
     // that have it, then how many more; null when no other Profile has it.
     function describeOwners(owners) {
@@ -239,8 +249,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
                     kind: ITEM_KIND.ROW,
                     height: LIST_LOOK.rowHeight,
                     look: {
-                        title: achievement.getTitle(),
-                        description: achievement.getDescription(),
+                        ...describeTexts(achievement, isUnlocked),
                         rank: achievement.rank,
                         unlocked: isUnlocked,
                         hasEmblemImage: emblemImage !== null,

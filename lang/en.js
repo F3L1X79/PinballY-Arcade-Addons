@@ -173,6 +173,9 @@ export default {
         rageQuitDescription: (minSeconds, maxSeconds) => `Quit a table after only ${minSeconds} to ${maxSeconds} seconds...`,
         grandReturnTitle: () => "The Grand Comeback",
         grandReturnDescription: (days) => `Replay a table after ${days} or more days away.`,
+        // A Secret Achievement's hint, shown instead of its description while it is missing.
+        rageQuitHint: () => "Some tables just aren't your day...",
+        grandReturnHint: () => "Old friends are always glad to see you again...",
         randomGamesTitles: {
             10: "Why Not?",
             25: "Heads or Tails",
@@ -217,6 +220,8 @@ export default {
         back: "Back",
         // After at most four Avatars on a row: how many other Profiles have it too.
         moreOwners: (count) => `+${count}`,
+        // A missing Secret Achievement's title.
+        secretTitle: "???",
         // A missing Achievement's Achievement Progress, on its row.
         progressUnits: {
             tables: {

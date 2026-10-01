@@ -1,14 +1,16 @@
 ﻿// ============================================================
 // Generic achievement evaluation. An achievement is a plain object:
-//   { id, family, rank, getTitle(), getDescription(), checkUnlocked(), getProgress() }
+//   { id, family, rank, getTitle(), getDescription(), checkUnlocked(), getProgress(), getHint() }
 // where family is one of ACHIEVEMENT_FAMILY, rank its Achievement Rank (one
 // of ACHIEVEMENT_RANK) and the optional getProgress() returns its
 // Achievement Progress, { current, target, unit } with unit one of
-// PROGRESS_UNIT, or null. countedAchievement() builds both from one value
-// (or from a value and its record, for a Streak) and deduces the rank;
-// standaloneAchievement() builds one that stands alone, Gold unless its
-// definition states a rank. The
-// rank is never persisted nor part of an ID.
+// PROGRESS_UNIT, or null. The optional getHint() makes it a Secret
+// Achievement: the Achievement List shows "???" and the hint while it is
+// missing. countedAchievement() builds the unlock and the Achievement
+// Progress from one value (or from a value and its record, for a Streak)
+// and deduces the rank; standaloneAchievement() builds one that stands
+// alone, Gold unless its definition states a rank. The rank is never
+// persisted nor part of an ID.
 // "Unlocked" is computed live from the active Profile's progress; only the
 // fact that a Profile was Notified is persisted (its profile.json
 // "notified" list), so each Achievement is announced once per Profile.
@@ -79,8 +81,10 @@ function groupCompletionRank(tableCount) {
 
 // An Achievement outside any ladder or group, such as rage quit. Its
 // structure says nothing about how hard it is, hence Gold unless stated.
-export function standaloneAchievement({ id, family, rank = ACHIEVEMENT_RANK.GOLD, getTitle, getDescription, checkUnlocked }) {
-    return { id, family, rank, getTitle, getDescription, checkUnlocked };
+// Only such an Achievement can be secret, with getHint: a ladder's step or
+// a group completion is a goal to aim at.
+export function standaloneAchievement({ id, family, rank = ACHIEVEMENT_RANK.GOLD, getTitle, getDescription, checkUnlocked, getHint }) {
+    return { id, family, rank, getTitle, getDescription, checkUnlocked, ...(getHint ? { getHint } : {}) };
 }
 
 // Below this target, an Achievement Progress would only ever read "0/1".

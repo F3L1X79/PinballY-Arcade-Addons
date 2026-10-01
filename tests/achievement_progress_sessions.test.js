@@ -30,11 +30,13 @@ test("marathons show whole minutes, Random Games and Day's Manufacturers their c
     const halfHour = ACHIEVEMENT.marathonTitles[30];
 
     const fullHour = ACHIEVEMENT.marathonTitles[60];
-    assert.deepEqual(readShown([halfHour, fullHour, ACHIEVEMENT.rageQuitTitle(), ACHIEVEMENT.grandReturnTitle()]), [
+    // The rage quit and the grand return are Secret Achievements, both "???".
+    const { secretTitle } = lang.achievementList;
+    assert.deepEqual(readShown([halfHour, fullHour, secretTitle, secretTitle]), [
         missingRow(halfHour, "minutes", 29, 30),
         missingRow(fullHour, "minutes", 29, 60),
-        missingRow(ACHIEVEMENT.rageQuitTitle()),
-        missingRow(ACHIEVEMENT.grandReturnTitle()),
+        missingRow(secretTitle),
+        missingRow(secretTitle),
     ]);
     const randomGames = [10, 25, 50, 100];
     assert.deepEqual(readShown(randomGames.map(count => ACHIEVEMENT.randomGamesTitles[count])),

@@ -62,16 +62,19 @@ export async function startScenario({ now, tables, files = {}, folders = [] }) {
 
     // How the list shows each of these Achievements, by title, in the given
     // order: { title, progress, unlocked }, progress being the short text
-    // of its Achievement Progress or null. Opened from the main menu and
-    // closed again with Exit.
+    // of its Achievement Progress or null. A title given again is the next
+    // row showing it, such as a second Secret Achievement's "???". Opened
+    // from the main menu and closed again with Exit.
     function readShown(titles) {
         fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
         fake.selectMenuItem(TEXT.menuEntry);
         const rows = readRows(fake, TEXT);
         pressAndGlide(fake, "Exit");
+        const taken = new Set();
         return titles.map(title => {
-            const row = rows.find(shownRow => shownRow.title === title);
+            const row = rows.find(shownRow => shownRow.title === title && !taken.has(shownRow));
             if (!row) throw new Error(`"${title}" is not in the Achievement List.`);
+            taken.add(row);
             return { title, progress: row.progress, unlocked: row.unlocked };
         });
     }
