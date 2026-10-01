@@ -1,8 +1,9 @@
 ﻿// ============================================================
 // The Profile Stats, started through main.js on the fake PinballY globals:
 // its main menu entry sits right after the Achievement List entry, the
-// screen names Guest and shows Guest's own plays, and its Achievements line
-// agrees with the real Achievement List and opens it.
+// screen names Guest and shows Guest's own plays, its Achievements line
+// agrees with the real Achievement List and opens it, and a game under a
+// minute leaves a never played table never played.
 // ============================================================
 
 import { test } from "node:test";
@@ -16,7 +17,7 @@ const NOW = new Date(2026, 8, 23, 10, 0, 0);
 function table(id, title, manufacturer, year, isHidden = false) {
     return {
         id, configId: `${title} (${manufacturer} ${year})`, title, manufacturer, year, categories: [],
-        playCount: 0, playTime: 0, lastPlayed: null, rating: -1, isHidden,
+        playCount: 0, playTime: 0, lastPlayed: null, rating: -1, isHidden, isConfigured: true,
     };
 }
 
@@ -89,6 +90,20 @@ test("the Profile Stats entry follows the Achievement List and shows Guest's own
     assert.equal(readListTotalLine(), listTotalLine);
     const [unlocked, total] = listTotalLine.match(/\d+/g).map(Number);
     assert.equal(achievementsLine, TEXT.achievements(unlocked, total));
+    pressAndGlide(fake, "Exit");
+
+    // Attack from Mars, never played, launched by mistake: not a Play.
+    fake.gameStarted(TABLES[1]);
+    await settle();
+    fake.advanceTime(59 * 1000);
+    fake.gameOver(TABLES[1]);
+    await settle();
+    openMainMenu();
+    fake.selectMenuItem(TEXT.menuEntry);
+    const shownAfter = fake.currentMenu().items.map(item => item.title);
+    assert.equal(shownAfter[2], TEXT.gamesPlayed(4));
+    assert.equal(shownAfter[4], TEXT.collection(1, 2, 50));
+    assert.ok(shownAfter.includes(TEXT.neverPlayedTables(1)), shownAfter.join("\n"));
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });

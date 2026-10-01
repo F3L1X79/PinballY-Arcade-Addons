@@ -197,11 +197,11 @@ test("persisted files and Achievement IDs stay byte-identical", async () => {
     const weekTable = await playLastLaunch(fake, 45);
     await closeEveryDialog(fake);
 
-    // Main menu again: a Random Game.
+    // Main menu again: a Random Game, played for a minute.
     fake.openMenu("main", [{ title: "Play", cmd: globalThis.command.PlayGame }]);
     fake.selectMenuItem(lang.customMenuLabels.randomGame);
     await settle();
-    const randomTable = await playLastLaunch(fake, 3);
+    const randomTable = await playLastLaunch(fake, 60);
     await closeEveryDialog(fake);
 
     // Achievements are Notified when their toast starts, one toast after the other.
@@ -210,13 +210,13 @@ test("persisted files and Achievement IDs stay byte-identical", async () => {
     // Nothing of the add-ons' own data in PinballY's settings any more.
     assert.deepEqual([...fake.writtenSettingsKeys()], []);
 
-    // Every game played for Guest, the only Profile of a fresh install, and
-    // every Achievement Notified for Guest (in the order the toasts showed).
+    // Every Play for Guest, the only Profile of a fresh install (the
+    // 45-second game is not one), and every Achievement Notified for Guest
+    // (in the order the toasts showed).
     const expectedPlays = structuredClone(SEEDED_PLAYS);
     for (const [game, seconds, lastPlayed] of [
         [dayTable, 61 * 60, "2026-09-23T11:01:00"],
-        [weekTable, 45, "2026-09-23T11:01:45"],
-        [randomTable, 3, "2026-09-23T11:01:48"],
+        [randomTable, 60, "2026-09-23T11:02:45"],
     ]) {
         const play = expectedPlays[game.configId];
         expectedPlays[game.configId] = { count: play.count + 1, seconds: play.seconds + seconds, lastPlayed };
@@ -236,7 +236,7 @@ test("persisted files and Achievement IDs stay byte-identical", async () => {
     assert.equal(guestProfile.randomGames, 100);
     assert.deepEqual(guestProfile.sessions, {
         longestSeconds: 61 * 60,
-        shortestSeconds: 3,
+        shortestSeconds: 45,
         rageQuit: true,
         grandReturn: true,
         dayManufacturers: { day: "2026-09-23", list: dayManufacturers },

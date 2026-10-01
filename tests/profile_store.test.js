@@ -1,9 +1,10 @@
 // ============================================================
 // Profile store at the PinballY host seam, on the fake host's in-memory
-// file system: every finished game is recorded for the active Profile in
-// its own profile.json, cabinet.json remembers the active Profile across
-// restarts, saves go through tmp / backup / rename, and Profiles are listed
-// with their Avatar.
+// file system: every Play (a game of at least a minute whose start was
+// seen) is recorded for the Profile active at its start in its own
+// profile.json and announced to the onPlay listeners, cabinet.json
+// remembers the active Profile across restarts, saves go through tmp /
+// backup / rename, and Profiles are listed with their Avatar.
 // ============================================================
 
 import { test } from "node:test";
@@ -11,7 +12,7 @@ import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { createFakePinballYHost } from "./fake_pinbally_host.js";
-import { createProfileStore } from "../common/profile_store.js";
+import { createProfileStore, MIN_PLAY_SECONDS } from "../common/profile_store.js";
 
 const NOW = new Date(2026, 8, 24, 21, 0, 0);
 const PROFILES = "C:\\PinballY\\Scripts\\profiles";
@@ -76,17 +77,17 @@ test("a start keeps an existing Guest folder, whatever its letter case", () => {
     assert.deepEqual(fake.files.listFolders(PROFILES), ["Guest"]);
 });
 
-test("each game adds one play and its seconds to that table", () => {
+test("each Play adds one play and its seconds to that table", () => {
     const fake = createFake();
     const store = createProfileStore(fake);
 
     play(fake, MEDIEVAL, 60);
-    play(fake, MARS, 30);
+    play(fake, MARS, 75);
     play(fake, MEDIEVAL, 120);
 
     assert.deepEqual(store.getActiveProfile().data.plays, {
-        [MEDIEVAL.configId]: { count: 2, seconds: 180, lastPlayed: "2026-09-24T21:03:30" },
-        [MARS.configId]: { count: 1, seconds: 30, lastPlayed: "2026-09-24T21:01:30" },
+        [MEDIEVAL.configId]: { count: 2, seconds: 180, lastPlayed: "2026-09-24T21:04:15" },
+        [MARS.configId]: { count: 1, seconds: 75, lastPlayed: "2026-09-24T21:02:15" },
     });
     assert.deepEqual(readJson(fake, GUEST_FILE).plays, store.getActiveProfile().data.plays);
 });
@@ -99,7 +100,7 @@ test("after a switch, games count only for the new Profile, which stays active a
     const guestBefore = fake.readFile(GUEST_FILE);
 
     store.switchTo("Alice");
-    play(fake, MARS, 45);
+    play(fake, MARS, 75);
 
     assert.equal(fake.readFile(GUEST_FILE), guestBefore);
     assert.deepEqual(Object.keys(readJson(fake, `${PROFILES}\\Alice\\profile.json`).plays), [MARS.configId]);
@@ -128,6 +129,89 @@ test("a switch loads the new Profile's saved plays and tells the subscribers", (
         { count: 5, seconds: 500, lastPlayed: "2026-09-24T21:01:40" });
 });
 
+test("a game under a minute changes no total and announces nothing", () => {
+    const fake = createFake();
+    const store = createProfileStore(fake);
+    const announced = [];
+    store.onPlay(play => announced.push(play));
+
+    play(fake, MEDIEVAL, MIN_PLAY_SECONDS - 1);
+
+    assert.equal(store.hasPlayed(MEDIEVAL.configId), false);
+    assert.equal(fake.files.fileExists(GUEST_FILE), false);
+    assert.deepEqual(announced, []);
+});
+
+test("a game of one minute updates the totals and announces one Play with its Profile, table, start and seconds", () => {
+    const fake = createFake();
+    const store = createProfileStore(fake);
+    const announced = [];
+    store.onPlay(play => announced.push({ ...play, plays: store.getPlay(play.configId) }));
+
+    play(fake, MEDIEVAL, MIN_PLAY_SECONDS + 0.4);
+
+    const totals = { count: 1, seconds: 60, lastPlayed: "2026-09-24T21:01:00" };
+    assert.deepEqual(store.getPlay(MEDIEVAL.configId), totals);
+    // Announced once the Play is in the totals.
+    assert.deepEqual(announced, [{ profileName: "guest", configId: MEDIEVAL.configId, start: NOW, seconds: 60, plays: totals }]);
+});
+
+test("a game over without its start changes nothing and announces nothing", () => {
+    const fake = createFake();
+    const store = createProfileStore(fake);
+    const announced = [];
+    store.onPlay(play => announced.push(play));
+
+    fake.advanceTime(10 * 60 * 1000);
+    fake.gameOver(MEDIEVAL);
+
+    assert.equal(store.hasPlayed(MEDIEVAL.configId), false);
+    assert.deepEqual(announced, []);
+});
+
+test("a Profile switch during a game announces the Play for the Profile active at its start, Guest included", () => {
+    const fake = createFake();
+    fake.addFolder(`${PROFILES}\\Alice`);
+    const store = createProfileStore(fake);
+    const announced = [];
+    store.onPlay(({ profileName, configId }) => announced.push({ profileName, configId }));
+
+    fake.gameStarted(MEDIEVAL);
+    store.switchTo("Alice");
+    fake.advanceTime(90 * 1000);
+    fake.gameOver(MEDIEVAL);
+    fake.gameStarted(MARS);
+    store.switchTo("guest");
+    fake.advanceTime(90 * 1000);
+    fake.gameOver(MARS);
+
+    assert.deepEqual(announced, [
+        { profileName: "guest", configId: MEDIEVAL.configId },
+        { profileName: "Alice", configId: MARS.configId },
+    ]);
+    assert.deepEqual(Object.keys(store.getPlaysOf("guest")), [MEDIEVAL.configId]);
+    assert.deepEqual(Object.keys(store.getPlaysOf("Alice")), [MARS.configId]);
+});
+
+test("a listener that throws is logged and the next listener still hears of the Play", () => {
+    const fake = createFake();
+    // The error goes to PinballY's logfile, like any failing handler's.
+    const uninstallGlobals = fake.installGlobals();
+    try {
+        const store = createProfileStore(fake);
+        const announced = [];
+        store.onPlay(() => { throw new Error("broken counter"); });
+        store.onPlay(play => announced.push(play.configId));
+
+        play(fake, MEDIEVAL, 90);
+
+        assert.deepEqual(announced, [MEDIEVAL.configId]);
+        assert.ok(fake.logLines().some(line => line.startsWith("[ProfileStore] ERROR") && line.includes("broken counter")));
+    } finally {
+        uninstallGlobals();
+    }
+});
+
 test("switching to an unknown Profile fails and keeps the active one", () => {
     const fake = createFake();
     const store = createProfileStore(fake);
@@ -143,9 +227,10 @@ test("a save writes a tmp file, keeps the previous version as the backup, then r
     const firstVersion = fake.readFile(GUEST_FILE);
     const operationsBefore = fake.fileOperations().length;
 
-    play(fake, MARS, 30);
+    play(fake, MARS, 75);
 
-    assert.deepEqual(fake.fileOperations().slice(operationsBefore), [
+    const profileFileOperations = fake.fileOperations().slice(operationsBefore).filter(({ path }) => path.includes("\\profile."));
+    assert.deepEqual(profileFileOperations, [
         { operation: "write", path: `${PROFILES}\\guest\\profile.tmp.json` },
         { operation: "rename", path: GUEST_FILE, to: `${PROFILES}\\guest\\profile.bak.json` },
         { operation: "rename", path: `${PROFILES}\\guest\\profile.tmp.json`, to: GUEST_FILE },
@@ -159,10 +244,10 @@ test("the next save replaces the older backup", () => {
     const fake = createFake();
     createProfileStore(fake);
     play(fake, MEDIEVAL, 60);
-    play(fake, MARS, 30);
+    play(fake, MARS, 75);
     const secondVersion = fake.readFile(GUEST_FILE);
 
-    play(fake, MARS, 30);
+    play(fake, MARS, 75);
 
     assert.equal(fake.readFile(`${PROFILES}\\guest\\profile.bak.json`), secondVersion);
 });

@@ -37,6 +37,7 @@ test("turning the Profile picker off makes Guest the active Profile", async () =
 
     fake.gameStarted(MEDIEVAL);
     await settle();
+    fake.advanceTime(60 * 1000);
     fake.gameOver(MEDIEVAL);
     await settle();
 

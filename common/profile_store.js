@@ -11,14 +11,14 @@
 // through every rewrite, never written. A Profile Reset erases a Profile's
 // play-based data, after keeping a dated copy of its former profile.json
 // and renaming its Play Log year files to dated reset copies.
-// Listens to "gamestarted" / "gameover" to record every finished game for
-// the Profile active when it started. Each Play (a game of at least a
-// minute) also goes to that Profile's Play Log: one play-log-<year>.json
-// per year of the Plays' start (ADR 0007), saved like profile.json, read
-// only when a Play is added or asked for. At startup, creates the Guest folder
-// and writes cabinet.json when they are missing. Tells its listeners of
-// every switch (onSwitch) and every saved change of a Profile's data
-// (onUpdate).
+// Listens to "gamestarted" / "gameover" to decide whether a game is a Play
+// (at least a minute, its start seen): only a Play enters the table totals
+// of the Profile active when it started, and that Profile's Play Log: one
+// play-log-<year>.json per year of the Plays' start (ADR 0007), saved like
+// profile.json, read only when a Play is added or asked for. At startup,
+// creates the Guest folder and writes cabinet.json when they are missing.
+// Tells its listeners of every switch (onSwitch), every saved change of a
+// Profile's data (onUpdate) and every Play (onPlay, ADR 0008).
 // ============================================================
 
 import { safeHandler, logHandlerError } from "./safe_handler.js";
@@ -81,6 +81,7 @@ export function createProfileStore(host) {
     const files = host.files;
     const switchListeners = [];
     const updateListeners = [];
+    const playListeners = [];
     const log = text => host.log(`[${SCRIPT_NAME}] ${text}`);
     // Logged once per session: the picker lists the Profiles on every opening.
     const loggedUnreadableAvatars = new Set();
@@ -268,17 +269,18 @@ export function createProfileStore(host) {
         tellUpdateListeners(profile.name, { isReset: false });
     }
 
-    // The change is saved already: one failing listener must not keep the
-    // others from hearing of it.
-    function tellUpdateListeners(profileName, change) {
-        for (const listener of updateListeners) {
+    // What they hear of is saved already: one failing listener must not keep
+    // the others from hearing of it.
+    function tellListeners(listeners, ...args) {
+        for (const listener of listeners) {
             try {
-                listener(profileName, change);
+                listener(...args);
             } catch (error) {
                 logHandlerError(SCRIPT_NAME, error);
             }
         }
     }
+    const tellUpdateListeners = (profileName, change) => tellListeners(updateListeners, profileName, change);
 
     // Renames each Play Log year file to "play-log-<year>.reset-<date>.json"
     // and deletes its backup, which would otherwise bring the year back on
@@ -370,15 +372,7 @@ export function createProfileStore(host) {
         activeData = data;
         cabinet.activeProfile = profile.name;
         saveCabinet();
-        // The switch is already saved: one failing listener must not keep
-        // the others from hearing of it.
-        for (const listener of switchListeners) {
-            try {
-                listener(publicProfile(activeProfile));
-            } catch (error) {
-                logHandlerError(SCRIPT_NAME, error);
-            }
-        }
+        tellListeners(switchListeners, publicProfile(activeProfile));
     }
 
     // The Profile active at "gamestarted" and when the game started, by table.
@@ -389,15 +383,20 @@ export function createProfileStore(host) {
         runningGames.set(ev.game.configId, { profileName: activeProfile.name, startMs: host.now().getTime() });
     }));
 
-    // Fires on table exit: one play, and its seconds when its start is
-    // known, as PinballY counts them, in the table totals; a Play in the Play
-    // Log too.
+    // Fires on table exit: a Play, and only a Play, enters the table totals
+    // (with its seconds as PinballY counts them) and the Play Log, then is
+    // announced. The listeners run synchronously, so they finish before the
+    // Achievements check, which is deferred.
     host.on("gameover", safeHandler(SCRIPT_NAME, ev => {
         const { configId } = ev.game;
         const now = host.now();
         const running = runningGames.get(configId);
         runningGames.delete(configId);
-        const seconds = running ? Math.round((now.getTime() - running.startMs) / 1000) : 0;
+        if (!running) return;
+        const seconds = Math.round((now.getTime() - running.startMs) / 1000);
+        if (seconds < MIN_PLAY_SECONDS) return;
+        const { profileName } = running;
+        const start = new Date(running.startMs);
 
         updateProfileData(data => {
             const play = data.plays[configId] || NO_PLAY;
@@ -406,10 +405,15 @@ export function createProfileStore(host) {
                 seconds: play.seconds + seconds,
                 lastPlayed: toLocalIsoString(now),
             };
-        }, running ? running.profileName : activeProfile.name);
-
-        if (!running || seconds < MIN_PLAY_SECONDS) return;
-        addToPlayLog(running.profileName, configId, new Date(running.startMs), seconds);
+        }, profileName);
+        // The Play is in the totals already: a Play Log that cannot be
+        // written must not keep it from being announced.
+        try {
+            addToPlayLog(profileName, configId, start, seconds);
+        } catch (error) {
+            logHandlerError(SCRIPT_NAME, error);
+        }
+        tellListeners(playListeners, { profileName, configId, start, seconds });
     }));
 
     return {
@@ -449,6 +453,9 @@ export function createProfileStore(host) {
         // listener(profileName, { isReset }): after any change of a Profile's
         // data is saved; isReset when the Profile was reset.
         onUpdate: (listener) => { updateListeners.push(listener); },
+        // listener({ profileName, configId, start, seconds }): after a Play is
+        // saved; profileName is the Profile active at its start.
+        onPlay: (listener) => { playListeners.push(listener); },
     };
 }
 

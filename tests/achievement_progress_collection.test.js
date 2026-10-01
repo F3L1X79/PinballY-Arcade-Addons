@@ -14,8 +14,8 @@ import { startScenario, table, PROFILES_FOLDER } from "./achievement_progress_sc
 const TABLES = Array.from({ length: 10 }, (_, index) => table(index + 1, `Table ${index + 1}`, "Williams", 1990));
 const [FIRST, SECOND] = TABLES;
 
-// 4 h 59 min 50 s: 4.99 hours, which must read 4.9.
-const PLAYED_SECONDS = 5 * 3600 - 10;
+// 4 h 59 min: 4.98 hours, which must read 4.9.
+const PLAYED_SECONDS = 5 * 3600 - 60;
 
 test("collection milestones show the tables played, play time the hours rounded down", async () => {
     const { fake, lang, getProfileStore, play, readShown, unlockedRow, missingRow } = await startScenario({
@@ -54,9 +54,9 @@ test("collection milestones show the tables played, play time the hours rounded 
         missingRow(playTime[4], "hours", 4.9, 100),
     ]);
 
-    // Ten more seconds reach the 5 hours exactly: the Achievement unlocks
+    // A one-minute Play reaches the 5 hours exactly: the Achievement unlocks
     // as its Achievement Progress reaches its target.
-    await play(SECOND, 10);
+    await play(SECOND, 60);
     assert.deepEqual(readShown(playTime.slice(0, 3)), [
         unlockedRow(playTime[0]),
         unlockedRow(playTime[1]),

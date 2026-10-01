@@ -27,10 +27,10 @@ const LAST_PLAYED_CONFIG_ID = "Theatre of Magic (Bally 1995)";
 
 const ADD_ONS_UNDER_TEST = ["customMenuCommands", "startupChoicePrompt"];
 
-// A second apart, so each play is Guest's most recent one.
+// A one-minute Play each, so each one is Guest's most recent one.
 function playAndReturnToWheel(fake, game) {
-    fake.advanceTime(1000);
     fake.gameStarted(game);
+    fake.advanceTime(60 * 1000);
     fake.gameOver(game);
 }
 

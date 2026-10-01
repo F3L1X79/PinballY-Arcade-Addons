@@ -56,8 +56,7 @@ test("a game under a minute, or one whose start was never seen, is not a Play", 
 
     assert.deepEqual(store.getPlayLogOf("guest", 2026), []);
     assert.equal(fake.files.fileExists(GUEST_LOG_2026), false);
-    // The table totals keep counting both games.
-    assert.equal(store.getPlay(MEDIEVAL.configId).count, 2);
+    assert.equal(store.hasPlayed(MEDIEVAL.configId), false);
 });
 
 test("a Play counts for the Profile active at its start, and Guest keeps its own Play Log", () => {
