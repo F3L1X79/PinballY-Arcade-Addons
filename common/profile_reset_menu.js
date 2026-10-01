@@ -1,11 +1,10 @@
 // ============================================================
-// Profile Reset menus: the list of every Profile (Guest and the active one
-// included), then one confirmation naming the chosen Profile, cursor on
-// "No"; "Yes" resets it through the Profile store, then a one-line message
-// with "OK" tells whether it worked (the cause of a failure goes to the log
-// only). Opened from PinballY's Exit menu, so every menu opens directly, not
-// through the wheel dialog module: the player asked for them. Listens to
-// "command".
+// Profile Reset menus, opened from PinballY's Exit menu: the list of every
+// Profile, ending with "Every Profile" when there are two or more, then one
+// confirmation, cursor on "No"; "Yes" resets them, a failure not stopping the
+// others, and a one-line message with "OK" tells the outcome (causes go to the
+// log only). The player asked for them, so they open directly, not through
+// the wheel dialog module. Listens to "command".
 // ============================================================
 
 import lang from "./i18n.js";
@@ -20,13 +19,14 @@ const OUTCOME_MENU_ID = "profileResetOutcome";
 export function createProfileResetMenu(host, profileStore) {
     const { profileReset: TEXT } = lang;
     const yesCommand = host.allocateCommand("profileResetYes");
+    const everyProfileCommand = host.allocateCommand("profileResetEveryProfile");
     const cancelCommand = host.getBuiltInCommand("MenuReturn");
     // One command per line of the list, by position, allocated on demand:
     // the household can grow while PinballY runs.
     const profileCommands = [];
-    // The Profiles of the list on screen, then the one the confirmation names.
+    // The Profiles of the list on screen, then those the confirmation names.
     let listedProfiles = [];
-    let profileToReset = null;
+    let profilesToReset = null;
 
     function getProfileCommand(index) {
         while (profileCommands.length <= index) {
@@ -35,6 +35,9 @@ export function createProfileResetMenu(host, profileStore) {
         return profileCommands[index];
     }
 
+    // With Guest alone, "Every Profile" would only repeat its line.
+    const offersEveryProfile = () => listedProfiles.length >= 2;
+
     function open() {
         listedProfiles = profileStore.listProfiles();
         host.showMenu(LIST_MENU_ID, [
@@ -42,31 +45,41 @@ export function createProfileResetMenu(host, profileStore) {
             { cmd: -1 },
             ...listedProfiles.map((profile, index) => ({ title: displayNameOf(profile), cmd: getProfileCommand(index) })),
             { cmd: -1 },
+            ...(offersEveryProfile() ? [{ title: TEXT.everyProfile, cmd: everyProfileCommand }] : []),
             { title: TEXT.cancel, cmd: cancelCommand },
         ]);
     }
 
-    function confirm(profile) {
-        profileToReset = profile;
+    function confirm(profiles) {
+        profilesToReset = profiles;
+        const question = profiles.length === 1 ? TEXT.confirm(displayNameOf(profiles[0])) : TEXT.confirmEvery(profiles.length);
         host.showMenu(CONFIRM_MENU_ID, [
-            { title: TEXT.confirm(displayNameOf(profile)), cmd: -1 },
+            { title: question, cmd: -1 },
             { cmd: -1 },
             { title: TEXT.yes, cmd: yesCommand },
             { title: TEXT.no, cmd: cancelCommand, selected: true },
         ], { dialogStyle: true });
     }
 
-    // Resets the Profile, then shows the outcome: a failure is caught here,
-    // not by safeHandler, for the player to see it; its cause goes to the log.
-    function resetAndReport(profile) {
-        const shownName = displayNameOf(profile);
+    // Resets the Profiles one by one, then shows the outcome: each failure is
+    // caught here, not by safeHandler, for the others to go on and the player
+    // to see it; its cause goes to the log.
+    function resetAndReport(profiles) {
+        const failedNames = [];
+        for (const profile of profiles) {
+            try {
+                profileStore.resetProfile(profile.name);
+            } catch (error) {
+                logHandlerError(SCRIPT_NAME, error);
+                failedNames.push(displayNameOf(profile));
+            }
+        }
+        const resetCount = profiles.length - failedNames.length;
         let message;
-        try {
-            profileStore.resetProfile(profile.name);
-            message = TEXT.done(shownName);
-        } catch (error) {
-            logHandlerError(SCRIPT_NAME, error);
-            message = TEXT.failed(shownName);
+        if (profiles.length === 1) {
+            message = failedNames.length > 0 ? TEXT.failed(failedNames[0]) : TEXT.done(displayNameOf(profiles[0]));
+        } else {
+            message = failedNames.length > 0 ? TEXT.everyFailed(resetCount, failedNames) : TEXT.everyDone(resetCount);
         }
         host.showMenu(OUTCOME_MENU_ID, [
             { title: message, cmd: -1 },
@@ -75,16 +88,18 @@ export function createProfileResetMenu(host, profileStore) {
         ], { dialogStyle: true });
     }
 
-    // Fires on every command: a Profile of the list asks for confirmation,
-    // "Yes" resets it and shows the outcome.
+    // Fires on every command: a Profile of the list, or "Every Profile", asks
+    // for confirmation, "Yes" resets them and shows the outcome.
     host.on("command", safeHandler(SCRIPT_NAME, ev => {
         const index = profileCommands.indexOf(ev.id);
         if (index >= 0 && index < listedProfiles.length) {
-            confirm(listedProfiles[index]);
-        } else if (ev.id === yesCommand && profileToReset) {
-            const profile = profileToReset;
-            profileToReset = null;
-            resetAndReport(profile);
+            confirm([listedProfiles[index]]);
+        } else if (ev.id === everyProfileCommand && offersEveryProfile()) {
+            confirm(listedProfiles);
+        } else if (ev.id === yesCommand && profilesToReset) {
+            const profiles = profilesToReset;
+            profilesToReset = null;
+            resetAndReport(profiles);
         }
     }));
 

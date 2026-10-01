@@ -664,6 +664,7 @@ export function createFakePinballYHost({
         },
         // Locks a file as another program holding it open would.
         lockFile(filePath) { lockedFiles.add(filePath); },
+        unlockFile(filePath) { lockedFiles.delete(filePath); },
         addFolder,
         // Removes the folder with everything in it, as a player would by hand.
         removeFolder(folderPath) {

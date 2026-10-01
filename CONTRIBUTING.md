@@ -24,7 +24,7 @@ The repository is the pack's folder, installed as `PinballY\Scripts\ExpansionPac
 
 - `pinbally_host`: the only way from a shared module to PinballY's globals, so that tests can run on a fake host (`tests/fake_pinbally_host.js`).
 - `profile_store`: the only module that reads and writes the `profiles` folder (see [Progress and reset](#progress-and-reset)).
-- `profile_reset_menu`: the Profile Reset's Profile list, confirmation and outcome message, opened from the Exit menu.
+- `profile_reset_menu`: the Profile Reset's Profile list (one Profile or every Profile), confirmation and outcome message, opened from the Exit menu.
 - `period_table`: the Table of the Day and the Table of the Week, and their Streaks.
 - `random_game`: the Random Game.
 - `wheel_dialog`: spontaneous dialogs from Add-ons, shown one at a time when the wheel is free, by priority.

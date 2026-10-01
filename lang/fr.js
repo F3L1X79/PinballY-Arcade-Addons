@@ -427,6 +427,10 @@ export default {
         done: name => `${name} repart de zéro.`,
         failed: name => `Impossible de réinitialiser ${name}. Voir le journal pour les détails.`,
         ok: "OK",
+        everyProfile: "Tous les profils",
+        confirmEvery: count => `Réinitialiser les ${count} profils ? Leurs parties, séries, défis et succès seront tous effacés.`,
+        everyDone: count => `Les ${count} profils repartent de zéro.`,
+        everyFailed: (count, names) => `Profils réinitialisés : ${count}. Impossible de réinitialiser ${names.join(", ")}. Voir le journal pour les détails.`,
     },
 
     // The clock at the top left of the wheel screen.
