@@ -21,13 +21,13 @@
 // record of completed Challenges.
 // Created from the PinballY host, the Profile store, the Period Tables, the
 // Random Game module, the Achievement Toast module and a random source; the
-// Add-ons share one instance through getChallenges(). Listens to "gamestarted" /
-// "gameover" to count games.
+// Add-ons share one instance through getChallenges(). Notes each game's facts
+// on "gamestarted" and counts it when the Profile store announces its Play.
 // ============================================================
 
 import { safeHandler } from "./safe_handler.js";
 import { createPinballYHost } from "./pinbally_host.js";
-import { getProfileStore, MIN_PLAY_SECONDS } from "./profile_store.js";
+import { getProfileStore } from "./profile_store.js";
 import { getTableOfTheDay, getTableOfTheWeek, formatDateKey, getWeekKey } from "./period_table.js";
 import { getRandomGame } from "./random_game.js";
 import { getDecadeStartYear } from "./decade.js";
@@ -339,10 +339,11 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
         });
     }
 
-    // The started game's facts, noted before the Profile store records the
-    // play at "gameover" (a never played table stops being one), for the
-    // Profile active then; by table, like the store.
-    const startedGames = new Map();
+    // The started game's facts, noted at "gamestarted" because by its Play
+    // the Profile store has recorded it (a never played table stops being
+    // one) and the Period may have changed; by table, until its Play or its
+    // next start.
+    const startedFacts = new Map();
 
     function factsOf(game, start) {
         const play = profileStore.getPlay(game.configId);
@@ -364,25 +365,23 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
 
     // Fires on table launch.
     host.on("gamestarted", safeHandler(SCRIPT_NAME, ev => {
-        const profile = profileStore.getActiveProfile();
         if (!ev.game) return;
-        const start = host.now();
-        startedGames.set(ev.game.configId, { profileName: profile.name, start, facts: factsOf(ev.game, start) });
+        // Forgotten first, so that a start whose facts cannot be read never
+        // counts with an earlier short game's facts.
+        startedFacts.delete(ev.game.configId);
+        startedFacts.set(ev.game.configId, factsOf(ev.game, host.now()));
     }));
 
-    // Fires on table exit: the game counts when it lasted long enough, on a
-    // table the Profile can still see, for a Profile following the Challenge
-    // of the week the game started in; the first one to reach the target
-    // completes it.
-    host.on("gameover", safeHandler(SCRIPT_NAME, ev => {
-        const started = ev.game && startedGames.get(ev.game.configId);
-        if (!started) return;
-        startedGames.delete(ev.game.configId);
-        const seconds = Math.round((host.now().getTime() - started.start.getTime()) / 1000);
-        const table = host.getGameInfo(ev.game.configId);
-        if (seconds < MIN_PLAY_SECONDS || !table || !isVisibleTo(table, profileStore, started.profileName)) return;
+    // Fires on "gameover" for a Play only (ADR 0008); the first Play to reach
+    // the target of its week's Challenge completes it.
+    profileStore.onPlay(safeHandler(SCRIPT_NAME, ({ profileName, configId, start, seconds }) => {
+        const facts = startedFacts.get(configId);
+        if (!facts) return;
+        startedFacts.delete(configId);
+        const table = host.getGameInfo(configId);
+        if (!table || !isVisibleTo(table, profileStore, profileName)) return;
 
-        const week = getWeekKey(started.start);
+        const week = getWeekKey(start);
         const { current, previous } = getLocks();
         const challenge = [current, previous].find(candidate => isChallenge(candidate) && candidate.week === week);
         if (!challenge) return;
@@ -391,17 +390,17 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
             const state = readProfileChallenge(data);
             if (state.week !== week || state.judgedWeek === week) return;
             const before = progressOf(challenge, state.games);
-            const games = [...state.games, { ...started.facts, seconds }];
+            const games = [...state.games, { ...facts, seconds }];
             const progress = progressOf(challenge, games);
             data.challenge = { ...state, games };
-            if (progress > before) progressedProfile = started.profileName;
+            if (progress > before) progressedProfile = profileName;
             if (!state.completed && progress >= challenge.target) {
                 completedCount = state.completedCount + 1;
                 data.challenge = { ...data.challenge, completed: true, completedCount };
             }
-        }, started.profileName);
+        }, profileName);
         if (completedCount === 0) return;
-        log(`${started.profileName} completed the week ${week} Challenge.`);
+        log(`${profileName} completed the week ${week} Challenge.`);
         toasts.submit({
             kind: TOAST_KIND.CHALLENGE,
             title: lang.challenges.titles[challenge.template](challenge.target, challenge.param),
