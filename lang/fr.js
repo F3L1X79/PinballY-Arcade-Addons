@@ -258,7 +258,7 @@ export default {
         grandReturnTitle: () => "Le grand retour",
         grandReturnDescription: (days) => `Rejouer une table après ${days} jours d'absence ou plus.`,
         // A Secret Achievement's hint, shown instead of its description while it is missing.
-        rageQuitHint: () => "Certaines tables ne sont pas de votre jour...",
+        rageQuitHint: () => "Il y a des jours où une table ne vous réussit pas...",
         grandReturnHint: () => "Les vieux amis sont toujours contents de vous revoir...",
         randomGamesTitles: {
             10: "Et pourquoi pas ?",
