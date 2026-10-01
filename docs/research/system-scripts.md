@@ -20,6 +20,20 @@ Not checked: the upstream issue tracker (the API is blocked and the issue search
 
 **Decision (2026-10-01):** the cabinet keeps the AI-fixed copies, since `System\` is not versioned and they are only a local convenience. Nothing is reported upstream. The habits became rules in `.claude/rules/conventions.md`: `logfile.log` with one string, no trailing `//` in a `dllImport` declaration, and the timer functions added to the allowed globals (§3.1). To keep in mind: after a PinballY upgrade, `Scripts\System\` must come from the new build (§3.6).
 
+### What the cabinet's AI copies still get wrong
+
+Nothing below has been corrected: `System\` is left untouched, and the decision above keeps the copies as they are. None of it is on a path our code takes (§5).
+
+**Defects the AI introduced** (absent from the originals; checked in the files):
+- **S6:** `console.countReset()` without a label no longer resets the unlabelled counter, and unlabelled `count()` calls still share one counter. A regression.
+- **C4:** an interface GUID written with spaces inside the quotes (`' {GUID} '`) is now rejected as "invalid GUID format", where the original accepted it.
+- **S1:** `%+d` / `%+f` of 0 prints `+0` instead of the original's deliberate ` 0`.
+- **C9:** the author's name in the CParser licence comment is corrupted. A comment, so no runtime effect.
+
+**Bugs of the originals the AI copies still have:** the list "Bugs that neither version fixes" at the end of §5, and every row marked "Same" in §4 (for example `HttpRequest.send()` rejecting any status other than 200).
+
+**Optimizations:** only one, C2 (the sticky-regex scanner). It is correct and gives the same output, with no visible gain on our one-line declarations.
+
 ### The AI fixes at a glance
 
 "Used by us?" means: does any of our code reach the changed lines (grep of `main.js`, `common/`, `addons/`, details in §5).
