@@ -227,7 +227,7 @@
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
       <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import ; reste la bascule de la borne (ticket humain <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>). <strong>Tour du monde et Secret Achievements</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/124">#124</a>) : le tour d'une traite de « Toutes les tables », Rage Quit, Grand Return et Tour du monde en « ??? » avec leur indice, à essayer sur la borne.</p>
-      <span class="next">Ensuite : bascule de la borne (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>), puis <code>/grill-with-docs</code> court du <a href="#profile-reset-feedback">message de la Profile Reset</a></span>
+      <span class="next">Ensuite : bascule de la borne (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>), puis <code>/to-tickets</code> du <a href="#profile-reset-feedback">message de la Profile Reset</a></span>
     </div>
   </section>
 
@@ -262,18 +262,19 @@
             <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span></div>
           </div>
           <p>Aujourd'hui, après « Oui », le menu se ferme sans rien dire : on ne sait pas si la remise à zéro a eu lieu, et un échec n'est visible que dans le journal. Un message dit maintenant si c'est fait ou si ça a échoué. La liste des Profiles gagne aussi une ligne « Tous les profils », qui les remet tous à zéro d'un coup, après confirmation.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Suite des <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">Profiles marqués (#97)</a>. Flow Matt : <code>/grill-with-docs</code> court → <code>/to-tickets</code> → <code>/implement</code></div>
+          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="here">tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Suite des <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">Profiles marqués (#97)</a>. Flow Matt : <code>/to-tickets</code> → <code>/implement</code></div>
           <details>
-            <summary>Questions ouvertes (5)</summary>
+            <summary>Décisions (6)</summary>
             <ul>
-              <li>Quelle forme pour le message : un menu natif d'une ligne avec « OK », ouvert directement puisque le joueur l'a demandé (comme les menus de la remise à zéro), ou un toast dessiné comme le Challenge Toast ?</li>
-              <li>En cas d'échec : un message générique qui renvoie au journal, ou la cause en clair (fichier verrouillé, dossier introuvable) ?</li>
-              <li>« Tous les profils » : Guest compris ? Le Profile de l'admin qui la lance compris ?</li>
-              <li>Une confirmation plus appuyée pour tous (double confirmation, nombre de Profiles cité), curseur sur « Non » comme aujourd'hui ?</li>
-              <li>Échec partiel : continuer avec les suivants puis dire lesquels ont échoué, ou s'arrêter au premier échec ?</li>
+              <li>Après « Oui », un menu natif d'une ligne avec « OK », ouvert directement (le joueur l'a demandé).</li>
+              <li>En cas d'échec, un message générique qui nomme le Profile et renvoie au journal ; la cause exacte reste dans le journal.</li>
+              <li>« Tous les profils » les remet tous à zéro, Guest et l'Admin Profile qui la lance compris.</li>
+              <li>Une seule confirmation, qui cite le nombre de Profiles, curseur sur « Non ».</li>
+              <li>Échec partiel : on continue avec les suivants, puis le message dit combien sont réinitialisés et lesquels ont échoué.</li>
+              <li>La ligne « Tous les profils » est en bas, après un séparateur, juste avant « Annuler », et seulement s'il y a au moins deux Profiles.</li>
             </ul>
-            <p class="ctx">Demandé le 01/10/2026. <code>profileStore.resetProfile</code> lève une erreur en cas d'échec, que <code>safeHandler</code> ne fait que journaliser : le message de réussite ou d'échec vient de là. Chaque Profile garde sa copie datée, y compris lors d'une remise à zéro de tous.</p>
+            <p class="ctx">Demandé et tranché (<code>/grill-with-docs</code>) le 01/10/2026. <code>profileStore.resetProfile</code> lève une erreur en cas d'échec, que <code>safeHandler</code> ne fait que journaliser : le message de réussite ou d'échec vient de là. Chaque Profile garde sa copie datée, y compris lors d'une remise à zéro de tous.</p>
           </details>
         </div>
       </li>
