@@ -5,10 +5,10 @@
 // the Profile store and an animator (skipped when the player turned the
 // animation off); the "Start Random Game" menu command and the startup
 // choice prompt share one instance through getRandomGame(). Calls made
-// while an animation is already running are ignored. Counts the Random
-// Games played in the active Profile's "randomGames" (on "gamestarted",
-// never after "launcherror"), and tells whether the game that just started
-// is one.
+// while an animation is already running are ignored. Tells whether the
+// game that just started is a Random Game (on "gamestarted", never after
+// "launcherror"), and counts it in "randomGames" only when the Profile
+// store announces its Play, for the Profile active at its start.
 // ============================================================
 
 import { animateWheelTo, sleep } from "./wheel_navigator.js";
@@ -47,6 +47,8 @@ export function createRandomGame(host, profileStore, { animateTo, skipAnimation 
     // Whether the last game that started is a Random Game, for the modules
     // whose "gamestarted" listeners run after this one's.
     let startedGameIsRandom = false;
+    // The tables started as Random Games, until their Play or their next start.
+    const startedRandomConfigIds = new Set();
 
     function playGame(game) {
         pendingConfigId = game.configId;
@@ -95,13 +97,25 @@ export function createRandomGame(host, profileStore, { animateTo, skipAnimation 
     }
 
     // Fires when a launched table's first window opens. Only one table runs
-    // at a time, so any start settles the pending Random Game: counted if it
+    // at a time, so any start settles the pending Random Game: noted if it
     // is that table, forgotten otherwise.
     host.on("gamestarted", safeHandler(SCRIPT_NAME, ev => {
         const isRandomGame = pendingConfigId !== null && ev.game && ev.game.configId === pendingConfigId;
         pendingConfigId = null;
         startedGameIsRandom = isRandomGame;
-        if (isRandomGame) profileStore.updateProfileData(data => { data.randomGames += 1; });
+        if (!ev.game) return;
+        if (isRandomGame) {
+            startedRandomConfigIds.add(ev.game.configId);
+        } else {
+            startedRandomConfigIds.delete(ev.game.configId);
+        }
+    }));
+
+    // Fires on "gameover" for a Play only; a shorter Random Game stays noted
+    // until that table's next "gamestarted" settles it again.
+    profileStore.onPlay(safeHandler(SCRIPT_NAME, ({ profileName, configId }) => {
+        if (!startedRandomConfigIds.delete(configId)) return;
+        profileStore.updateProfileData(data => { data.randomGames += 1; }, profileName);
     }));
 
     // Fires instead of "gamestarted" when the launch fails.

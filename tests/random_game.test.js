@@ -161,18 +161,55 @@ function forceEarlyStop(t) {
     t.mock.method(Math, "random", () => (values.length > 0 ? values.shift() : 0.99));
 }
 
-test("a started Random Game adds 1 to the Random Games played, once", async () => {
+// Plays the game for the given seconds: a minute or more makes it a Play.
+function playFor(fake, game, seconds) {
+    fake.gameStarted(game);
+    fake.advanceTime(seconds * 1000);
+    fake.gameOver(game);
+}
+
+test("a Random Game played a minute adds 1 to the Random Games played, once", async () => {
+    const { fake, randomGame } = createRandomGameOn({ wheel: [MEDIEVAL_MADNESS, ATTACK_FROM_MARS] });
+
+    await randomGame.launch();
+    const [launched] = fake.launches();
+    playFor(fake, launched, 60);
+    // The same table started again by hand is not a Random Game.
+    playFor(fake, launched, 60);
+
+    assert.equal(randomGame.getRandomGamesPlayed(), 1);
+});
+
+test("a Random Game quit under a minute adds nothing, though it was started as a Random Game", async () => {
     const { fake, randomGame } = createRandomGameOn({ wheel: [MEDIEVAL_MADNESS, ATTACK_FROM_MARS] });
 
     await randomGame.launch();
     const [launched] = fake.launches();
     fake.gameStarted(launched);
+    assert.equal(randomGame.isStartedGameRandom(), true);
+    fake.advanceTime(59 * 1000);
     fake.gameOver(launched);
-    // The same table started again by hand is not a Random Game.
+    // Its next start by hand, played a minute, is not a Random Game either.
+    playFor(fake, launched, 60);
+
+    assert.equal(randomGame.getRandomGamesPlayed(), 0);
+});
+
+test("a Random Game counts for the Profile active at its start", async () => {
+    const { fake, profileStore, randomGame } = createRandomGameOn({
+        wheel: [MEDIEVAL_MADNESS, ATTACK_FROM_MARS],
+        seed: fake => seedProfile(fake, "Alice", { randomGames: 4 }),
+    });
+
+    await randomGame.launch();
+    const [launched] = fake.launches();
     fake.gameStarted(launched);
+    profileStore.switchTo("Alice");
+    fake.advanceTime(60 * 1000);
     fake.gameOver(launched);
 
-    assert.equal(randomGame.getRandomGamesPlayed(), 1);
+    assert.equal(randomGame.getRandomGamesPlayed(), 4, "Alice's count is untouched");
+    assert.equal(JSON.parse(fake.readFile(profileFile("guest"))).randomGames, 1);
 });
 
 test("the landing table of an early stop counts as a Random Game", async (t) => {
@@ -182,7 +219,7 @@ test("the landing table of an early stop counts as a Random Game", async (t) => 
     await randomGame.launch();
     const [launched] = fake.launches();
     assert.equal(launched.configId, MEDIEVAL_MADNESS.configId, "stopped one table early");
-    fake.gameStarted(launched);
+    playFor(fake, launched, 60);
 
     assert.equal(randomGame.getRandomGamesPlayed(), 1);
 });
@@ -193,7 +230,7 @@ test("a Random Game whose launch fails does not count, nor a later start of that
     await randomGame.launch();
     const [launched] = fake.launches();
     fake.launchError(launched);
-    fake.gameStarted(launched);
+    playFor(fake, launched, 60);
 
     assert.equal(randomGame.getRandomGamesPlayed(), 0);
 });
@@ -201,7 +238,7 @@ test("a Random Game whose launch fails does not count, nor a later start of that
 test("a table started by hand does not count as a Random Game", () => {
     const { fake, randomGame } = createRandomGameOn({ wheel: [MEDIEVAL_MADNESS, ATTACK_FROM_MARS] });
 
-    fake.gameStarted(MEDIEVAL_MADNESS);
+    playFor(fake, MEDIEVAL_MADNESS, 60);
 
     assert.equal(randomGame.getRandomGamesPlayed(), 0);
 });
@@ -214,7 +251,7 @@ test("the Random Games played continue from the active Profile's saved count", a
     });
 
     await randomGame.launch();
-    fake.gameStarted(fake.launches()[0]);
+    playFor(fake, fake.launches()[0], 60);
 
     assert.equal(randomGame.getRandomGamesPlayed(), 10);
     assert.equal(JSON.parse(fake.readFile(profileFile("guest"))).randomGames, 10);
@@ -229,14 +266,13 @@ test("each Profile has its own Random Games played", async () => {
     });
 
     await randomGame.launch();
-    fake.gameStarted(fake.launches()[0]);
-    fake.gameOver(fake.launches()[0]);
+    playFor(fake, fake.launches()[0], 60);
     assert.equal(randomGame.getRandomGamesPlayed(), 1, "Guest's first Random Game");
 
     profileStore.switchTo("Alice");
     assert.equal(randomGame.getRandomGamesPlayed(), 4, "Alice's own count");
     await randomGame.launch();
-    fake.gameStarted(fake.launches()[1]);
+    playFor(fake, fake.launches()[1], 60);
 
     assert.equal(randomGame.getRandomGamesPlayed(), 5);
     assert.equal(JSON.parse(fake.readFile(profileFile("guest"))).randomGames, 1);

@@ -2,7 +2,8 @@
 // The startup prompt's random choice and the "Start Random Game" main menu
 // entry, started through main.js on the fake PinballY globals, never launch
 // the active Profile's Last Played Table when the wheel selection holds
-// another table, and every started one counts in the Random Games played.
+// another table, and every one played a minute counts in the Random Games
+// played.
 // Runs with the Random Game animation turned off (the fake has no wheel
 // buttons).
 // ============================================================

@@ -263,7 +263,7 @@ export default {
             50: "Joueur de dés",
             100: "J'adooooore le hasard !!",
         },
-        randomGamesDescription: (count) => `Lancer ${count} tables au hasard.`,
+        randomGamesDescription: (count) => `Jouer ${count} tables au hasard.`,
         challengesCompletedTitles: {
             1: "Premier défi",
             5: "Amateur de défis",
