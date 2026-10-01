@@ -227,7 +227,7 @@
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
       <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import ; reste la bascule de la borne (ticket humain <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>).</p>
-      <span class="next">Ensuite : bascule de la borne (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>), puis <code>/grill-with-docs</code> du <a href="#world-tour">Tour du monde</a></span>
+      <span class="next">Ensuite : bascule de la borne (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>), puis <code>/to-spec</code> du <a href="#world-tour">Tour du monde</a></span>
     </div>
   </section>
 
@@ -258,46 +258,21 @@
         <div class="emblem"></div>
         <div class="content">
           <div class="item-head">
-            <h3>Achievement « Tour du monde »</h3>
+            <h3>Achievement « Tour du monde » et Secret Achievements</h3>
             <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
           </div>
-          <p>Sans filtre actif, faire défiler toutes les tables de la Wheel sans en lancer aucune.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Achievement isolé : Gold, d'après la règle de la spec #78</div>
+          <p>Sur « Toutes les tables », sélectionner chaque table de la Wheel d'une traite, sans en lancer aucune (Collection, Gold). Un Secret Achievement montre « ??? » et un indice dans l'Achievement List tant qu'il manque : Tour du monde, Rage Quit et Grand Return le deviennent.</p>
+          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span class="here">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Grillé le 01/10/2026. Flow Matt : <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code></div>
           <details>
-            <summary>Questions ouvertes (5)</summary>
+            <summary>Décisions</summary>
             <ul>
-              <li>À vérifier dans PinballY : <code>gameselect</code> se déclenche-t-il pour chaque table traversée en défilement rapide, ou seulement à l'arrêt ?</li>
-              <li>Les sauts par lettre ou par page comptent-ils ?</li>
-              <li>D'une traite dans la session (un lancement ou un changement de filtre remet le tour à zéro) ou cumulé ? Je recommande d'une traite, sinon le succès se débloque tout seul avec le temps.</li>
-              <li>Tables Hidden exclues ; quelle Achievement Family ?</li>
-              <li>Par Profile, jamais pour Guest ?</li>
+              <li>Toutes les tables sélectionnées au moins une fois, dans n'importe quel ordre ; la table du départ compte, sauts par lettre permis ; rien sous deux tables.</li>
+              <li>Tour remis à zéro par un lancement, un changement de filtre ou de Profile, le mode attract, un redémarrage ou un changement du contenu de la roue ; un <code>gameselect</code> hors du mode <code>wheel</code> ne compte pas.</li>
+              <li>Profile actif, Guest compris ; indicateur gardé comme le Rage Quit, effacé par la Profile Reset ; pas d'Achievement Progress ; toast dès la dernière table.</li>
+              <li>Secret Achievement : seulement un Achievement isolé ; « ??? » et un indice traduit, Rank, Unlock Rate, tri et compteurs inchangés ; le toast le dévoile.</li>
             </ul>
             <p class="ctx">Nos propres déplacements (animation Random Game, Profile Stats) passent par <code>setWheelGame</code>, qui ne déclenche pas <code>gameselect</code> : ils ne compteront pas. Nouvel ID à figer dans <code>persisted_data_pinning.test.js</code>.</p>
-          </details>
-        </div>
-      </li>
-
-      <li draggable="true" tabindex="0" class="item tr-play" id="hidden-achievements" data-track="play" data-rank="bronze">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Achievements cachés</h3>
-            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
-          </div>
-          <p>Un Achievement peut être caché : l'Achievement List montre « ??? » et un indice (« Il se passe quelque chose après minuit… ») jusqu'à son déblocage. Esprit arcade, sans nouveau type : la difficulté reste dite par l'Achievement Rank.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="skip">tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">À griller avec le <a href="#world-tour">Tour du monde (n° <span data-ref="world-tour"></span>)</a> : un seul grilling</div>
-          <details>
-            <summary>Questions ouvertes (4)</summary>
-            <ul>
-              <li>Quels Achievements cacher : des nouveaux uniquement (une partie après minuit…), ou aussi certains existants ?</li>
-              <li>Un Achievement caché montre-t-il son Achievement Progress, ou rien du tout ?</li>
-              <li>Où se range-t-il dans la section des manquants, dont l'ordre suit l'Unlock Rate ?</li>
-              <li>L'Achievement Toast le dévoile-t-il comme un autre ?</li>
-            </ul>
-            <p class="ctx">Idée externe du 30/09/2026 : le type MASTER a été écarté, il ferait doublon avec l'Achievement Rank.</p>
           </details>
         </div>
       </li>
@@ -516,6 +491,24 @@
         </div>
       </li>
 
+      <li draggable="true" tabindex="0" class="item tr-play" id="new-secrets" data-track="play" data-rank="bronze">
+        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
+        <div class="emblem"></div>
+        <div class="content">
+          <div class="item-head">
+            <h3>Nouveaux Secret Achievements</h3>
+            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
+          </div>
+          <p>Des Achievements isolés pensés comme des surprises, par exemple une partie lancée après minuit, avec leur indice.</p>
+          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/grill-with-docs</code> → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Après le <a href="#world-tour">Tour du monde (n° <span data-ref="world-tour"></span>)</a>, qui crée les Secret Achievements</div>
+          <details>
+            <summary>Contexte</summary>
+            <p class="ctx">Reporté pendant le grilling du Tour du monde (01/10/2026) : la première version ne rend secrets que des Achievements existants.</p>
+          </details>
+        </div>
+      </li>
+
     </ol>
   </section>
 
@@ -621,8 +614,8 @@
 
           <div class="ax row">Moyen</div>
           <div class="cell sweet">
-            <a class="chip tr-play" href="#world-tour"><b></b>Tour du monde</a>
-                        <a class="chip tr-play" href="#hidden-achievements"><b></b>Succès cachés</a>
+            <a class="chip tr-play" href="#world-tour"><b></b>Tour du monde et secrets</a>
+            <a class="chip tr-play" href="#new-secrets"><b></b>Nouveaux secrets</a>
             <a class="chip tr-play" href="#challenge-confetti"><b></b>Confettis</a>
           </div>
           <div class="cell">

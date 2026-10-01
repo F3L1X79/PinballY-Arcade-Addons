@@ -151,5 +151,9 @@ How many of the household's Profiles (Guest excepted) have been Notified of an A
 _Avoid_: rarity (a rare Achievement has a low Unlock Rate), household rate, global percentage
 
 **Achievement Progress**:
-How far the active Profile is from a missing Achievement: the very value its unlock condition tests, against the target that unlocks it (for a Streak, the current Streak: a missing Streak Achievement starts over from 0 when the Streak breaks). Only Achievements with a counted target of at least 2 have one; an Unlocked Achievement shows none.
+How far the active Profile is from a missing Achievement: the very value its unlock condition tests, against the target that unlocks it (for a Streak, the current Streak: a missing Streak Achievement starts over from 0 when the Streak breaks). Only Achievements with a counted target of at least 2 have one, unless that value starts over at every game, like a tour of the wheel; an Unlocked Achievement shows none.
 _Avoid_: progress (alone), completion (a completion Achievement covers a group of tables)
+
+**Secret Achievement**:
+An Achievement whose title and description stay out of sight while it is missing: the Achievement List shows "???" and a hint in their place, with its Achievement Rank, Unlock Rate and order as for any other. Once Unlocked, its Achievement Toast and row show it like any other. Only standalone Achievements can be secret, never one of a series of thresholds nor a group completion, which are goals to aim at. Shown as "Succès secret" in French.
+_Avoid_: hidden achievement (Hidden is PinballY's own flag for tables), mystery achievement
