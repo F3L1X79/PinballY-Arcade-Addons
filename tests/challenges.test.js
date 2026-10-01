@@ -48,7 +48,7 @@ const scripted = values => () => (values.length > 0 ? values.shift() : 0);
 // saved: the week's lock already in cabinet.json and each Profile's
 // "challenge" record already in its profile.json; plays: each Profile's
 // play records already there, Guest's under "guest".
-function setUp({ now = MONDAY, tables = TABLES, profiles = ["Alice", "Bob"], active = "Alice", randoms = [], saved = {}, plays = {} } = {}) {
+function setUp({ now = MONDAY, tables = TABLES, profiles = ["Alice", "Bob"], active = "Alice", randoms = [], saved = {}, plays = {}, underBadge = true } = {}) {
     const fake = createFakePinballYHost({ now, tables, layoutSize: { width: 1080, height: 1920 } });
     fake.installGlobals();
     for (const name of [...profiles, ...(plays.guest ? ["guest"] : [])]) {
@@ -63,7 +63,7 @@ function setUp({ now = MONDAY, tables = TABLES, profiles = ["Alice", "Bob"], act
     const toasts = createAchievementToasts(fake);
     const challenges = createChallenges(fake, store,
         { tableOfTheDay, tableOfTheWeek, randomGame, toasts, random: scripted([...randoms]) });
-    createChallengeCard(fake, challenges, store);
+    createChallengeCard(fake, challenges, store, { underBadge });
     return { fake, store, toasts, challenges, tableOfTheDay, tableOfTheWeek, randomGame };
 }
 
@@ -271,6 +271,15 @@ test("the card keeps its size and sits under the Profile badge", () => {
     assert.equal(card(fake).position().align, "top right");
     assert.ok(card(fake).position().y < 0, "moved down, below the badge");
     assert.equal(Object.keys(card(fake).scale()).length, 1, "only one span set: it keeps its proportions");
+});
+
+test("without a Profile badge, the card sits in the top right corner, whatever the Profile", () => {
+    const { fake, store } = setUp({ underBadge: false, randoms: [0, 0, 0.99] });
+    assert.deepEqual(card(fake).position(), { x: 0, y: 0, align: "top right" });
+
+    store.switchTo("Bob");
+    play(fake, TABLES[0], 90);
+    assert.deepEqual(card(fake).position(), { x: 0, y: 0, align: "top right" });
 });
 
 test("reaching the target completes the Challenge once: completed count, Challenge Toast, completed card", () => {

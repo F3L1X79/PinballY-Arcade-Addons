@@ -1,8 +1,9 @@
 // ============================================================
 // Challenge Card: the week's Challenge and the active Profile's progress
-// (title, bar, value / target, days left), always in view under the
-// Profile badge at the top right of the wheel screen, on its own drawing
-// layer (see docs/adr/0003). Always the same size; hidden when there is
+// (title, bar, value / target, days left), always in view at the top
+// right of the wheel screen, under the Profile badge or, with no badge
+// (Profile picker off), right in the corner, on its own drawing layer
+// (see docs/adr/0003). Always the same size; hidden when there is
 // no Challenge and while a game runs. When there is something new
 // (a Challenge to follow, a Profile switch, progress after a game) its
 // content changes in place and it lights up once. Once the Challenge is
@@ -21,10 +22,11 @@ const SCRIPT_NAME = "ChallengeCard";
 // Like the badge: above the wheel and the game info box, under popups and menus.
 export const CHALLENGE_CARD_Z_INDEX = 4500;
 // Its own canvas pinned to the top right corner, right under the badge's
-// canvas, for the same reason as the badge: a canvas drawn at startup,
-// before the window is laid out, would be stretched out of shape. Sizes
-// are on the cabinet's 1920 px high playfield; the card's right edge lines
-// up with the badge's Avatar, and the canvas leaves room for the glow.
+// canvas when there is one, for the same reason as the badge: a canvas
+// drawn at startup, before the window is laid out, would be stretched out
+// of shape. Sizes are on the cabinet's 1920 px high playfield; the card's
+// right edge lines up with the badge's Avatar, and the canvas leaves room
+// for the glow.
 const CARD_REFERENCE_HEIGHT = 1920;
 const BADGE_HEIGHT = 170;
 const CANVAS = Object.freeze({ width: 400, height: 124 });
@@ -103,10 +105,11 @@ function drawCard(host, dc, face, lit) {
         { ...PROGRESS, weight: completed ? 600 : 400, color: completed ? COLORS.accent : COLORS.text });
 }
 
-export function createChallengeCard(host, challenges, profileStore) {
+// underBadge: false when there is no Profile badge to leave room for.
+export function createChallengeCard(host, challenges, profileStore, { underBadge = true } = {}) {
     const layer = host.createDrawingLayer(CHALLENGE_CARD_Z_INDEX);
     layer.setScale({ ySpan: CANVAS.height / CARD_REFERENCE_HEIGHT });
-    layer.setPos(0, -BADGE_HEIGHT / CARD_REFERENCE_HEIGHT, "top right");
+    layer.setPos(0, underBadge ? -BADGE_HEIGHT / CARD_REFERENCE_HEIGHT : 0, "top right");
     let timer = null;
 
     function stopTimer() {

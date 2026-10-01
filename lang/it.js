@@ -366,7 +366,7 @@ export default {
         time: (hours, minutes) => `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`,
     },
 
-    // The Challenge Card, under the Profile badge (see common/challenge_card.js).
+    // The Challenge Card, at the top right of the wheel screen (see common/challenge_card.js).
     challenges: {
         cardHeader: "Sfida della settimana",
         titles: {

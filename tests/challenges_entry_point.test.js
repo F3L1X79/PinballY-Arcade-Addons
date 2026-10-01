@@ -38,6 +38,7 @@ test("the Challenges Add-on draws the week's Challenge, shows the card and count
     const title = lang.challenges.titles[template](target, param);
     const card = fake.drawingLayers().find(layer => layer.zIndex === CARD_Z_INDEX && layer.texts().includes(title));
     assert.ok(card && card.alpha > 0, "the Challenge Card is shown");
+    assert.ok(card.position().y < 0, "under the Profile badge");
 
     fake.gameStarted(TABLES[0]);
     fake.advanceTime(2 * 60 * 1000);
