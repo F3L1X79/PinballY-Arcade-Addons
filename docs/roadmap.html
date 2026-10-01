@@ -226,8 +226,8 @@
   <section>
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
-      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne.</p>
-      <span class="next">Ensuite : <code>/implement</code> du <a href="#play-log">Play Log</a>, ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/111">#111</a> puis <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/112">#112</a></span>
+      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne.</p>
+      <span class="next">Ensuite : <code>/implement</code> de la <a href="#one-minute-rule">règle d'une minute</a>, ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/114">#114</a></span>
     </div>
   </section>
 
@@ -253,24 +253,6 @@
 
     <ol class="queue">
 
-      <li draggable="true" tabindex="0" class="item tr-profiles" id="play-log" data-track="profiles" data-rank="bronze">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Play Log : journal des parties datées</h3>
-            <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span><span class="tag">données</span></div>
-          </div>
-          <p>Garder chaque Play (partie d'au moins une minute) avec son début, sa table (<code>configId</code>) et sa durée, dans un fichier par année du dossier du Profile (<code>play-log-2026.json</code>). Rien ne s'affiche encore : ce sont les données du futur Year in Pinball et de « première table jouée ».</p>
-          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span class="here">implement</span></div>
-          <div class="links">Spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>, tickets <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/111">#111</a> puis <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/112">#112</a>. Tôt dans la file : ce qui est joué avant le journal manquera au <a href="#year-in-pinball">Year in Pinball (n° <span data-ref="year-in-pinball"></span>)</a></div>
-          <details>
-            <summary>Contexte</summary>
-            <p class="ctx">Grillé le 01/10/2026 : termes Play et Play Log dans <code>CONTEXT.md</code>, fichier par année dans l'ADR 0007. Guest compris ; durée inconnue exclue ; journal vide au départ, sans reprise de l'existant ; la Profile Reset renomme chaque fichier en copie datée. Clés <code>start</code>, <code>configId</code>, <code>seconds</code> à figer dans <code>persisted_data_pinning.test.js</code>.</p>
-          </details>
-        </div>
-      </li>
-
       <li draggable="true" tabindex="0" class="item tr-play" id="one-minute-rule" data-track="play" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>
@@ -281,7 +263,7 @@
           </div>
           <p>Seules les Plays comptent, partout : cumuls par table (Last Played Table, Hall of Fame, Profile Stats, complétion, Play Time), Streak et Periods Played, Random Games, Day's Manufacturers, Grand Return. Une partie plus courte est un lancement par erreur. Seule exception, le Rage Quit, gardé tel quel.</p>
           <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span class="here">implement</span></div>
-          <div class="links">Spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>, ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/114">#114</a> puis <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/115">#115</a> à <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/118">#118</a> (dans n'importe quel ordre). Juste après le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a>, qui applique déjà la règle</div>
+          <div class="links">Spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>, ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/114">#114</a> puis <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/115">#115</a> à <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/118">#118</a> (dans n'importe quel ordre). Le Play Log (spec #110), livré, applique déjà la règle</div>
           <details>
             <summary>Contexte</summary>
             <p class="ctx">Grillé le 01/10/2026 : le Profile store décide une seule fois si une partie est une Play et l'annonce aux autres modules (ADR 0008, qui remplace en partie l'ADR 0001). Une partie au début inconnu ne compte plus ; une Play compte pour la Period et le jour de son début ; <code>shortestSeconds</code> ne garde que les Plays ; aucun recalcul du passé. La Table of the Day (« jamais jouée ») et le Rating Prompt, qui lisent les compteurs partagés de PinballY, restent hors du chantier. Les descriptions d'Achievements passent de « Lancer » à « Jouer » (<code>fr</code>, <code>en</code>). Termes du glossaire mis à jour.</p>
@@ -558,7 +540,7 @@
           </div>
           <p>Un bilan de l'année par Profile, façon Spotify Wrapped : tables jouées et découvertes, temps de jeu, table et fabricant préférés, plus longue session, Achievements débloqués, plus longue Streak. Proposé tout seul en fin d'année.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Lit le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a> ; sur l'écran des <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
+          <div class="links">Lit le Play Log (livré) ; sur l'écran des <a href="#stats-drawn">Profile Stats dessinées (n° <span data-ref="stats-drawn"></span>)</a></div>
           <details>
             <summary>Questions ouvertes (4)</summary>
             <ul>
@@ -582,7 +564,7 @@
           </div>
           <p>Calculer l'objectif du Challenge d'après ce que la maison a joué les dernières semaines (la mesure du modèle appliquée aux Plays du Play Log, un peu au-dessus de la semaine typique), avec les plages fixes comme plancher et comme repli tant que le journal est trop court.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Lit le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a> ; part des plages du <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a></div>
+          <div class="links">Lit le Play Log (livré) ; part des plages du <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a></div>
           <details>
             <summary>Questions ouvertes (3)</summary>
             <ul>
@@ -689,7 +671,6 @@
 
           <div class="ax row">Fort</div>
           <div class="cell sweet">
-            <a class="chip tr-profiles" href="#play-log"><b></b>Play Log</a>
           </div>
           <div class="cell">
             <a class="chip tr-share" href="#nested-install"><b></b>Install non invasive</a>
