@@ -173,7 +173,7 @@ Categories and media:
 ### 2.7 logfile / console (LogfileObject.html, ConsoleObject.html)
 - `logfile.log(...args)` writes to `PinballY.log` whatever the log options are.
 - When the first argument contains `%` codes **and** more than one argument is passed, printf formatting applies: `%d %i %x %X %b %o %O %f %s %S %%`, with flags `- + space # 0`, width and `.precision`.
-- `console.log/info/warning/error/exception/assert/count/countReset/time/timeLog/timeEnd/trace/format` print only in an attached debugger. Otherwise the output is discarded.
+- `console.log/info/warning/error/exception/assert/count/countReset/time/timeLog/timeEnd/trace/format` print only in an attached debugger. Otherwise the output is discarded, per the help; in fact it also goes to `OutputDebugString` (see §6).
 
 ### 2.8 StatusLine (StatusLine.html)
 Members:
@@ -192,7 +192,7 @@ Text may contain `[substitution]` variables (StatuslineOptions.html).
 - `command.name(id)` returns names like "FilterFirst+3". `command.nameAndIndex(id)` returns `{name, index}`.
 - `command.allocate(name?)` hands out IDs from `UserLast` downward and sets `command[name]`, so pick names that don't clash with built-in ones. Call it **once at startup**. IDs change between sessions, so **never persist them**.
 - `UserFirst..UserLast` are ignored by default.
-- Ranged groups: `FilterFirst..FilterLast`, `CaptureFirst..CaptureLast`, `MediaDropFirst..MediaDropLast`, `PickSysFirst..PickSysLast`, `UserFilterGroupFirst..UserFilterGroupLast`.
+- Ranged groups: `FilterFirst..FilterLast`, `CaptureFirst..CaptureLast`, `MediaDropFirst..MediaDropLast`, `PickSysFirst..PickSysLast`, `UserFilterGroupFirst..UserFilterGroupLast`. `nameAndIndex()` only names some of them (see §6).
 - Useful built-in commands:
   - Menus and navigation: `PlayGame`, `Quit`, `KillGame`, `PauseGame`, `ResumeGame`, `MenuReturn`, `MenuPageUp`, `MenuPageDown`, `ShowMainMenu`, `ShowExitMenu`, `ShowGameSetupMenu`, `ShowOperatorMenu`, `Options`.
   - Game dialogs: `RateGame`, `GameInfo`, `HighScores`, `Instructions`, `Flyer`, `AddFavorite`, `RemoveFavorite`, `HideGame`, `EditGameInfo`, `SetCategories`, `FilterBy*`.
@@ -353,3 +353,32 @@ Other uses:
   - "settingschange" is really `settingsreload`.
   - "settingspostchange" is really `settingspostsave`.
   - The `playGame` example passes the overrides as a 3rd argument. The documented signature is `(game, {overrides})`.
+
+---
+
+## 6. System scripts: what the code does that the help doesn't say
+
+Checked in `Scripts\System\*.js` as shipped with Beta 10 (`SystemClasses.js` = upstream `a452891`; `CParser.js` unchanged since 2018) and in the PinballY C++. Details, line citations, and the review of the AI-modified copies on the cabinet: `docs/research/system-scripts.md`.
+
+- **Loading:** `CParser.js`, then `SystemClasses.js`, run as classic sloppy-mode scripts before `main.js` (a module). The exe looks up about 60 of their globals by name and **disables Javascript** if one is missing. So the System scripts must match the exe version: upstream master, the future Beta 11, adds a `pinscape` global and requires it.
+- **Undocumented globals:** `sprintf(fmt, …)`, `trySprintf`, `OutputDebugString(text)` and `_defineInternalType`; the script-scope bindings `CParser`, `Logger`, `Event` and `EventTarget`. The original scripts also leak `ifc` and `ranged`.
+- **logfile:** each line is prefixed `[Script] `, has no timestamp, and is converted to the ANSI code page. printf formatting applies only with **two or more** arguments, and extra arguments after the format codes are dropped.
+- **console** (corrects §2.7): output is not discarded without a debugger. Every call also goes to `OutputDebugString` as `console.log(<level>): <text>`. `warning` is sent at level "log", `timeLog`/`timeEnd` always report about 0 ms, and `count()` without a label shares one counter across all call sites.
+- **printf quirks:**
+  - `%s` of `null`/`undefined` throws.
+  - `%10.3s` pads, then truncates, which leaves only spaces.
+  - `%+d` of 0 gives `" 0"`.
+  - `%.3d` zero-pads and ignores the width.
+  - `%S` of an object nested more than 5 levels deep throws.
+- **Events:** `addEventListener(type, fn, true|false)` throws a ReferenceError. `off("type.ns")` or `off(".ns")` throws once a listener of that type was added with `addEventListener`. When a listener throws, the later listeners are skipped, and the C++ logs the error and runs the default action even if `preventDefault()` was called.
+- **Menus:**
+  - `addMenuItem(where, item, items)` edits `ev.items`, not `items`.
+  - `deleteMenuItem(/re/)` throws.
+  - `deleteMenuItem(which, items)` returns a new array instead of editing `items`.
+  - `tidyMenu` only sees separators that have `title: ""`, so it ignores `{ cmd: -1 }`.
+- **command** (corrects §2.9): only `Capture*`, `Filter*` and `PickSys*` get `name` + `index`. Media-drop commands get a numeric `name`, and `UserFilterGroup*` is not a range. `allocate(name)` silently overwrites an existing `command[name]`.
+- **HttpRequest:** `send()` rejects every status other than 200.
+- **dllImport:**
+  - A declaration string that ends with a `//` comment (no newline), or that has an unclosed `/*`, **freezes PinballY** in an infinite loop.
+  - `unsigned long long` is parsed as signed, so write `ULONGLONG`.
+  - `HFONT` is mapped to a 32-bit int.
