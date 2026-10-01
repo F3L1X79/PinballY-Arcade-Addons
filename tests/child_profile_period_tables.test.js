@@ -15,7 +15,7 @@ import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const CABINET = `${PROFILES}\\cabinet.json`;
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 

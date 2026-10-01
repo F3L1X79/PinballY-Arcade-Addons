@@ -15,7 +15,7 @@ import { createFakePinballYHost } from "./fake_pinbally_host.js";
 import { createProfileStore, MIN_PLAY_SECONDS } from "../common/profile_store.js";
 
 const NOW = new Date(2026, 8, 24, 21, 0, 0);
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const GUEST_FILE = `${PROFILES}\\guest\\profile.json`;
 const CABINET_FILE = `${PROFILES}\\cabinet.json`;
 
@@ -273,7 +273,7 @@ test("a Profile's own avatar.png or avatar.jpg is its Avatar, otherwise the defa
     const store = createProfileStore(fake);
 
     const avatars = Object.fromEntries(store.listProfiles().map(profile => [profile.name, profile.avatarPath]));
-    const defaultAvatar = "C:\\PinballY\\Scripts\\assets\\default_avatar.png";
+    const defaultAvatar = "C:\\PinballY\\Scripts\\ExpansionPack\\assets\\default_avatar.png";
     assert.deepEqual(avatars, {
         guest: defaultAvatar,
         Alice: `${PROFILES}\\Alice\\avatar.png`,

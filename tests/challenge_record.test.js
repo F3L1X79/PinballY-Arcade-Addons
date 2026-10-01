@@ -15,7 +15,7 @@ import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 
 // Wednesday 23 September 2026: its week is keyed "2026-09-21".
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 // Longer than a toast's whole life (rise, hold, fade).
 const ONE_TOAST_MS = 6000;
 

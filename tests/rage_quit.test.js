@@ -33,7 +33,7 @@ const TOAST_MS = 6000;
 
 test("only a session of 30 seconds to under a minute unlocks the rage quit for good", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: [TABLE, PERIOD_TABLE] });
-    fake.addFile("C:\\PinballY\\Scripts\\profiles\\cabinet.json", JSON.stringify({
+    fake.addFile("C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\cabinet.json", JSON.stringify({
         version: 1, activeProfile: "guest",
         tableOfTheDay: { configId: PERIOD_TABLE.configId, period: "2026-09-23" },
         tableOfTheWeek: { configId: PERIOD_TABLE.configId, period: "2026-09-21" },

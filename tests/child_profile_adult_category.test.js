@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const TABLES = [
     { id: 1, configId: "Playboy (Bally 1978)", title: "Playboy", categories: ["Adult"] },
     { id: 2, configId: "Medieval Madness (Williams 1997)", title: "Medieval Madness", categories: ["NSFW"] },

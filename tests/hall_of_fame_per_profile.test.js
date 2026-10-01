@@ -11,7 +11,7 @@ import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 9, 1, 20, 0, 0);
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const HALL_OF_FAME_FILTER_ID = "User.project.HallOfFame";
 
 // PinballY's own play stats put Theatre of Magic first: they must be ignored.

@@ -20,6 +20,8 @@
 // Never loaded by PinballY.
 // ============================================================
 
+import { projectFolderOf } from "../common/pinbally_host.js";
+
 const RealDate = Date;
 const realSetTimeout = setTimeout;
 const realClearTimeout = clearTimeout;
@@ -122,7 +124,7 @@ export function createFakePinballYHost({
     // The single player behind playSound(), created on its first sound.
     let oneOffSoundPlayerId = null;
     // In-memory file system: folder paths, and file contents by path. The
-    // program folder and its Scripts folder exist, as in PinballY.
+    // program folder, its Scripts folder and the pack's folder exist, as in PinballY.
     const folders = new Set();
     const files = new Map();
     // Image files that exist but cannot be decoded (broken or half-written).
@@ -131,7 +133,7 @@ export function createFakePinballYHost({
     const fileOperationList = [];
     // Every file read, in order, by path.
     const fileReadList = [];
-    addFolder(`${withoutTrailingSlash(programFolder)}\\Scripts`);
+    addFolder(projectFolderOf(programFolder));
     // Pending timers, run in due order by advanceTime(): { id, dueMs, callback, intervalMs }.
     let timers = [];
     let nextTimerId = 1;
@@ -619,6 +621,7 @@ export function createFakePinballYHost({
             runMode = "starting";
         },
         getProgramFolder: () => programFolder,
+        getProjectFolder: () => projectFolderOf(programFolder),
         countMonitors: () => monitorCount,
         showBackglass: (visible) => { backglassShowCalls.push(visible); },
         playSound,

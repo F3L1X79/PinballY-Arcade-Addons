@@ -15,7 +15,7 @@ import config from "../common/config.js";
 
 // Wednesday 30 September 2026: its week is keyed "2026-09-28".
 const NOW = new Date(2026, 8, 30, 21, 0, 0);
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 const CARD_Z_INDEX = 4500;
 // Longer than a toast's whole life (rise, hold, fade).

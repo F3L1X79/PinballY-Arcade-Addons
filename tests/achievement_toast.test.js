@@ -117,7 +117,7 @@ test("the configured sound plays once per card, and a failing one never stops th
     assert.equal(fake.logLines().filter(line => line.includes("Windows Media Player unavailable")).length, 1);
 });
 
-test("a Challenge Toast shares the queue with the Achievement Toasts, with its own header and icon", () => {
+test("a Challenge Toast shares the queue with the Achievement Toasts, with its own header and icon from the pack's assets", () => {
     const fake = createFakePinballYHost();
     fake.installGlobals();
     const toasts = createAchievementToasts(fake);
@@ -131,6 +131,6 @@ test("a Challenge Toast shares the queue with the Achievement Toasts, with its o
     assert.equal(byTitle("challenge").texts()[0], lang.challenges.toastHeader.toLocaleUpperCase());
     const [trophy] = byTitle("achievement").images();
     const [target] = byTitle("challenge").images();
-    assert.match(trophy, /achievement_trophy\.png$/);
-    assert.match(target, /challenge_target\.png$/);
+    assert.equal(trophy, "C:\\PinballY\\Scripts\\ExpansionPack\\assets\\achievement_trophy.png");
+    assert.equal(target, "C:\\PinballY\\Scripts\\ExpansionPack\\assets\\challenge_target.png");
 });

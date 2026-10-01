@@ -13,7 +13,7 @@ import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 9, 1, 20, 0, 0);
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const RANDOM_GAME_COUNT = 30;
 
 const table = (id, configId, manufacturer, categories) => ({ id, configId, title: configId, manufacturer, categories });

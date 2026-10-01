@@ -17,7 +17,7 @@ import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 // A Thursday: the week started on Monday 2026-09-28.
 const NOW = new Date(2026, 9, 1, 20, 0, 0);
 const WEEK = "2026-09-28";
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 
 const table = (id, title, manufacturer, year, categories) => ({

@@ -10,7 +10,7 @@ import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const TABLES = [
     { id: 1, configId: "Medieval Madness", title: "Medieval Madness", manufacturer: "Williams", year: 1997 },
     { id: 2, configId: "Attack from Mars", title: "Attack from Mars", manufacturer: "Bally", year: 1995 },

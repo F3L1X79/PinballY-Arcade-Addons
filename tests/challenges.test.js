@@ -35,7 +35,7 @@ const HIGHLIGHT_OVER_MS = 5000;
 // Longer than a toast's whole life (rise, hold, fade).
 const ONE_TOAST_MS = 6000;
 
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const CABINET_FILE = `${PROFILES}\\cabinet.json`;
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 

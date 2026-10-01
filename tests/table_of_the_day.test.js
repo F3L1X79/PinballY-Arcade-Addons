@@ -23,7 +23,7 @@ const PLAYED_TABLES = [
     { id: 3, configId: "Theatre of Magic (Bally 1995)", title: "Theatre of Magic", lastPlayed: new Date(2026, 7, 1) },
 ];
 
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const CABINET_FILE = `${PROFILES}\\cabinet.json`;
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 const readJson = (fake, path) => JSON.parse(fake.readFile(path));

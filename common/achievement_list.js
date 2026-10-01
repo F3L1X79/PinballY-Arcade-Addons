@@ -82,7 +82,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     // share one. An image is drawn once per slot, not per row: PinballY
     // rereads an image file on every draw, most of a row's cost.
     const pieceLayers = new Map();
-    const assetsFolder = `${host.getProgramFolder().replace(/\\+$/, "")}\\Scripts\\assets`;
+    const assetsFolder = `${host.getProjectFolder()}\\assets`;
     // Each emblem image's path, or null when its file is missing: checked
     // once per session.
     const emblemImagePaths = new Map();

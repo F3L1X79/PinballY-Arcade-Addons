@@ -28,7 +28,7 @@ const LIST_TEXT = lang.achievementList;
 
 // Wednesday: its week started on Monday 21 September.
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 
 function table(id, title, { isHidden = false, manufacturer = "Williams", year = 1990 } = {}) {

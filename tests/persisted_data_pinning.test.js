@@ -110,7 +110,7 @@ const EXPECTED_ACHIEVEMENT_IDS = [
 
 // Enough for every waiting Achievement Toast to show, one after the other.
 const TOASTS_MS = 60 * 60 * 1000;
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const GUEST_PROFILE_FILE = `${PROFILES_FOLDER}\\guest\\profile.json`;
 // Guest's play record before the session matches PinballY's play counts and
 // play times of the visible tables, so every completion and play-time

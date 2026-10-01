@@ -28,7 +28,7 @@ const TABLES = [
 ];
 
 // Guest's own plays; PinballY's shared play stats above stay at zero.
-const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\profiles\\guest\\profile.json";
+const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\guest\\profile.json";
 const GUEST_PLAYS = {
     [TABLES[0].configId]: { count: 3, seconds: 5400, lastPlayed: "2026-09-20T20:00:00" },
     [TABLES[2].configId]: { count: 1, seconds: 600, lastPlayed: "2026-09-21T20:00:00" },

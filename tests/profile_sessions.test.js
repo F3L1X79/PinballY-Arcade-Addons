@@ -15,7 +15,7 @@ import config from "../common/config.js";
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 // Longer than a toast's whole life (rise, hold, fade).
 const ONE_TOAST_MS = 6000;
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const FORTY_DAYS_AGO = "2026-08-14T10:00:00";
 
 // PinballY's own play stats say every table was played yesterday: they
@@ -42,7 +42,7 @@ const sessionIdsOf = (fake, name) => (readProfile(fake, name).notified || []).fi
 
 test("session stats and their Achievements belong to the active Profile", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: [MEDIEVAL, MARS, TWILIGHT, PERIOD_TABLE] });
-    fake.addFile("C:\\PinballY\\Scripts\\profiles\\cabinet.json", JSON.stringify({
+    fake.addFile("C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\cabinet.json", JSON.stringify({
         version: 1, activeProfile: "guest",
         tableOfTheDay: { configId: PERIOD_TABLE.configId, period: "2026-09-23" },
         tableOfTheWeek: { configId: PERIOD_TABLE.configId, period: "2026-09-21" },

@@ -36,7 +36,7 @@ const TABLES = [
 
 // Guest's play record matches PinballY's play stats above. Guest was
 // Notified of the 10 % Collection Achievement, then of the first table.
-const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\profiles\\guest\\profile.json";
+const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\guest\\profile.json";
 const GUEST_PLAYS = Object.fromEntries(TABLES.filter(game => game.playCount > 0).map(game =>
     [game.configId, { count: game.playCount, seconds: game.playTime, lastPlayed: "2026-09-01T20:00:00" }]));
 const GUEST_NOTIFIED = ["collectionMilestone:10percent", "collectionMilestone:firstTable"];

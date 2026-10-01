@@ -26,7 +26,7 @@ const TOAST_MS = 6000;
 
 test("a Streak never announced announces the first play once", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: [TABLE] });
-    fake.addFile("C:\\PinballY\\Scripts\\profiles\\guest\\profile.json", JSON.stringify({
+    fake.addFile("C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\guest\\profile.json", JSON.stringify({
         version: 1,
         streaks: { tableOfTheDay: { current: 1, longest: 1, lastPeriod: "2026-08-01", periodsPlayed: 1 } },
     }));

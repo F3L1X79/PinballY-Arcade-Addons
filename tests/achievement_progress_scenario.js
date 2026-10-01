@@ -11,7 +11,7 @@ import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 import { pressAndGlide, readRows } from "./achievement_list_reader.js";
 
-export const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+export const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 // Longer than a toast's whole life (rise, hold, fade).
 const ONE_TOAST_MS = 6000;
 const ADD_ONS_UNDER_TEST = ["customMenuCommands", "achievements", "sessionStatsTracker"];

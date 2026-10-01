@@ -11,7 +11,7 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const markAdmin = (fake, name) =>
     fake.addFile(`${PROFILES}\\${name}\\profile.json`, JSON.stringify({ version: 1, isAdmin: true }));
 

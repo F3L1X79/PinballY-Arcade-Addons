@@ -1,11 +1,12 @@
 ﻿// ============================================================
 // Player settings for the PinballY scripts in this project, with neutral
-// defaults. Each player overrides them in a git-ignored .env.local at the
-// project root (copy .env.example), read synchronously at load time; the
+// defaults. Each player overrides them in a git-ignored .env.local in the
+// pack's folder (copy .env.example), read synchronously at load time; the
 // overridden keys and any invalid line are written to the PinballY log.
 // ============================================================
 
 import { applyEnvOverrides } from "./env_overrides.js";
+import { projectFolderOf } from "./pinbally_host.js";
 
 const DEFAULTS = {
     // --- Set these for your setup ---
@@ -63,13 +64,10 @@ const LOG_PREFIX = "[Config]";
 const ADODB_TEXT_TYPE = 2;
 const ADODB_READ_ALL = -1;
 
-// Returns the text of .env.local, or null when there is none. Read through
-// COM (not an async API) because modules read the configuration while they
-// load; ADODB.Stream decodes UTF-8, so accented paths survive.
-function readEnvLocal() {
-    const folder = systemInfo.programDir.replace(/\\+$/, "");
-    const path = `${folder}\\Scripts\\.env.local`;
-
+// Returns the text of the .env.local at that path, or null when there is none.
+// Read through COM (not an async API) because modules read the configuration
+// while they load; ADODB.Stream decodes UTF-8, so accented paths survive.
+function readEnvLocal(path) {
     const fileSystem = createAutomationObject("Scripting.FileSystemObject");
     if (!fileSystem.FileExists(path)) return null;
 
@@ -89,15 +87,16 @@ function loadConfig() {
     // Under Node (tests) there is no COM: the defaults apply.
     if (typeof createAutomationObject !== "function") return DEFAULTS;
 
+    const path = `${projectFolderOf(systemInfo.programDir)}\\.env.local`;
     let text;
     try {
-        text = readEnvLocal();
+        text = readEnvLocal(path);
     } catch (error) {
-        logfile.log(`${LOG_PREFIX} ERROR reading .env.local, using defaults: ${error.message}`);
+        logfile.log(`${LOG_PREFIX} ERROR reading ${path}, using defaults: ${error.message}`);
         return DEFAULTS;
     }
     if (text === null) {
-        logfile.log(`${LOG_PREFIX} No .env.local found; using defaults.`);
+        logfile.log(`${LOG_PREFIX} No .env.local found at ${path}; using defaults.`);
         return DEFAULTS;
     }
 

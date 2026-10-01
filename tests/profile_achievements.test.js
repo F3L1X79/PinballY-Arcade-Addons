@@ -19,7 +19,7 @@ const NOW = new Date(2026, 8, 23, 10, 0, 0);
 const SECONDS_PER_HOUR = 3600;
 // Longer than a toast's whole life (rise, hold, fade).
 const ONE_TOAST_MS = 6000;
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 
 // PinballY's own play stats say every table was played for hours: they must
 // no longer unlock anything.

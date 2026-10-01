@@ -22,7 +22,7 @@ const MONDAY = new Date(2026, 8, 21, 20, 0, 0);
 const TUESDAY = new Date(2026, 8, 22, 20, 0, 0);
 const WEEK = "2026-09-21";
 
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const FILTER_ID = "User.project.ChallengeTables";
 
 const table = (id, manufacturer, year, isHidden = false) =>

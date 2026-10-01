@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const PICKER_Z = 6500;
 
 const pickerTexts = fake => fake.drawingLayers()

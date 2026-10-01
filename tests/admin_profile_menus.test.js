@@ -13,7 +13,7 @@ import { createFakePinballYHost } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 30, 20, 0, 0);
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 const markFile = (fake, name, isAdmin) => fake.addFile(profileFile(name), JSON.stringify({ version: 1, isAdmin }));
 

@@ -10,7 +10,7 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 
 test("turning the Profile picker off removes its main-menu and startup prompt entries", async () => {
     const fake = createFakePinballYHost();

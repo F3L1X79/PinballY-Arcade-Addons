@@ -2,7 +2,7 @@
 // Production PinballY host: the single seam through which the deepened
 // modules reach PinballY (settings, clock, timers, visible tables, wheel
 // selection, filter and metafilters, main window menus / UI mode / events / drawing layers,
-// StyledText, commands and running them, table launch, program folder,
+// StyledText, commands and running them, table launch, program and pack folders,
 // monitor count, backglass window, sound playback (one-off or on players
 // in turn), logfile.log, and the few file operations the Profile store
 // needs).
@@ -18,6 +18,11 @@ const ADODB_SAVE_OVERWRITE = 2;
 const IMAGE_PROBE_Z_INDEX = -1000;
 // GetSystemMetrics index: the number of display monitors on the desktop.
 const SM_CMONITORS = 80;
+// The pack's fixed folder under Scripts (ADR 0009): never detected at run time.
+const PROJECT_FOLDER_NAME = "ExpansionPack";
+
+// The pack's folder for a PinballY program folder, with no trailing backslash.
+export const projectFolderOf = programFolder => `${programFolder.replace(/\\+$/, "")}\\Scripts\\${PROJECT_FOLDER_NAME}`;
 
 // Text through ADODB.Stream, which encodes UTF-8 so accented names and paths
 // survive (Scripting.FileSystemObject only knows ANSI and UTF-16).
@@ -166,6 +171,8 @@ export function createPinballYHost() {
 
         // drawImage resolves relative paths from this folder, not from Scripts/.
         getProgramFolder: () => systemInfo.programDir,
+        // Where the pack keeps its settings, Profiles and assets.
+        getProjectFolder: () => projectFolderOf(systemInfo.programDir),
         // Read again on each call: a screen can be plugged in or out while
         // PinballY runs.
         countMonitors: () => {

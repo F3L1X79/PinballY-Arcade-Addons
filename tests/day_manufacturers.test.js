@@ -47,7 +47,7 @@ test("three manufacturers in one calendar day unlock the first multi-manufacture
         now: NOW,
         tables: [WILLIAMS, OTHER_WILLIAMS, HOMEBREW, BALLY, HIDDEN_STERN, GOTTLIEB, DATA_EAST, PERIOD_TABLE],
     });
-    fake.addFile("C:\\PinballY\\Scripts\\profiles\\cabinet.json", JSON.stringify({
+    fake.addFile("C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\cabinet.json", JSON.stringify({
         version: 1, activeProfile: "guest",
         tableOfTheDay: { configId: PERIOD_TABLE.configId, period: "2026-09-23" },
         tableOfTheWeek: { configId: PERIOD_TABLE.configId, period: "2026-09-21" },

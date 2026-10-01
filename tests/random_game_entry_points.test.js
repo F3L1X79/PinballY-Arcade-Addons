@@ -16,7 +16,7 @@ import { getRandomGame } from "../common/random_game.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
 const MENU_LAUNCH_COUNT = 50;
-const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\profiles\\guest\\profile.json";
+const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\guest\\profile.json";
 
 const TABLES = [
     { id: 1, configId: "Medieval Madness (Williams 1997)", title: "Medieval Madness" },

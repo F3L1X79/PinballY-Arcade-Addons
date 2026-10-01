@@ -33,7 +33,7 @@ const TABLES = [
     },
 ];
 
-const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\profiles\\guest\\profile.json";
+const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\guest\\profile.json";
 // Guest played both tables.
 const GUEST_PLAYS = {
     [TABLES[0].configId]: { count: 5, seconds: 2 * SECONDS_PER_HOUR, lastPlayed: "2026-09-01T20:00:00" },

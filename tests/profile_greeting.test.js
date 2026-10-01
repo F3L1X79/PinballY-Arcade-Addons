@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const ALICE_AVATAR = `${PROFILES_FOLDER}\\Alice\\avatar.png`;
 const SOUND_FILE = "C:\\Sounds\\hello.wav";
 const PICKER_Z = 6500;

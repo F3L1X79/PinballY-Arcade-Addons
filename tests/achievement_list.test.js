@@ -31,7 +31,7 @@ import {
 } from "./achievement_list_reader.js";
 
 const TEXT = lang.achievementList;
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const upper = text => text.toLocaleUpperCase();
 
 function fakeAchievement(id, unlocked = false, progress = undefined, rank = ACHIEVEMENT_RANK.BRONZE) {
@@ -62,7 +62,7 @@ function sampleAchievements() {
 }
 
 const avatarOf = name => `${PROFILES}\\${name}\\avatar.png`;
-const ASSETS = "C:\\PinballY\\Scripts\\assets";
+const ASSETS = "C:\\PinballY\\Scripts\\ExpansionPack\\assets";
 // Plain (without its halo) for an Unlocked row and the header, greyed for a missing one.
 const emblemOf = (rank, variant = "") => `${ASSETS}\\rank_${rank}${variant}.png`;
 const EMBLEM_IMAGES = Object.values(ACHIEVEMENT_RANK).flatMap(rank => ["_plain", "_missing"].map(variant => emblemOf(rank, variant)));

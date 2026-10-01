@@ -12,7 +12,7 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 // The carousel's background, its Avatars, then the gold frame and names.
 const PICKER_Z_RANGE = [6500, 6502];
 const GLIDE_OVER_MS = 500;

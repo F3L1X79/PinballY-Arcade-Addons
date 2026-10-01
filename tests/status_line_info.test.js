@@ -12,7 +12,7 @@ import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 9, 1, 20, 0, 0);
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 
 // PinballY's own figures are wrong on purpose.
 const MEDIEVAL = { id: 1, configId: "Medieval Madness", title: "Medieval Madness", manufacturer: "Williams", playCount: 99, playTime: 999999 };

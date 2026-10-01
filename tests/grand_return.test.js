@@ -32,13 +32,13 @@ const THIRTY_ONE_DAYS_AGO = table(2, "Thirty-One Days Ago");
 // count as a Period Table play.
 const PERIOD_TABLE = table(3, "Period Table");
 
-const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\profiles\\guest\\profile.json";
+const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\guest\\profile.json";
 const COLLECTION_MILESTONE_IDS = ["firstTable", "10percent", "25percent", "50percent", "75percent", "100percent"]
     .map(milestone => `collectionMilestone:${milestone}`);
 
 test("the grand return needs a 31-day break and says so", async () => {
     const fake = createFakePinballYHost({ now: NOW, tables: [THIRTY_DAYS_AGO, THIRTY_ONE_DAYS_AGO, PERIOD_TABLE] });
-    fake.addFile("C:\\PinballY\\Scripts\\profiles\\cabinet.json", JSON.stringify({
+    fake.addFile("C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\cabinet.json", JSON.stringify({
         version: 1, activeProfile: "guest",
         tableOfTheDay: { configId: PERIOD_TABLE.configId, period: "2026-09-23" },
         tableOfTheWeek: { configId: PERIOD_TABLE.configId, period: "2026-09-21" },

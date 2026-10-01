@@ -1,7 +1,7 @@
 ﻿// ============================================================
 // Profile store: the only module that knows the Profiles folder
-// (Scripts\profiles). Each Profile is a sub-folder named after it, with its
-// Avatar and its profile.json; cabinet.json, next to them, holds what the
+// (Scripts\ExpansionPack\profiles). Each Profile is a sub-folder named
+// after it, with its Avatar and its profile.json; cabinet.json, next to them, holds what the
 // household shares: the active Profile and the Period Table locks. Files
 // are read at startup and on each switch, kept in memory, and rewritten
 // whole on every change (tmp, backup, rename). A broken file comes back
@@ -75,9 +75,9 @@ const playLogBaseName = year => `play-log-${year}`;
 const PLAY_LOG_FILE = /^(play-log-\d+)(\.bak)?\.json$/i;
 
 export function createProfileStore(host) {
-    const scriptsFolder = `${host.getProgramFolder().replace(/\\+$/, "")}\\Scripts`;
-    const profilesFolder = `${scriptsFolder}\\profiles`;
-    const defaultAvatarPath = `${scriptsFolder}\\assets\\default_avatar.png`;
+    const projectFolder = host.getProjectFolder();
+    const profilesFolder = `${projectFolder}\\profiles`;
+    const defaultAvatarPath = `${projectFolder}\\assets\\default_avatar.png`;
     const files = host.files;
     const switchListeners = [];
     const updateListeners = [];

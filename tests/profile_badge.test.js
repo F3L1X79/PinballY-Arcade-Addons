@@ -12,9 +12,9 @@ import assert from "node:assert/strict";
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import config from "../common/config.js";
 
-const SCRIPTS_FOLDER = "C:\\PinballY\\Scripts";
-const PROFILES_FOLDER = `${SCRIPTS_FOLDER}\\profiles`;
-const DEFAULT_AVATAR = `${SCRIPTS_FOLDER}\\assets\\default_avatar.png`;
+const PROJECT_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack";
+const PROFILES_FOLDER = `${PROJECT_FOLDER}\\profiles`;
+const DEFAULT_AVATAR = `${PROJECT_FOLDER}\\assets\\default_avatar.png`;
 const ALICE_AVATAR = `${PROFILES_FOLDER}\\Alice\\avatar.png`;
 const BADGE_Z = 4500;
 const GAME = { id: 1, configId: "mm", title: "Medieval Madness" };

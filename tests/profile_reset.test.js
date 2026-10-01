@@ -17,7 +17,7 @@ import config from "../common/config.js";
 
 // Thursday 1 October 2026, 20:15:30.
 const NOW = new Date(2026, 9, 1, 20, 15, 30);
-const PROFILES = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 const COPY_NAME = "profile.reset-2026-10-01_20-15-30.json";
 const playLogFile = (name, fileName) => `${PROFILES}\\${name}\\${fileName}`;

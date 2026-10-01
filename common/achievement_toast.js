@@ -69,17 +69,18 @@ const COLORS = Object.freeze({
 
 export const TOAST_KIND = Object.freeze({ ACHIEVEMENT: "achievement", CHALLENGE: "challenge" });
 
-// drawImage resolves relative paths from the PinballY folder, not Scripts/.
+// Icons in the pack's assets folder, drawn by absolute path: drawImage
+// resolves relative paths from the PinballY folder, not the pack's.
 const KIND_LOOKS = Object.freeze({
     [TOAST_KIND.ACHIEVEMENT]: {
         accent: STEAMBALL_COLORS.gold,
-        iconFile: "Scripts\\assets\\achievement_trophy.png",
+        iconFile: "assets\\achievement_trophy.png",
         header: () => lang.achievements.toastHeader,
     },
     // The Challenge Card's accent, so the toast reads as the card's news.
     [TOAST_KIND.CHALLENGE]: {
         accent: STEAMBALL_COLORS.challengeAccent,
-        iconFile: "Scripts\\assets\\challenge_target.png",
+        iconFile: "assets\\challenge_target.png",
         header: () => lang.challenges.toastHeader,
     },
 });
@@ -121,7 +122,7 @@ function drawTile(dc, look, x, y, accent, iconPath) {
 // (rotation-aware) and returns its height and the layout height.
 // Backgrounds use fillRect and frameRect: a StyledText holding only a
 // space draws no background.
-function drawCard(host, dc, look, toast, programFolder) {
+function drawCard(host, dc, look, toast, projectFolder) {
     const { cardWidth, edgeMargin, accentBarWidth, tileSize, tileGap, smallFont } = look;
     const kindLook = KIND_LOOKS[toast.kind || TOAST_KIND.ACHIEVEMENT];
     const size = dc.getSize();
@@ -140,7 +141,7 @@ function drawCard(host, dc, look, toast, programFolder) {
     dc.frameRect(x, y, cardWidth, height, look.border, COLORS.border);
     dc.fillRect(x, y, accentBarWidth, height, kindLook.accent);
     drawTile(dc, look, x + accentBarWidth + tileGap, y + (height - tileSize) / 2,
-        kindLook.accent, `${programFolder}\\${kindLook.iconFile}`);
+        kindLook.accent, `${projectFolder}\\${kindLook.iconFile}`);
     text.draw(dc, { x: x + textLeft, y: y + (height - textHeight) / 2, width: textWidth, height: textHeight });
     return { height, layoutHeight: size.height };
 }
@@ -170,7 +171,7 @@ export function createAchievementToasts(host, {
     // A sound that cannot play is logged and never stops the card.
     const playSound = safeHandler(SCRIPT_NAME, () => { if (soundFile) host.playSound(soundFile); });
     const waiting = [];
-    const programFolder = host.getProgramFolder().replace(/\\+$/, "");
+    const projectFolder = host.getProjectFolder();
     // Cards on screen, oldest first. Each one: its layer, its height, the
     // layout height, its lift above the bottom slot (layout pixels, up is
     // positive), its alpha and whether it is leaving.
@@ -248,7 +249,7 @@ export function createAchievementToasts(host, {
         const toast = waiting.shift();
         const layer = freeLayers.pop() || host.createDrawingLayer(ACHIEVEMENT_TOAST_Z_INDEX);
         let drawn = null;
-        layer.draw(dc => { drawn = drawCard(host, dc, look, toast, programFolder); });
+        layer.draw(dc => { drawn = drawCard(host, dc, look, toast, projectFolder); });
         // Starts just below the bottom edge, then rises into place.
         const card = {
             layer, height: drawn.height, layoutHeight: drawn.layoutHeight,

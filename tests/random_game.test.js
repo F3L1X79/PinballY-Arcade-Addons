@@ -13,7 +13,7 @@ import { createProfileStore } from "../common/profile_store.js";
 import { createRandomGame } from "../common/random_game.js";
 
 const LAUNCH_COUNT = 200;
-const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\profiles";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
 
 // PinballY's own last plays point at Medieval Madness: the Random Game must
 // ignore them and follow the active Profile's play record.
