@@ -226,8 +226,8 @@
   <section>
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
-      <p><strong>Profiles marqués</strong> (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : l'Admin Profile est livré (#98), restent l'enfant (#99, #100, #101) et la remise à zéro (#102). <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne.</p>
-      <span class="next">Ensuite : <code>/implement</code> du ticket #99</span>
+      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne.</p>
+      <span class="next">Ensuite : <code>/grill-with-docs</code> du <a href="#play-log">Journal des parties</a></span>
     </div>
   </section>
 
@@ -252,30 +252,6 @@
     </div>
 
     <ol class="queue">
-
-      <li draggable="true" tabindex="0" class="item tr-profiles current" id="marked-profiles" data-track="profiles" data-rank="silver">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Profiles marqués : Admin Profile, Child Profile et Profile Reset</h3>
-            <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen</span><span class="tag">1/5 tickets</span></div>
-          </div>
-          <p>Deux marques posées à la main dans <code>profile.json</code> (ADR 0006). Un <strong>Admin Profile</strong> garde « Table Setup » et « Operator Menu », les autres les perdent. Un <strong>Child Profile</strong> ne voit aucune Adult Table (catégorie « NSFW » par défaut) : ni sur la roue, ni dans les sélections, les Achievements de collection ou les Profile Stats ; une Period Table adulte lui est cachée et gèle sa Streak. L'admin trouve <strong>Réinitialiser un profil</strong> dans le menu Exit.</p>
-          <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="done">spec</span><i>›</i><span class="done">tickets</span><i>›</i><span class="here">implement</span></div>
-          <div class="links">Flow Matt : <code>/implement</code> par ticket, avec <code>/clear</code> entre chaque (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>)</div>
-          <details>
-            <summary>Tickets restants (4)</summary>
-            <ul>
-              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/99">#99</a> Child Profile : une roue sans Adult Tables</li>
-              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/100">#100</a> Child Profile : les tables qu'il voit, partout ailleurs</li>
-              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/101">#101</a> Child Profile : Period Table adulte cachée, Streak gelée</li>
-              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/102">#102</a> Profile Reset dans le menu Exit</li>
-            </ul>
-            <p class="ctx">Livré : <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/98">#98</a> Admin Profile (menus épurés pour les autres Profiles). Ce n'est ni une protection ni un contrôle parental : aucun mot de passe.</p>
-          </details>
-        </div>
-      </li>
 
       <li draggable="true" tabindex="0" class="item tr-profiles" id="play-log" data-track="profiles" data-rank="bronze">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
@@ -523,7 +499,7 @@
           <details>
             <summary>Questions ouvertes (4)</summary>
             <ul>
-              <li>Où placer l'entrée : menu principal via <code>getMainMenu().add(...)</code>, ou le menu Exit, réservé à l'Admin Profile comme la remise à zéro (<a href="#marked-profiles">Profiles marqués (n° <span data-ref="marked-profiles"></span>)</a>) ?</li>
+              <li>Où placer l'entrée : menu principal via <code>getMainMenu().add(...)</code>, ou le menu Exit, réservé à l'Admin Profile comme « Réinitialiser un profil » (livré le 01/10) ?</li>
               <li>Où l'enregistrer : dans <code>optionSettings</code> (sans <code>save()</code>), ou dans <code>profile.json</code>, ce qui donne une langue par Profile ?</li>
               <li>Changement immédiat, qui oblige les Add-ons à relire leurs textes au lieu de les capturer au démarrage, ou appliqué au prochain lancement de PinballY ?</li>
               <li>Le menu liste-t-il les six langues, alors que de, es, it et pt attendent la <a href="#translations">passe de traduction (n° <span data-ref="translations"></span>)</a> ?</li>
@@ -670,7 +646,7 @@
             <li><strong>Le projet s'ouvre aux autres à la fin</strong>
               <span>La Distribution reste en fin de file, quand il y aura le plus de choses à montrer (le README en est sorti le 28/09).</span></li>
             <li><strong>Admin, enfant et reset se grillent ensemble</strong>
-              <span>Réunis en un seul chantier : <a href="#marked-profiles">Profiles marqués (n° <span data-ref="marked-profiles"></span>)</a>.</span></li>
+              <span>Réunis en un seul chantier : Profiles marqués (livrés le 01/10).</span></li>
             <li><strong>Réglages et filtres par Profile : abandonné</strong>
               <span>Trop flou, et bloqué par l'interdiction de <code>save()</code>. À recréer seulement si un besoin précis apparaît.</span></li>
           </ol>
@@ -689,7 +665,6 @@
             <a class="chip tr-profiles" href="#play-log"><b></b>Journal des parties</a>
           </div>
           <div class="cell">
-            <a class="chip tr-profiles" href="#marked-profiles"><b></b>Profiles marqués</a>
             <a class="chip tr-share" href="#nested-install"><b></b>Install non invasive</a>
           </div>
           <div class="cell">
