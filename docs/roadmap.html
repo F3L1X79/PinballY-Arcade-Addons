@@ -218,7 +218,7 @@
         <span class="recap" id="recap" aria-label="Chantiers par effort"></span>
       </div>
       <div class="gauge" aria-hidden="true"><i id="hero-gauge" style="width:0"></i></div>
-      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 30.09.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
+      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 01.10.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
     </div>
   </header>
 
@@ -301,35 +301,6 @@
         </div>
       </li>
 
-      <li draggable="true" tabindex="0" class="item tr-profiles" id="guest-challenges" data-track="profiles" data-rank="bronze">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Challenges pour Guest</h3>
-            <div class="tags"><span class="tag track">Profiles</span><span class="tag">petit</span><span class="tag">0/3 tickets</span></div>
-          </div>
-          <p>Guest suit le Challenge de la semaine comme les autres Profiles : Challenge Card, Challenge Toast, Challenge Tables, verdict, ligne des Profile Stats et famille d'Achievements Challenges. Il reste hors de l'Unlock Rate, qui compare des personnes. Sans badge (Profile picker désactivé), la Challenge Card remonte dans le coin en haut à droite.</p>
-          <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="skip">spec</span><i>›</i><span class="done">tickets</span><i>›</i><span class="here">implement</span></div>
-          <div class="links">Première impression des nouveaux venus : tôt dans la file. Séparé du <a href="#challenge-balance">rééquilibrage (n° <span data-ref="challenge-balance"></span>)</a>, qui viendra après. Flow Matt : <code>/implement</code> par ticket, avec <code>/clear</code> entre chaque</div>
-          <details>
-            <summary>Tickets restants (3) et décisions du grill</summary>
-            <ul>
-              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/107">#107</a> Guest suit le Challenge de la semaine</li>
-              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/108">#108</a> Le tirage compte les parties de Guest quand il joue seul</li>
-              <li><a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/109">#109</a> Challenge Card dans le coin sans badge (bloqué par #107)</li>
-            </ul>
-            <ul>
-              <li>Tout l'ensemble Challenge pour Guest ; l'Unlock Rate l'exclut toujours.</li>
-              <li>Tirage (« tables jamais jouées », « tables délaissées ») : les parties de Guest comptent seulement quand aucun autre Profile n'existe ou que le Profile picker est désactivé. Sinon les vrais joueurs fixent la barre, et Guest accepte un objectif parfois inatteignable.</li>
-              <li>Quand un vrai Profile est créé, la progression de Guest reste à Guest : aucun transfert.</li>
-              <li>Pas de badge, carte dans le coin : la règle ne dépend pas du Profile (en pratique, seul Guest est concerné).</li>
-            </ul>
-            <p class="ctx">Code concerné : <code>common/challenge.js</code> (les exclusions de Guest, le tirage), <code>common/challenge_card.js</code> (position), <code>achievements/challenges.js</code>, <code>common/profile_stats.js</code>. Glossaire à jour (Challenge, Challenge Card, Guest).</p>
-          </details>
-        </div>
-      </li>
-
       <li draggable="true" tabindex="0" class="item tr-play" id="challenge-balance" data-track="play" data-rank="silver">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
         <div class="emblem"></div>
@@ -340,7 +311,7 @@
           </div>
           <p>« Jouer 2 tables différentes » en une semaine, c'est trop léger. Les objectifs sont tirés entre 2 et 5 (tables, parties, jours…), 15 à 30 min pour l'endurance et 40 à 80 min pour le marathon. Piste recommandée : un objectif adapté à l'activité récente de la maison plutôt que des plages simplement relevées.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span class="skip">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">À griller avec les <a href="#guest-challenges">Challenges pour Guest (n° <span data-ref="guest-challenges"></span>)</a> : les deux touchent le tirage</div>
+          <div class="links">Touche le tirage, déjà revu pour les Challenges de Guest (livrés le 01/10)</div>
           <details>
             <summary>Questions ouvertes (5)</summary>
             <ul>
@@ -716,7 +687,6 @@
           <div class="ax row">Fort</div>
           <div class="cell sweet">
             <a class="chip tr-profiles" href="#play-log"><b></b>Journal des parties</a>
-            <a class="chip tr-profiles" href="#guest-challenges"><b></b>Challenges pour Guest</a>
           </div>
           <div class="cell">
             <a class="chip tr-profiles" href="#marked-profiles"><b></b>Profiles marqués</a>
