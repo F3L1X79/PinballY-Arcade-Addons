@@ -44,6 +44,13 @@ function createFileSystem() {
             for (const folder of fso().GetFolder(folderPath).SubFolders) names.push(folder.Name);
             return names;
         },
+        // The names of the folder's files; none when it doesn't exist.
+        listFiles: (folderPath) => {
+            if (!fso().FolderExists(folderPath)) return [];
+            const names = [];
+            for (const file of fso().GetFolder(folderPath).Files) names.push(file.Name);
+            return names;
+        },
         fileExists: (path) => fso().FileExists(path),
         readText: (path) => {
             const stream = openUtf8Stream();

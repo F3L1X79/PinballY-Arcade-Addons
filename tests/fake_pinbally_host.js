@@ -392,6 +392,10 @@ export function createFakePinballYHost({
             const parent = withoutTrailingSlash(folderPath);
             return [...folders].filter(path => parentFolder(path) === parent).map(path => path.slice(parent.length + 1));
         },
+        listFiles(folderPath) {
+            const parent = withoutTrailingSlash(folderPath);
+            return [...files.keys()].filter(path => parentFolder(path) === parent).map(path => path.slice(parent.length + 1));
+        },
         fileExists: (path) => files.has(path),
         readText(path) {
             requireFile(path);
@@ -431,7 +435,10 @@ export function createFakePinballYHost({
             FolderExists: (path) => folders.has(withoutTrailingSlash(path)),
             GetFolder: (path) => {
                 if (!folders.has(withoutTrailingSlash(path))) throw new Error(`Folder not found: ${path}`);
-                return { SubFolders: fileSystem.listFolders(path).map(name => ({ Name: name })) };
+                return {
+                    SubFolders: fileSystem.listFolders(path).map(name => ({ Name: name })),
+                    Files: fileSystem.listFiles(path).map(name => ({ Name: name })),
+                };
             },
             CreateFolder: (path) => {
                 if (folders.has(withoutTrailingSlash(path))) throw new Error(`Folder already exists: ${path}`);

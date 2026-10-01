@@ -4,7 +4,9 @@
 // lists every Profile (Guest and the admin included), and asks once,
 // cursor on "No". "No" changes nothing; "Yes" keeps a dated copy of the
 // former profile.json, then saves empty Profile data with the marks kept,
-// and the other Profiles' Unlock Rate drops.
+// renames each of its Play Log year files to a dated reset copy (its
+// backups go, unless a backup stands in for a lost year file), and the other Profiles' Unlock Rate drops; the other
+// Profiles' Play Logs are untouched, and its next Play starts a fresh file.
 // ============================================================
 
 import { test } from "node:test";
@@ -18,6 +20,10 @@ const NOW = new Date(2026, 9, 1, 20, 15, 30);
 const PROFILES = "C:\\PinballY\\Scripts\\profiles";
 const profileFile = name => `${PROFILES}\\${name}\\profile.json`;
 const COPY_NAME = "profile.reset-2026-10-01_20-15-30.json";
+const playLogFile = (name, fileName) => `${PROFILES}\\${name}\\${fileName}`;
+const playLogJson = (...seconds) => JSON.stringify({
+    version: 1, plays: seconds.map(count => ({ start: "2025-12-31T23:00:00", configId: "Medieval Madness", seconds: count })),
+});
 
 const MEDIEVAL = {
     id: 1, configId: "Medieval Madness", title: "Medieval Madness", manufacturer: "Williams", year: 1997, categories: ["Fantasy"],
@@ -41,6 +47,18 @@ test("an Admin Profile resets another Profile from the Exit menu, after one conf
     for (const name of ["guest", "Alice", "Bob"]) fake.addFile(`${PROFILES}\\${name}\\avatar.png`, "PNG");
     fake.addFile(profileFile("Bob"), JSON.stringify(BOB_DATA));
     fake.addFile(profileFile("guest"), JSON.stringify({ version: 1, plays: { [MEDIEVAL.configId]: PLAYED }, randomGames: 1 }));
+    const bobLog2025 = playLogJson(300);
+    const bobLog2026 = playLogJson(600, 900);
+    fake.addFile(playLogFile("Bob", "play-log-2025.json"), bobLog2025);
+    fake.addFile(playLogFile("Bob", "play-log-2026.json"), bobLog2026);
+    fake.addFile(playLogFile("Bob", "play-log-2026.bak.json"), playLogJson(600));
+    // A year whose file was lost: its backup is what the Play Log reads.
+    const bobLog2024 = playLogJson(200);
+    fake.addFile(playLogFile("Bob", "play-log-2024.bak.json"), bobLog2024);
+    // A reset copy name already taken, for the copy to be numbered.
+    fake.addFile(playLogFile("Bob", "play-log-2025.reset-2026-10-01_20-15-30.json"), "older copy");
+    const aliceLog2026 = playLogJson(120);
+    fake.addFile(playLogFile("Alice", "play-log-2026.json"), aliceLog2026);
     // Never uninstalled: node --test runs each test file in its own process.
     fake.installGlobals();
     for (const key of Object.keys(config.addOns)) {
@@ -122,6 +140,21 @@ test("an Admin Profile resets another Profile from the Exit menu, after one conf
     assert.ok(store.isChild("Bob"));
     assert.deepEqual(firstTableRow().owners.avatars, [], "Alice's Unlock Rate no longer counts Bob");
 
+    assert.equal(fake.readFile(playLogFile("Bob", "play-log-2026.reset-2026-10-01_20-15-30.json")), bobLog2026,
+        "each Play Log year file is kept, dated");
+    assert.equal(fake.readFile(playLogFile("Bob", "play-log-2025.reset-2026-10-01_20-15-30-2.json")), bobLog2025,
+        "numbered when the dated name is taken");
+    assert.equal(fake.readFile(playLogFile("Bob", "play-log-2025.reset-2026-10-01_20-15-30.json")), "older copy");
+    assert.equal(fake.readFile(playLogFile("Bob", "play-log-2024.reset-2026-10-01_20-15-30.json")), bobLog2024,
+        "a backup without its year file is kept in its place");
+    for (const fileName of ["play-log-2024.bak.json", "play-log-2025.json", "play-log-2026.json", "play-log-2026.bak.json"]) {
+        assert.equal(fake.files.fileExists(playLogFile("Bob", fileName)), false, `${fileName} is gone`);
+    }
+    assert.deepEqual(store.getPlayLogOf("Bob", 2024), [], "Bob's Play Log is empty");
+    assert.deepEqual(store.getPlayLogOf("Bob", 2025), []);
+    assert.deepEqual(store.getPlayLogOf("Bob", 2026), []);
+    assert.equal(fake.readFile(playLogFile("Alice", "play-log-2026.json")), aliceLog2026, "Alice's Play Log is untouched");
+
     askToReset(lang.profiles.guestName);
     fake.selectMenuItem(TEXT.yes);
     assert.deepEqual(JSON.parse(fake.readFile(profileFile("guest"))).plays, {}, "Guest can be reset too");
@@ -132,6 +165,13 @@ test("an Admin Profile resets another Profile from the Exit menu, after one conf
     fake.selectMenuItem(TEXT.yes);
     assert.equal(fake.readFile(`${PROFILES}\\Bob\\${COPY_NAME}`), bobFile);
     assert.ok(fake.readFile(`${PROFILES}\\Bob\\profile.reset-2026-10-01_20-15-30-2.json`));
+
+    store.switchTo("Bob");
+    fake.gameStarted(MEDIEVAL);
+    fake.advanceTime(5 * 60 * 1000);
+    fake.gameOver(MEDIEVAL);
+    assert.deepEqual(store.getPlayLogOf("Bob", 2026).map(play => play.seconds), [300], "his next Play starts a fresh year file");
+    assert.equal(fake.readFile(playLogFile("Bob", "play-log-2026.reset-2026-10-01_20-15-30.json")), bobLog2026);
 
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), []);
 });

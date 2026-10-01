@@ -70,11 +70,11 @@ Each Profile's progress lives in `Scripts\profiles\<Profile>\profile.json`: its 
 
 Every Achievement counts the plays recorded for the active Profile since installation; PinballY's own statistics are not used.
 
-An Admin Profile starts a Profile over from the Exit menu ("Reset profile", see the README): its play-based data is erased, its marks stay, and its former file is kept as `profile.reset-<date>.json`.
+An Admin Profile starts a Profile over from the Exit menu ("Reset profile", see the README): its play-based data is erased, its marks stay, its former file is kept as `profile.reset-<date>.json` and each Play Log year file as `play-log-<year>.reset-<date>.json` (the Play Log's backups are deleted).
 
 To reset by hand, close PinballY first, then:
 
-- start a Profile over without an Admin Profile: delete both its `profile.json` and `profile.bak.json` (the Avatar stays, the marks go);
+- start a Profile over without an Admin Profile: delete both its `profile.json` and `profile.bak.json`, and its `play-log-*.json` files (the Avatar stays, the marks go);
 - announce every Unlocked Achievement again: empty the `"notified"` list (`"notified": []`) in its `profile.json`;
 - remove a Profile: delete its folder, or rename it with a leading `_` to hide it (the `guest` folder always comes back);
 - make Guest active and draw new Period Tables: delete both `cabinet.json` and `cabinet.bak.json`.

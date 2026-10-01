@@ -325,6 +325,17 @@ for (const { name, createHost, usesGlobals } of ADAPTERS) {
             ]);
         });
 
+        test("lists the files of a folder, not its sub-folders nor deeper files, and none for a missing folder", () => {
+            const alice = "C:\\PinballY\\Scripts\\profiles\\Alice";
+            assert.deepEqual(host.files.listFiles(alice), []);
+
+            fake.addFile(`${alice}\\profile.json`, "{}");
+            fake.addFile(`${alice}\\play-log-2026.json`, "{}");
+            fake.addFile(`${alice}\\old\\play-log-2025.json`, "{}");
+
+            assert.deepEqual(host.files.listFiles(alice).sort(), ["play-log-2026.json", "profile.json"]);
+        });
+
         test("writing into a missing folder fails", () => {
             assert.throws(() => host.files.writeText("C:\\PinballY\\Scripts\\missing\\file.json", "{}"), /not found/);
         });

@@ -9,7 +9,8 @@
 // broken too; every such problem is logged to logfile.log. A Profile's
 // marks (isAdmin, isChild), set by hand in its profile.json, are read and kept
 // through every rewrite, never written. A Profile Reset erases a Profile's
-// play-based data, after keeping a dated copy of its former profile.json.
+// play-based data, after keeping a dated copy of its former profile.json
+// and renaming its Play Log year files to dated reset copies.
 // Listens to "gamestarted" / "gameover" to record every finished game for
 // the Profile active when it started. Each Play (a game of at least a
 // minute) also goes to that Profile's Play Log: one play-log-<year>.json
@@ -70,6 +71,8 @@ const NO_PLAY = Object.freeze({ count: 0, seconds: 0, lastPlayed: "" });
 // A shorter game is a launch by mistake, not a Play.
 export const MIN_PLAY_SECONDS = 60;
 const playLogBaseName = year => `play-log-${year}`;
+// A Play Log year file or its backup: "play-log-2026.json", "play-log-2026.bak.json".
+const PLAY_LOG_FILE = /^(play-log-\d+)(\.bak)?\.json$/i;
 
 export function createProfileStore(host) {
     const scriptsFolder = `${host.getProgramFolder().replace(/\\+$/, "")}\\Scripts`;
@@ -277,10 +280,35 @@ export function createProfileStore(host) {
         }
     }
 
+    // Renames each Play Log year file to "play-log-<year>.reset-<date>.json"
+    // and deletes its backup, which would otherwise bring the year back on
+    // its next read. A backup without its year file is the year's data
+    // (loadJson reads it), so it becomes the reset copy instead. Returns the
+    // new file names.
+    function keepPlayLogAsResetCopies(profile) {
+        const byBaseName = new Map();
+        for (const fileName of files.listFiles(profile.folder)) {
+            const match = PLAY_LOG_FILE.exec(fileName);
+            if (!match) continue;
+            const yearFiles = byBaseName.get(match[1]) || {};
+            yearFiles[match[2] ? "backup" : "main"] = fileName;
+            byBaseName.set(match[1], yearFiles);
+        }
+        const copyNames = [];
+        for (const [baseName, { main, backup }] of byBaseName) {
+            const copyName = datedFileName(profile.folder, baseName, "reset");
+            files.renameFile(`${profile.folder}\\${main || backup}`, `${profile.folder}\\${copyName}`);
+            if (main && backup) files.deleteFile(`${profile.folder}\\${backup}`);
+            copyNames.push(copyName);
+        }
+        return copyNames;
+    }
+
     // The Profile Reset: the named Profile starts over as if it had never
     // played, keeping its folder (name, Avatar) and its marks. Its former
-    // profile.json is first copied to "profile.reset-<date>.json", for a
-    // mistaken reset to be undone by hand.
+    // profile.json is first copied to "profile.reset-<date>.json", and its
+    // Play Log year files renamed alike, for a mistaken reset to be undone
+    // by hand.
     function resetProfile(profileName) {
         const { profile, data } = profileWithData(profileName);
         const path = `${profile.folder}\\profile.json`;
@@ -289,13 +317,14 @@ export function createProfileStore(host) {
             copyName = datedFileName(profile.folder, "profile", "reset");
             files.writeText(`${profile.folder}\\${copyName}`, files.readText(path));
         }
+        const keptFiles = [...(copyName ? [copyName] : []), ...keepPlayLogAsResetCopies(profile)];
         const freshData = emptyProfileData();
         for (const markName of MARK_NAMES) {
             if (markName in data) freshData[markName] = data[markName];
         }
         saveProfileData(profile, freshData);
         if (sameName(profile.name, activeProfile.name)) activeData = freshData;
-        log(`${profile.name} was reset${copyName ? `; its former profile.json is kept as ${copyName}` : ""}.`);
+        log(`${profile.name} was reset${keptFiles.length ? `; its former files are kept as ${keptFiles.join(", ")}` : ""}.`);
         tellUpdateListeners(profile.name, { isReset: true });
     }
 
