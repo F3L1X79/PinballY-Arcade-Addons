@@ -226,8 +226,8 @@
   <section>
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
-      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne.</p>
-      <span class="next">Ensuite : <code>/grill-with-docs</code> de l'<a href="#nested-install">installation non invasive</a></span>
+      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import ; reste la bascule de la borne (ticket humain <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>).</p>
+      <span class="next">Ensuite : bascule de la borne (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>), puis <code>/grill-with-docs</code> du <a href="#world-tour">Tour du monde</a></span>
     </div>
   </section>
 
@@ -252,31 +252,6 @@
     </div>
 
     <ol class="queue">
-
-      <li draggable="true" tabindex="0" class="item tr-share" id="nested-install" data-track="share" data-rank="silver">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Installation non invasive : un sous-dossier et une ligne dans <code>main.js</code></h3>
-            <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen</span></div>
-          </div>
-          <p>Tout le projet vit dans <code>Scripts\ArcadeAddons\</code> (nom à choisir) et l'installation se résume à ajouter <code>import "./ArcadeAddons/main.js";</code> au <code>main.js</code> du joueur. On n'écrase plus ses scripts, et nos dossiers génériques (<code>addons\</code>, <code>common\</code>, <code>lang\</code>, <code>assets\</code>, <code>profiles\</code>) ne risquent plus d'entrer en collision avec les siens.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Recoupe peut-être la <a href="#distrib">Distribution (n° <span data-ref="distrib"></span>)</a> : à trancher pendant le grill. Ce que notre code suppose de l'emplacement de <code>System\</code> : <code>docs/research/system-scripts.md</code>, §6</div>
-          <details>
-            <summary>Questions ouvertes (5)</summary>
-            <ul>
-              <li>Faut-il fusionner ce chantier avec la Distribution, ou le traiter avant pour qu'elle installe déjà dans un sous-dossier ?</li>
-              <li>Où placer le dépôt git : à la racine du sous-dossier, avec <code>System\</code> hors du dépôt ? Il faut alors revoir <code>tests/file_layout.test.js</code> et la règle « la racine ne contient que <code>main.js</code> ».</li>
-              <li>Chemins écrits en dur à calculer à partir du dossier du projet : <code>Scripts\assets\...</code> (<code>achievement_toast.js</code>), <code>Scripts\.env.local</code> (<code>config.js</code>), <code>profiles\</code>.</li>
-              <li>Migration des installations existantes : déplacer <code>profiles\</code> et <code>.env.local</code> automatiquement, ou via une consigne du README ?</li>
-              <li>Faut-il une API d'Add-ons formelle (<code>registerAddon</code>, un contexte <code>ctx</code>) ? Seulement si d'autres doivent écrire des Add-ons ; <code>main.js</code>, <code>config.js</code>, <code>safeHandler</code> et <code>pinbally_host</code> en tiennent déjà lieu, et PinballY ne décharge jamais un script (pas de <code>shutdown</code>).</li>
-            </ul>
-            <p class="ctx">Idée issue d'une évaluation externe, qui proposait une « plateforme d'extension » (loader générique, Add-ons tiers). Écartée : PinballY ne fournit pas de <code>main.js</code> d'origine, notre <code>main.js</code> est déjà un loader, et les Add-ons sont volontairement couplés (Profile store en premier, ordre imposé).</p>
-          </details>
-        </div>
-      </li>
 
       <li draggable="true" tabindex="0" class="item tr-play" id="world-tour" data-track="play" data-rank="bronze">
         <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
@@ -484,7 +459,7 @@
             <h3>Distribution : installation et mises à jour</h3>
             <div class="tags"><span class="tag track">Diffusion</span><span class="tag">moyen-gros</span></div>
           </div>
-          <p>Installer le projet en 30 secondes sans git : choix des Add-ons, sauvegarde de <code>main.js</code>, dossiers <code>System</code> et <code>profiles/</code> et fichier <code>.env.local</code> préservés, puis un moyen de mettre à jour.</p>
+          <p>Installer le projet en 30 secondes sans git : choix des Add-ons, dossier <code>Scripts\ExpansionPack</code> copié, ligne <code>import "./ExpansionPack/main.js";</code> ajoutée à <code>Scripts\main.js</code> si elle manque, <code>profiles\</code> et <code>.env.local</code> préservés dans le dossier, puis un moyen de mettre à jour.</p>
           <div class="stepper"><span class="here">idée</span><i>›</i><span>research</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
           <div class="links">Réécrit la section Install des README</div>
           <details>
@@ -550,8 +525,10 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
-          <summary>01/10 <span class="count">(6)</span></summary>
+          <summary>01/10 <span class="count">(7)</span></summary>
           <ol>
+            <li><strong>Le pack vit dans <code>Scripts\ExpansionPack</code></strong>
+              <span>Un dossier au nom fixe, qui est le dépôt git, et une ligne d'import dans le <code>main.js</code> du joueur. Ses données (<code>profiles\</code>, <code>.env.local</code>) restent dedans ; <code>System\</code> sort du dépôt. Pas d'API d'Add-ons (ADR 0009).</span></li>
             <li><strong>Les scripts de <code>System\</code> de la borne : les copies IA, entièrement corrigées</strong>
               <span><code>System\</code> n'est pas versionné : c'est un confort local. Les défauts ajoutés par l'IA et les bugs restés de l'original y sont corrigés, avec un test rangé dans <code>System\</code>. Rien n'est signalé à PinballY. Trois habitudes deviennent des règles : <code>logfile.log</code> avec une seule chaîne, pas de <code>//</code> final dans une déclaration <code>dllImport</code>, les minuteurs dans les globales autorisées.</span></li>
             <li><strong>Challenges : des plages fixes par modèle</strong>
@@ -637,7 +614,6 @@
           <div class="cell sweet">
           </div>
           <div class="cell">
-            <a class="chip tr-share" href="#nested-install"><b></b>Install non invasive</a>
           </div>
           <div class="cell">
             <a class="chip tr-share" href="#distrib"><b></b>Distribution</a>

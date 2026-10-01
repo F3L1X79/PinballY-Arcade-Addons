@@ -42,10 +42,16 @@ Des dizaines de Succès, du Bronze au Platine, annoncés sans interrompre vos pa
 
 Nécessite **Windows** et **PinballY 1.1.0 Beta 10** ou plus récent (plus la fonctionnalité facultative *Lecteur Windows Media*, pour les sons de lancement et de succès uniquement).
 
-1. **Sauvegardez** `PinballY\Scripts`, en particulier `main.js` : ce projet le remplace.
-2. **Copiez le projet** dans `PinballY\Scripts`, en gardant votre dossier `System`.
-3. **Copiez `.env.example` en `.env.local`** et réglez ce qu'il vous faut, un `CLÉ=valeur` par ligne (UTF-8). Les réglages absents gardent leur valeur par défaut ; `.env.local` est ignoré par git.
+1. **Copiez le projet dans `PinballY\Scripts\ExpansionPack`**, sous ce nom exact : le pack y cherche ses fichiers. Depuis un zip téléchargé, renommez le dossier extrait (`PinballY-Expansion-Pack-main`) en `ExpansionPack` ; avec git, lancez `git clone https://github.com/F3L1X79/PinballY-Expansion-Pack.git ExpansionPack` depuis `PinballY\Scripts`.
+2. **Ajoutez cette ligne à `PinballY\Scripts\main.js`**, ou créez le fichier avec cette seule ligne si vous n'en avez pas :
+   ```js
+   import "./ExpansionPack/main.js";
+   ```
+   Vos propres scripts continuent de fonctionner : rien d'autre n'est touché dans `Scripts`.
+3. **Copiez `ExpansionPack\.env.example` en `ExpansionPack\.env.local`** et réglez ce qu'il vous faut, un `CLÉ=valeur` par ligne (UTF-8). Les réglages absents gardent leur valeur par défaut ; `.env.local` est ignoré par git.
 4. **Redémarrez PinballY** et consultez `PinballY.log` : il liste vos réglages, une ligne « initialized » par add-on, et des lignes `ERROR` qui désignent l'add-on en cause.
+
+Tout ce que le pack conserve reste dans `Scripts\ExpansionPack` : vos réglages (`.env.local`) et la progression de chaque Profil (`profiles`). **Pour sauvegarder**, copiez ce dossier. **Pour désinstaller**, supprimez-le et retirez la ligne d'import de `Scripts\main.js`.
 
 ## Réglages
 
@@ -56,17 +62,17 @@ ACHIEVEMENT_TOAST_SECONDS=4
 
 `LANGUAGE` choisit la langue (`en`, `fr`, `de`, `es`, `it` ou `pt`) et `ACHIEVEMENT_TOAST_SECONDS` le nombre de secondes pendant lesquelles un Succès reste affiché. Chaque fonctionnalité se désactive avec sa clé `ADD_ON_*`, par exemple `ADD_ON_CLOCK=false`. Tous les réglages sont décrits dans [.env.example](.env.example).
 
-La progression de chaque Profil est enregistrée dans le dossier `profiles`, que les mises à jour du projet n'écrasent jamais : gardez-le pour la retrouver après une réinstallation.
+La progression de chaque Profil est enregistrée dans `Scripts\ExpansionPack\profiles` : gardez ce dossier quand vous réinstallez ou mettez à jour le pack pour la retrouver.
 
 ### Profil admin
 
-Pour garder les entrées de configuration pour vous seul, ajoutez `"isAdmin": true` au premier niveau du `profiles\<nom>\profile.json` de votre Profil, PinballY fermé. Dès qu'au moins un Profil est marqué, les autres Profils (Invité compris) ne voient plus « Configuration de la table » dans le menu principal ni « Menu opérateur » dans le menu de sortie ; les Profils admin voient toujours les deux, et le bouton de service de la porte monnayeur ouvre toujours le Menu opérateur pour tout le monde. Plusieurs Profils peuvent être marqués. Invité n'est jamais un Profil admin, et une marque qui n'est ni `true` ni `false`, ou dont la clé est mal écrite (`"isAdmin "`, `"IsAdmin"`), est ignorée et signalée dans `PinballY.log`.
+Pour garder les entrées de configuration pour vous seul, ajoutez `"isAdmin": true` au premier niveau du `Scripts\ExpansionPack\profiles\<nom>\profile.json` de votre Profil, PinballY fermé. Dès qu'au moins un Profil est marqué, les autres Profils (Invité compris) ne voient plus « Configuration de la table » dans le menu principal ni « Menu opérateur » dans le menu de sortie ; les Profils admin voient toujours les deux, et le bouton de service de la porte monnayeur ouvre toujours le Menu opérateur pour tout le monde. Plusieurs Profils peuvent être marqués. Invité n'est jamais un Profil admin, et une marque qui n'est ni `true` ni `false`, ou dont la clé est mal écrite (`"isAdmin "`, `"IsAdmin"`), est ignorée et signalée dans `PinballY.log`.
 
 Un Profil admin trouve aussi **Réinitialiser un profil** dans le menu de sortie (Échap), juste après « Menu opérateur ». Il liste tous les Profils, Invité et vous-même compris ; après une confirmation (le curseur part sur « Non »), le Profil choisi repart de zéro comme s'il n'avait jamais joué : ses parties, ses séries, ses records de session, ses parties aléatoires, sa progression aux défis et ses succès annoncés sont effacés, tandis que son nom, son avatar et ses marques restent. Son ancien fichier est gardé à côté sous le nom `profile.reset-<date>.json` : pour annuler une réinitialisation, fermez PinballY et renommez cette copie en `profile.json`. Cette entrée a besoin du menu de sortie de PinballY : si vous l'avez désactivé dans les options de PinballY, elle ne peut pas apparaître.
 
 ### Profil enfant
 
-Pour tenir les tables pour adultes à l'écart d'un enfant, donnez-leur dans PinballY la catégorie `NSFW` (ou nommez votre propre catégorie avec `ADULT_CATEGORY` dans `.env.local`, écrite exactement comme dans PinballY), puis ajoutez `"isChild": true` au premier niveau du `profiles\<nom>\profile.json` de l'enfant, PinballY fermé. Tant que ce Profil est actif, ces tables n'apparaissent sur la roue sous aucun filtre, la partie aléatoire n'en tire jamais et le démarrage ne laisse jamais la roue sur l'une d'elles ; passer à un autre Profil les fait revenir aussitôt. La table du jour et la table de la semaine restent les mêmes pour toute la maison : tant que l'une d'elles est une table pour adultes, l'enfant n'a ni son entrée du menu principal ni son choix au démarrage, et ce jour ou cette semaine ne prolonge ni ne casse sa série. Invité n'est jamais un Profil enfant : les adultes de passage voient toute la collection. Ce n'est pas un contrôle parental : rien ne demande de mot de passe.
+Pour tenir les tables pour adultes à l'écart d'un enfant, donnez-leur dans PinballY la catégorie `NSFW` (ou nommez votre propre catégorie avec `ADULT_CATEGORY` dans `Scripts\ExpansionPack\.env.local`, écrite exactement comme dans PinballY), puis ajoutez `"isChild": true` au premier niveau du `Scripts\ExpansionPack\profiles\<nom>\profile.json` de l'enfant, PinballY fermé. Tant que ce Profil est actif, ces tables n'apparaissent sur la roue sous aucun filtre, la partie aléatoire n'en tire jamais et le démarrage ne laisse jamais la roue sur l'une d'elles ; passer à un autre Profil les fait revenir aussitôt. La table du jour et la table de la semaine restent les mêmes pour toute la maison : tant que l'une d'elles est une table pour adultes, l'enfant n'a ni son entrée du menu principal ni son choix au démarrage, et ce jour ou cette semaine ne prolonge ni ne casse sa série. Invité n'est jamais un Profil enfant : les adultes de passage voient toute la collection. Ce n'est pas un contrôle parental : rien ne demande de mot de passe.
 
 ### Nettoyage des menus
 

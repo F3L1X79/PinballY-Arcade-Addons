@@ -10,6 +10,8 @@ The project's words (Profile, Avatar, Table of the Day, Challenge, Achievement, 
 
 ## Layout
 
+The repository is the pack's folder, installed as `PinballY\Scripts\ExpansionPack` under that fixed name and started by one `import` line in the player's own `Scripts\main.js` ([ADR 0009](docs/adr/0009-the-project-lives-in-its-own-scripts-subfolder.md)). The folder name is written once, in `common/pinbally_host.js`.
+
 - `main.js` is the only script at the root. It starts the Add-ons listed in `SCRIPTS`, each one isolated so that a failing Add-on does not stop the others.
 - `addons/` holds exactly one file per Add-on started by `main.js`. Each exports a default initialisation function, and each can be turned off with its `ADD_ON_*` setting.
 - `common/` holds the shared code, which is never an Add-on.
@@ -42,7 +44,6 @@ The project's words (Profile, Avatar, Table of the Day, Challenge, Achievement, 
 - No text shown to the player is hard-coded: it goes through `common/i18n.js`, and every new key is added to all six languages.
 - Event handlers and asynchronous callbacks are wrapped in `safeHandler(SCRIPT_NAME, ...)`. Never swallow an error silently.
 - Never call `optionSettings.save()`: PinballY saves on its own, and saving during a game can record the hidden backglass state.
-- Never edit the `System` folder: it belongs to PinballY.
 - No external library or build step.
 
 ## Tests
@@ -66,7 +67,7 @@ Translations live in `lang/<code>.js`. English is the fallback, and missing keys
 
 ## Progress and reset
 
-Each Profile's progress lives in `Scripts\profiles\<Profile>\profile.json`: its plays, Streaks, Random Games, session stats, Challenge progress and the list of Notified Achievements. Next to it, `play-log-<year>.json` holds its Play Log: every Play (a game of at least one minute) started that year, with its start, table and seconds. `Scripts\profiles\cabinet.json` holds what the household shares: the active Profile, the Table of the Day, the Table of the Week and the week's Challenge. Every save keeps the previous version as `*.bak.json`, and a missing or broken file comes back from it.
+Each Profile's progress lives in `Scripts\ExpansionPack\profiles\<Profile>\profile.json`: its plays, Streaks, Random Games, session stats, Challenge progress and the list of Notified Achievements. Next to it, `play-log-<year>.json` holds its Play Log: every Play (a game of at least one minute) started that year, with its start, table and seconds. `Scripts\ExpansionPack\profiles\cabinet.json` holds what the household shares: the active Profile, the Table of the Day, the Table of the Week and the week's Challenge. Every save keeps the previous version as `*.bak.json`, and a missing or broken file comes back from it.
 
 Every Achievement counts the plays recorded for the active Profile since installation; PinballY's own statistics are not used.
 

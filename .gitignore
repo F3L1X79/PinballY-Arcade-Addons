@@ -33,9 +33,6 @@ skills-lock.json
 .claude/settings.json
 .claude/workflows
 
-# This folder is already provided by PinballY
-System/
-
 # Player settings (see .env.example)
 .env.local
 

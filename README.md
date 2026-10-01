@@ -42,10 +42,16 @@ PinballY's own menus and messages in French, German, Spanish, Italian or Portugu
 
 Requires **Windows** and **PinballY 1.1.0 Beta 10** or later (plus the *Windows Media Player* optional feature for the launch and Achievement sounds only).
 
-1. **Back up** `PinballY\Scripts`, especially `main.js`: this project replaces it.
-2. **Copy the project** into `PinballY\Scripts`, keeping your own `System` folder.
-3. **Copy `.env.example` to `.env.local`** and set what you need, one `KEY=value` per line (UTF-8). Missing settings keep their default; `.env.local` is ignored by git.
+1. **Copy the project into `PinballY\Scripts\ExpansionPack`**, under that exact name: the pack looks for its files there. From a downloaded zip, rename the extracted folder (`PinballY-Expansion-Pack-main`) to `ExpansionPack`; with git, run `git clone https://github.com/F3L1X79/PinballY-Expansion-Pack.git ExpansionPack` from `PinballY\Scripts`.
+2. **Add this line to `PinballY\Scripts\main.js`**, or create the file with only this line if you have none:
+   ```js
+   import "./ExpansionPack/main.js";
+   ```
+   Your own scripts keep running: nothing else in `Scripts` is touched.
+3. **Copy `ExpansionPack\.env.example` to `ExpansionPack\.env.local`** and set what you need, one `KEY=value` per line (UTF-8). Missing settings keep their default; `.env.local` is ignored by git.
 4. **Restart PinballY** and check `PinballY.log`: it lists your overrides, one "initialized" line per add-on, and `ERROR` lines naming the add-on at fault.
+
+Everything the pack keeps stays in `Scripts\ExpansionPack`: your settings (`.env.local`) and each Profile's progress (`profiles`). **To back up**, copy that folder. **To uninstall**, delete it and remove the import line from `Scripts\main.js`.
 
 ## Settings
 
@@ -56,17 +62,17 @@ ACHIEVEMENT_TOAST_SECONDS=4
 
 `LANGUAGE` sets the language (`en`, `fr`, `de`, `es`, `it` or `pt`) and `ACHIEVEMENT_TOAST_SECONDS` how many seconds an Achievement stays on screen. Every feature can be turned off with its `ADD_ON_*` key, for example `ADD_ON_CLOCK=false`. Every setting is described in [.env.example](.env.example).
 
-Each Profile's progress is saved in the `profiles` folder, which project updates never overwrite: keep it to get your progress back after reinstalling.
+Each Profile's progress is saved in `Scripts\ExpansionPack\profiles`: keep that folder when you reinstall or update the pack to get your progress back.
 
 ### Admin Profile
 
-To keep the setup entries for yourself, add `"isAdmin": true` at the top level of your Profile's `profiles\<name>\profile.json`, PinballY closed. Once at least one Profile is marked, the other Profiles (Guest included) no longer see "Table Setup" in the main menu nor "Operator Menu" in the Exit menu; the Admin Profiles still see both, and the coin door service button still opens the Operator Menu for anyone. Several Profiles can be marked. Guest is never an Admin Profile, and a mark that is not `true` or `false`, or whose key is misspelt (`"isAdmin "`, `"IsAdmin"`), is ignored and logged in `PinballY.log`.
+To keep the setup entries for yourself, add `"isAdmin": true` at the top level of your Profile's `Scripts\ExpansionPack\profiles\<name>\profile.json`, PinballY closed. Once at least one Profile is marked, the other Profiles (Guest included) no longer see "Table Setup" in the main menu nor "Operator Menu" in the Exit menu; the Admin Profiles still see both, and the coin door service button still opens the Operator Menu for anyone. Several Profiles can be marked. Guest is never an Admin Profile, and a mark that is not `true` or `false`, or whose key is misspelt (`"isAdmin "`, `"IsAdmin"`), is ignored and logged in `PinballY.log`.
 
 An Admin Profile also finds **Reset profile** in the Exit menu (Escape), right after "Operator Menu". It lists every Profile, Guest and yourself included; after one confirmation (the cursor starts on "No"), the chosen Profile starts over as if it had never played: its plays, Streaks, session records, Random Games, Challenge progress and announced Achievements are erased, while its name, Avatar and marks stay. Its former file is kept next to it as `profile.reset-<date>.json`: to undo a reset, close PinballY and rename that copy back to `profile.json`. Reset profile needs PinballY's Exit menu: if you disabled it in PinballY's options, the entry cannot show.
 
 ### Child Profile
 
-To keep the Adult Tables away from a child, tag them in PinballY with the category `NSFW` (or name your own category with `ADULT_CATEGORY` in `.env.local`, spelt exactly as in PinballY), then add `"isChild": true` at the top level of the child's `profiles\<name>\profile.json`, PinballY closed. While that Profile is active, those tables are on the wheel under no filter, the Random Game never draws one, and starting up never leaves the wheel on one; switching to another Profile brings them back at once. The Table of the Day and the Table of the Week stay the same for the whole household: while one is an Adult Table, the child gets neither its main menu entry nor its startup choice, and that day or week neither extends nor breaks the child's Streak. Guest is never a Child Profile, so adult visitors see the whole collection. This is no parental control: nothing asks for a password.
+To keep the Adult Tables away from a child, tag them in PinballY with the category `NSFW` (or name your own category with `ADULT_CATEGORY` in `Scripts\ExpansionPack\.env.local`, spelt exactly as in PinballY), then add `"isChild": true` at the top level of the child's `Scripts\ExpansionPack\profiles\<name>\profile.json`, PinballY closed. While that Profile is active, those tables are on the wheel under no filter, the Random Game never draws one, and starting up never leaves the wheel on one; switching to another Profile brings them back at once. The Table of the Day and the Table of the Week stay the same for the whole household: while one is an Adult Table, the child gets neither its main menu entry nor its startup choice, and that day or week neither extends nor breaks the child's Streak. Guest is never a Child Profile, so adult visitors see the whole collection. This is no parental control: nothing asks for a password.
 
 ### Menu Cleanup
 
