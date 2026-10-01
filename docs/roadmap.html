@@ -280,8 +280,8 @@
             <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span></div>
           </div>
           <p>Seules les Plays comptent, partout : cumuls par table (Last Played Table, Hall of Fame, Profile Stats, complétion, Play Time), Streak et Periods Played, Random Games, Day's Manufacturers, Grand Return. Une partie plus courte est un lancement par erreur. Seule exception, le Rage Quit, gardé tel quel.</p>
-          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span class="here">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Juste après le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a>, qui applique déjà la règle</div>
+          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span class="here">tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>. Juste après le <a href="#play-log">Play Log (n° <span data-ref="play-log"></span>)</a>, qui applique déjà la règle</div>
           <details>
             <summary>Contexte</summary>
             <p class="ctx">Grillé le 01/10/2026 : le Profile store décide une seule fois si une partie est une Play et l'annonce aux autres modules (ADR 0008, qui remplace en partie l'ADR 0001). Une partie au début inconnu ne compte plus ; une Play compte pour la Period et le jour de son début ; <code>shortestSeconds</code> ne garde que les Plays ; aucun recalcul du passé. La Table of the Day (« jamais jouée ») et le Rating Prompt, qui lisent les compteurs partagés de PinballY, restent hors du chantier. Les descriptions d'Achievements passent de « Lancer » à « Jouer » (<code>fr</code>, <code>en</code>). Termes du glossaire mis à jour.</p>
