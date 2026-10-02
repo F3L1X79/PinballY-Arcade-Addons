@@ -146,6 +146,10 @@ _Avoid_: acknowledged, seen, unlocked (an Achievement can be unlocked but not ye
 How hard an Achievement is: Bronze, Silver, Gold or Platinum. Every Achievement has one, whether Unlocked or missing.
 _Avoid_: tier, level, difficulty, grade
 
+**Confetti Shower**:
+A shower of coloured confetti released all at once from above the wheel screen, falling down across all of it, in front of everything, toasts and menus included, to celebrate along with the toast of a completed Challenge or of a Platinum Achievement; one shower only when the same return to the wheel brings several. It never waits for the player nor takes their input, and vanishes at once when a table launches or attract mode starts. Shown as "Pluie de confettis" in French.
+_Avoid_: celebration, party, fireworks
+
 **Unlock Rate**:
 How many of the household's Profiles (Guest excepted) have been Notified of an Achievement, shown on the Achievement List by the Avatars of the Profiles other than the active one. It is not shown while there is only one Profile besides Guest.
 _Avoid_: rarity (a rare Achievement has a low Unlock Rate), household rate, global percentage
