@@ -218,7 +218,7 @@
         <span class="recap" id="recap" aria-label="Chantiers par effort"></span>
       </div>
       <div class="gauge" aria-hidden="true"><i id="hero-gauge" style="width:0"></i></div>
-      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 01.10.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
+      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 02.10.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
     </div>
   </header>
 
@@ -227,7 +227,7 @@
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
       <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import ; reste la bascule de la borne (ticket humain <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>). <strong>Tour du monde et Secret Achievements</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/124">#124</a>) : le tour d'une traite de « Toutes les tables », Rage Quit, Grand Return et Tour du monde en « ??? » avec leur indice, à essayer sur la borne. <strong>Profile Reset avec message</strong> livrée (tickets <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/128">#128</a> et <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/129">#129</a>) : un message avec « OK » dit si c'est fait, et « Tous les profils » les remet tous à zéro d'un coup, à essayer sur la borne.</p>
-      <span class="next">Ensuite : bascule de la borne (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>), puis <code>/grill-with-docs</code> de la <a href="#achievement-list-scrollbar">barre de défilement de l'Achievement List</a></span>
+      <span class="next">Ensuite : bascule de la borne (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/123">#123</a>), puis <code>/implement</code> de la <a href="#achievement-list-scrollbar">barre de défilement de l'Achievement List</a> (<a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/130">#130</a>)</span>
     </div>
   </section>
 
@@ -261,18 +261,17 @@
             <h3>Barre de défilement dans l'Achievement List</h3>
             <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">petit</span></div>
           </div>
-          <p>Une barre de défilement le long de l'Achievement List, pour voir où l'on en est dans la liste et ce qu'il reste en dessous.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Flow Matt : <code>/grill-with-docs</code> → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code></div>
+          <p>Une barre de défilement fine et dorée le long de l'Achievement List, pour voir où l'on en est dans la liste et ce qu'il reste en dessous.</p>
+          <div class="stepper"><span>idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span class="here">tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/implement</code> du ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/130">#130</a> (grill fait, spec sautée : un seul ticket)</div>
           <details>
-            <summary>Questions ouvertes</summary>
+            <summary>Décidé</summary>
             <ul>
-              <li>Toujours visible, ou seulement quand la liste dépasse l'écran ?</li>
-              <li>Curseur proportionnel à la part visible, dans les couleurs Steamball ? Glisse-t-il avec les lignes ?</li>
-              <li>Repères des sections « Débloqués » / « Manquants » sur la barre ?</li>
-              <li>Dessinée d'avance avec le reste de la liste (<code>drawing_ahead.js</code>), pour ne rien coûter au défilement ?</li>
+              <li>Seulement quand la liste dépasse la zone des lignes (en pratique toujours), dans la marge droite du panneau.</li>
+              <li>Fine et dorée, le reste au goût de l'implémentation : à juger sur la borne.</li>
+              <li>Glisse avec les lignes, dessinée d'avance et seulement déplacée (ADR 0005). Pas de repères de section.</li>
             </ul>
-            <p class="ctx">Demandé le 01/10/2026, pendant l'implémentation du Tour du monde.</p>
+            <p class="ctx">Demandé le 01/10/2026, pendant l'implémentation du Tour du monde. Grillé le 02/10/2026.</p>
           </details>
         </div>
       </li>
