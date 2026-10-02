@@ -227,7 +227,7 @@
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
       <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import, borne basculée. <strong>Tour du monde et Secret Achievements</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/124">#124</a>) : le tour d'une traite de « Toutes les tables », Rage Quit, Grand Return et Tour du monde en « ??? » avec leur indice, à essayer sur la borne. <strong>Profile Reset avec message</strong> livrée (tickets <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/128">#128</a> et <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/129">#129</a>) : un message avec « OK » dit si c'est fait, et « Tous les profils » les remet tous à zéro d'un coup, à essayer sur la borne. <strong>Barre de défilement de l'Achievement List</strong> livrée (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/130">#130</a>) : une barre fine et dorée dans la marge droite, qui glisse avec les lignes, à juger sur la borne.</p>
-      <span class="next">Ensuite : <code>/prototype</code> de la <a href="#challenge-confetti">Confetti Shower</a></span>
+      <span class="next">Ensuite : <code>/to-spec</code> de la <a href="#challenge-confetti">Confetti Shower</a></span>
     </div>
   </section>
 
@@ -279,17 +279,17 @@
             <h3>Confetti Shower : un Challenge réussi ou un Platinum</h3>
             <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span><span class="tag">UI</span></div>
           </div>
-          <p>Avec le toast d'un Challenge réussi ou d'un Achievement Platinum, une grosse averse de confettis tombe d'un coup sur toute la roue, du haut jusqu'en bas, devant tout (toast et menus compris). Le toast dit ce qui est fêté, les confettis le fêtent. Une seule averse même s'il y a plusieurs raisons ; elle disparaît net au lancement d'une table ou en mode attract.</p>
+          <p>Avec le toast d'un Challenge réussi ou d'un Achievement Platinum, une averse d'environ 8 s : 342 confettis en papier recto-verso lâchés du haut de la roue, devant tout (toast et menus compris). Le toast dit ce qui est fêté, les confettis le fêtent. Une seule averse même s'il y a plusieurs raisons ; elle disparaît net au lancement d'une table ou en mode attract.</p>
           <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="here">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Flow Matt : <code>/prototype</code> (rendu et cadence sur la borne) → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Pourra resservir pour un titre de Grand Maître (<a href="#table-mastery">Maîtrise des tables, n° <span data-ref="table-mastery"></span></a>) ou le <a href="#year-in-pinball">Year in Pinball (n° <span data-ref="year-in-pinball"></span>)</a></div>
+          <div class="links">Flow Matt : <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Prototype validé sur la borne : branche <code>prototype/confetti-shower</code> (verdict dans son dernier commit). Pourra resservir pour un titre de Grand Maître (<a href="#table-mastery">Maîtrise des tables, n° <span data-ref="table-mastery"></span></a>) ou le <a href="#year-in-pinball">Year in Pinball (n° <span data-ref="year-in-pinball"></span>)</a></div>
           <details>
-            <summary>Grillé le 02/10/2026</summary>
+            <summary>Grillé et prototypé le 02/10/2026</summary>
             <ul>
-              <li>Rectangles de papier aux couleurs des confettis (bleu ciel, violet, rose, vert, jaune, orange, magenta) et l'or Steamball ; ils se balancent et tournent sur eux-mêmes (largeur qui oscille), sur trois plans de profondeur.</li>
-              <li>Le « gros beau » d'abord : environ 150 confettis au départ, autant que la borne tient. Si ça rame ailleurs, <code>CONFETTI=false</code> dans <code>.env.local</code> les coupe (activés par défaut).</li>
-              <li>Le cri (« ouééééé » d'enfants) : <code>CONFETTI_SOUND_FILE</code> dans <code>.env.local</code>, vide par défaut, comme les autres sons ; aucun son livré.</li>
-              <li>La roue seulement, pas le backglass (les toasts n'y sont pas). Guest compris.</li>
-              <li>Reste au prototype : la durée de la chute, réglée à l'œil sur la borne.</li>
+              <li>Le mouvement est celui de react-confetti (réglages par défaut) : lâcher le long du bord haut sur une courbe en cloche (3,3 s), gravité, frottement de l'air, retournement ; ramené à la hauteur de l'écran. Environ 3,8 s de chute, 8 s en tout.</li>
+              <li>Chaque confetti : un papier incliné dessiné d'avance, bord clair et bord foncé, avec un dos plus foncé quand il se retourne (le plus fluide des deux essais). Couleurs : bleu ciel, violet, rose, vert, jaune, orange, magenta et l'or Steamball.</li>
+              <li><code>CONFETTI=false</code> dans <code>.env.local</code> coupe l'averse (activée par défaut) ; <code>CONFETTI_SOUND_FILE</code> donne le cri, vide par défaut, aucun son livré.</li>
+              <li>La roue seulement, pas le backglass. Guest compris.</li>
+              <li>Écartés au prototype : carrés plats et droits (laids), départ en bande étroite (un mur de confettis), mouvements maison (feuille morte, vitesses en cloche).</li>
             </ul>
           </details>
         </div>
@@ -577,8 +577,10 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
-          <summary>02/10 <span class="count">(2)</span></summary>
+          <summary>02/10 <span class="count">(3)</span></summary>
           <ol>
+            <li><strong>Confettis : la physique de react-confetti, en papier recto-verso</strong>
+              <span>Les mouvements inventés sonnaient faux : on reprend une bibliothèque éprouvée. Le recto-verso, plus beau, s'est aussi montré le plus fluide sur la borne. Huit secondes d'averse.</span></li>
             <li><strong>Une Confetti Shower pour un Challenge réussi ou un Platinum</strong>
               <span>Les Platinum sont les sommets du pack et restent rares : la fête leur va aussi. Une grosse averse belle d'abord, que chacun coupe dans <code>.env.local</code> si sa borne peine ; le cri d'enfants est un son à choisir, aucun n'est livré.</span></li>
             <li><strong>Nouveaux Secret Achievements mis de côté</strong>
