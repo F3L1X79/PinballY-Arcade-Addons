@@ -23,17 +23,20 @@ export default function init() {
     const MEDIA_CAPTURE_ACTION_LABELS = lang.mediaCaptureActionLabels || {};
     const LAUNCH_OVERLAY_MESSAGES = lang.launchOverlayMessages || {};
     const BUILD_LABEL = lang.dynamicLabelBuilders || {};
+    // Undefined when the language has no such builder. Not "?.(": PinballY's
+    // ChakraCore rejects optional chaining and the whole pack fails to load.
+    const buildLabel = (name, ...args) => (typeof BUILD_LABEL[name] === "function" ? BUILD_LABEL[name](...args) : undefined);
 
     // PinballY's own durations ("5 minutes", "An hour and 5 minutes"...),
     // inside a sentence; kept as they are when no rule matches.
     const DURATION_RULES = [
-        { pattern: /^(\d+) seconds?$/, build: m => BUILD_LABEL.durationSeconds?.(Number(m[1])) },
-        { pattern: /^(\d+) minutes?$/, build: m => BUILD_LABEL.durationMinutes?.(Number(m[1])) },
-        { pattern: /^One hour$/, build: () => BUILD_LABEL.durationHours?.(1, 0) },
-        { pattern: /^An hour and (\d+) minutes$/, build: m => BUILD_LABEL.durationHours?.(1, Number(m[1])) },
-        { pattern: /^(\d+) hours$/, build: m => BUILD_LABEL.durationHours?.(Number(m[1]), 0) },
-        { pattern: /^(\d+) hours and (\d+) minutes$/, build: m => BUILD_LABEL.durationHours?.(Number(m[1]), Number(m[2])) },
-        { pattern: /^(\d+):(\d+) hours$/, build: m => BUILD_LABEL.durationHours?.(Number(m[1]), Number(m[2])) },
+        { pattern: /^(\d+) seconds?$/, build: m => buildLabel("durationSeconds", Number(m[1])) },
+        { pattern: /^(\d+) minutes?$/, build: m => buildLabel("durationMinutes", Number(m[1])) },
+        { pattern: /^One hour$/, build: () => buildLabel("durationHours", 1, 0) },
+        { pattern: /^An hour and (\d+) minutes$/, build: m => buildLabel("durationHours", 1, Number(m[1])) },
+        { pattern: /^(\d+) hours$/, build: m => buildLabel("durationHours", Number(m[1]), 0) },
+        { pattern: /^(\d+) hours and (\d+) minutes$/, build: m => buildLabel("durationHours", Number(m[1]), Number(m[2])) },
+        { pattern: /^(\d+):(\d+) hours$/, build: m => buildLabel("durationHours", Number(m[1]), Number(m[2])) },
     ];
     const translateDuration = text => {
         for (const rule of DURATION_RULES) {
