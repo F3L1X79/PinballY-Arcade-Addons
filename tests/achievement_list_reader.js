@@ -150,3 +150,18 @@ export function readRows(fake, TEXT) {
     };
     return [...unlocked.rows.map(toRow(true)), ...missing.rows.map(toRow(false))];
 }
+
+// The scrollbar's thumb as the player sees it, in window pixels: its
+// horizontal centre, its top and its height; null when none shows.
+export function scrollbarThumb(fake, { width, height } = { width: 1920, height: 1080 }) {
+    const shown = fake.drawingLayers().filter(layer => layer.zIndex === ACHIEVEMENT_LIST_Z_INDEX.scrollbarThumb && layer.alpha > 0);
+    assert.ok(shown.length <= 1, "at most one thumb shows");
+    if (shown.length === 0) return null;
+    const [layer] = shown;
+    const thumbHeight = layer.scale().ySpan * height;
+    return {
+        x: (layer.position().x + 0.5) * width,
+        top: (0.5 - layer.position().y) * height - thumbHeight / 2,
+        height: thumbHeight,
+    };
+}

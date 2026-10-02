@@ -22,7 +22,10 @@
 // faded while the list is open; the header and footer sit on a mask layer
 // above the rows, the header's small emblem images on layers above it. Each
 // emblem image, Avatar and "+N" pill of the rows sits on a small layer of
-// its own, one set per on-screen slot, moved with the rows.
+// its own, one set per on-screen slot, moved with the rows. When the list
+// overflows the rows area, a gold scrollbar sits in the panel's right
+// margin: its rail on the mask, its thumb on a layer of its own, moved with
+// the glide.
 // Every layer is drawn ahead from startup through the shared drawing
 // ahead, nearest the highlighted line first, kept from one opening to the
 // next and redrawn only when what it shows or the window size changed.
@@ -40,14 +43,16 @@ import { displayNameOf } from "./profile_name.js";
 import { RANKS_IN_ORDER } from "./achievements.js";
 import {
     LIST_LOOK, computeGeometry, drawBackdrop, drawMask, drawSectionHeader, drawRow, layoutOwners, layoutRowEmblem, layoutHeaderEmblems,
-    drawPiece,
+    drawPiece, layoutScrollbar, thumbTopAt, drawScrollbarThumb,
 } from "./achievement_list_painter.js";
 
 const SCRIPT_NAME = "AchievementList";
 
 // Above PinballY's menus (custom layers 6000 and above), under the
 // Achievement Toast and the Profile picker. Exported for the tests' reader.
-export const ACHIEVEMENT_LIST_Z_INDEX = Object.freeze({ backdrop: 6000, items: 6001, emblems: 6002, owners: 6003, mask: 6004, headerEmblems: 6005 });
+export const ACHIEVEMENT_LIST_Z_INDEX = Object.freeze({
+    backdrop: 6000, items: 6001, emblems: 6002, owners: 6003, mask: 6004, headerEmblems: 6005, scrollbarThumb: 6006,
+});
 
 const ITEM_KIND = Object.freeze({ SECTION: "section", ROW: "row" });
 // The lines around the highlighted one, dimmed through their layer's alpha
@@ -83,6 +88,8 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
     // share one. An image is drawn once per slot, not per row: PinballY
     // rereads an image file on every draw, most of a row's cost.
     const pieceLayers = new Map();
+    // The scrollbar's thumb: one layer, kept in a map like the others.
+    const thumbLayers = new Map();
     const assetsFolder = `${host.getProjectFolder()}\\assets`;
     // Each emblem image's path, or null when its file is missing: checked
     // once per session.
@@ -259,7 +266,9 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
                 });
             }
         }
-        return { items, listHeight: top };
+        // Without the gap after the last item, so the last row scrolls to
+        // the rows area's very bottom.
+        return { items, listHeight: top - LIST_LOOK.itemGap };
     }
 
     // The counts of the header's total line, also shown by the Profile Stats
@@ -369,24 +378,39 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
             dc => drawPiece(host, dc, emblem));
     }
 
+    // Null when the list fits in the rows area.
+    const scrollbar = () => layoutScrollbar(geometry, content.listHeight);
+    const THUMB_KEY = "thumb";
+    const isThumbDrawn = bar => isDrawn(thumbLayers, THUMB_KEY, null, bar.thumbWidth, bar.thumbHeight);
+
+    function thumbLayer(bar) {
+        return signedLayer(thumbLayers, THUMB_KEY, ACHIEVEMENT_LIST_Z_INDEX.scrollbarThumb, null, bar.thumbWidth, bar.thumbHeight,
+            dc => drawScrollbarThumb(dc, bar.thumbWidth, bar.thumbHeight));
+    }
+
+    // The rail's place only depends on the geometry; whether it shows, on
+    // whether the list overflows.
     function maskSignature() {
-        return JSON.stringify([content.header, content.footer, geometry]);
+        return JSON.stringify([content.header, content.footer, geometry, scrollbar() !== null]);
     }
 
     function drawMaskLayer() {
         mask.layer.clear(TRANSPARENT);
-        mask.layer.draw(dc => drawMask(host, dc, geometry, { header: content.header, footer: content.footer }));
+        mask.layer.draw(dc => drawMask(host, dc, geometry, { header: content.header, footer: content.footer, scrollbar: scrollbar() }));
         mask.signature = maskSignature();
     }
 
     // The next layer to draw ahead, as a function drawing it, or null once
-    // everything is drawn: the header and footer, the header's emblems,
-    // then the items from the highlighted one outwards, wrapping (a wrap
-    // reaches the other end), each followed by its emblem and Unlock Rate.
+    // everything is drawn: the header and footer, the header's emblems, the
+    // scrollbar's thumb, then the items from the highlighted one outwards,
+    // wrapping (a wrap reaches the other end), each followed by its emblem
+    // and Unlock Rate.
     function nextDrawing() {
         if (mask.signature !== maskSignature()) return drawMaskLayer;
         const headerEmblem = headerEmblems().find(emblem => !isHeaderEmblemDrawn(emblem));
         if (headerEmblem) return () => headerEmblemLayer(headerEmblem);
+        const bar = scrollbar();
+        if (bar && !isThumbDrawn(bar)) return () => thumbLayer(bar);
         const { items } = content;
         const around = shown ? shown.highlighted : Math.max(0, items.findIndex(item => item.kind === ITEM_KIND.ROW));
         const distance = index => Math.min(Math.abs(index - around), items.length - Math.abs(index - around));
@@ -430,9 +454,9 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
 
     // Shows the items overlapping the rows area at their place with their
     // emblem image and Unlock Rate, each dimmed by its distance to the
-    // highlighted line, and hides the others. An item sliding out hides
-    // under the header or the footer. Anything not drawn ahead yet is drawn
-    // on the spot.
+    // highlighted line, and hides the others; moves the scrollbar's thumb.
+    // An item sliding out hides under the header or the footer. Anything
+    // not drawn ahead yet is drawn on the spot.
     function placeItems() {
         const g = geometry;
         const toX = x => x / g.width - 0.5;
@@ -462,6 +486,21 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         });
         hideAllExcept(itemLayers, shownLayers);
         hideAllExcept(pieceLayers, shownLayers);
+        placeThumb();
+    }
+
+    // At the glide's scroll, so it never moves ahead of the rows.
+    function placeThumb() {
+        const bar = scrollbar();
+        const shownLayers = new Set();
+        if (bar) {
+            const layer = thumbLayer(bar);
+            const top = thumbTopAt(bar, glide.scroll);
+            layer.setPos(bar.centerX / geometry.width - 0.5, 0.5 - (top + bar.thumbHeight / 2) / geometry.height);
+            layer.alpha = 1;
+            shownLayers.add(layer);
+        }
+        hideAllExcept(thumbLayers, shownLayers);
     }
 
     function stopGlide() {
@@ -567,7 +606,7 @@ export function createAchievementList(host, { getAchievements, profileStore, dra
         stopGlide();
         shown = null;
         for (const layer of [backdropLayer, mask.layer]) layer.alpha = 0;
-        for (const layers of [itemLayers, pieceLayers, headerEmblemLayers]) hideAllExcept(layers, new Set());
+        for (const layers of [itemLayers, pieceLayers, headerEmblemLayers, thumbLayers]) hideAllExcept(layers, new Set());
         // What changed while it was open is read again once it is closed.
         wakeDrawingAhead();
     }
