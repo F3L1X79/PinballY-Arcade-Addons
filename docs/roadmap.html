@@ -218,7 +218,7 @@
         <span class="recap" id="recap" aria-label="Chantiers par effort"></span>
       </div>
       <div class="gauge" aria-hidden="true"><i id="hero-gauge" style="width:0"></i></div>
-      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 02.10.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
+      <div class="hero-line" style="margin-top:8px"><span class="stamp">MAJ 03.10.2026</span><span class="stamp">Blason = effort : bronze petit · argent moyen · or moyen-gros · platine gros</span></div>
     </div>
   </header>
 
@@ -227,7 +227,7 @@
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
       <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import, borne basculée. <strong>Tour du monde et Secret Achievements</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/124">#124</a>) : le tour d'une traite de « Toutes les tables », Rage Quit, Grand Return et Tour du monde en « ??? » avec leur indice, à essayer sur la borne. <strong>Profile Reset avec message</strong> livrée (tickets <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/128">#128</a> et <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/129">#129</a>) : un message avec « OK » dit si c'est fait, et « Tous les profils » les remet tous à zéro d'un coup, à essayer sur la borne. <strong>Barre de défilement de l'Achievement List</strong> livrée (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/130">#130</a>) : une barre fine et dorée dans la marge droite, qui glisse avec les lignes, à juger sur la borne. <strong>Confetti Shower</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/131">#131</a>) : une pluie de confettis avec le toast d'un Challenge réussi ou d'un Achievement Platinum, son au choix (<code>CONFETTI_SOUND_FILE</code>), à essayer sur la borne.</p>
-      <span class="next">Ensuite : <code>/grill-with-docs</code> des <a href="#new-secrets">Nouveaux Secret Achievements</a></span>
+      <span class="next">Ensuite : <code>/prototype</code> de la <a href="#table-mastery">Mastery Bar</a></span>
     </div>
   </section>
 
@@ -279,20 +279,20 @@
             <h3>Maîtrise des tables : un niveau de 1 à 10 par table</h3>
             <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen-gros</span><span class="tag">UI</span></div>
           </div>
-          <p>Une grosse nouvelle fonctionnalité : chaque table a un niveau de maîtrise, de 1 à 10 environ, qui monte avec le temps que le Profile y joue. Le joueur voit une évolution régulière sur ses tables préférées, et le niveau de la table sélectionnée s'affiche <strong>sur la roue</strong>, pour motiver à y revenir. Une progression à part, <strong>sans Achievement</strong> : un toast non bloquant fait le récap après la partie.</p>
-          <div class="stepper"><span class="here">idée</span><i>›</i><span>grill</span><i>›</i><span>spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
-          <div class="links">Flow Matt : <code>/grill-with-docs</code> → <code>/prototype</code> (affichage sur la roue) → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Passe avant la <a href="#stats-drawn">fiche joueur (n° <span data-ref="stats-drawn"></span>)</a>, qui reprendra le détail par table</div>
+          <p>Une grosse nouvelle fonctionnalité : chaque table a un Mastery Level de 1 à 10 par Profile, qui monte avec le temps de ses Plays sur la table. Sous la Challenge Card (ou à sa place), une <strong>Mastery Bar</strong> fine se remplit vers le niveau suivant pour la table sélectionnée, le niveau atteint dans un carré au bout, de plus en plus brillant. Une progression à part, <strong>sans Achievement</strong> : un Mastery Toast annonce chaque niveau atteint, avec une Confetti Shower au niveau 10.</p>
+          <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="here">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
+          <div class="links">Flow Matt : <code>/prototype</code> (Mastery Bar sur la borne : rendu des chiffres, temps de dessin, mémoire) → <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Passe avant la <a href="#stats-drawn">fiche joueur (n° <span data-ref="stats-drawn"></span>)</a>, qui reprendra le détail par table. Voir ADR 0010</div>
           <details>
-            <summary>Questions ouvertes (6)</summary>
+            <summary>Grillé le 03/10/2026</summary>
             <ul>
-              <li>Combien de niveaux (10 ?) et quelle courbe : des premiers niveaux rapides puis de plus en plus longs, pour une évolution régulière sur les tables préférées ?</li>
-              <li>Seulement le temps joué, ou aussi le nombre de Plays ?</li>
-              <li>Sur la roue : où et comment (près de la Challenge Card, une jauge vers le niveau suivant) ? Dessiné d'avance pour ne pas ralentir le défilement ?</li>
-              <li>Des noms en plus des chiffres (Apprenti → Grand Maître, idée d'origine), ou les chiffres seuls ?</li>
-              <li>Récap après la partie : à chaque Play (progression vers le niveau suivant), ou seulement quand un niveau est atteint ?</li>
-              <li>Où voir toutes ses tables avant la fiche joueur : une liste à part, ou rien d'autre que la roue au début ?</li>
+              <li>Seul compte le temps des Plays du Profile (une minute minimum), ni le nombre de parties ni le temps compté par PinballY. Tous les Profiles, Guest et Child Profile compris ; une Profile Reset la remet à zéro.</li>
+              <li>10 niveaux : 1 à la première Play, puis 30 min, 1 h, 1 h 45, 2 h 30, 3 h 30, 5 h, 6 h 30, 9 h et 12 h cumulées.</li>
+              <li>Des chiffres seuls, sans noms. Matière selon le niveau (bronze 1–3, argent 4–6, or 7–9, platine 10) et halo croissant, dessin fixe.</li>
+              <li>Mastery Bar : barre par niveau, chiffre atteint dans un carré collé au bout ; vide et sans chiffre pour une table jamais jouée ; monte à la place de la Challenge Card quand il n'y en a pas ; s'allume une fois après une Play qui l'a fait avancer ; cachée pendant une partie.</li>
+              <li>Tout dessiné d'avance (10 carrés, barre en 20 crans de 5 %) : la roue défile sans aucun dessin (ADR 0010).</li>
+              <li>Mastery Toast seulement quand un niveau est atteint, un seul par Play (le plus haut). Rien de plus dans les Profile Stats ni dans la ligne d'état. Add-on à part, désactivable dans <code>addOns</code>.</li>
             </ul>
-            <p class="ctx">Fusion du « Féru d'une table » et de l'idée d'XP par table (30/09/2026). Pas d'Achievement : ils doubleraient le toast de maîtrise, et la famille Play Time récompense déjà le temps de jeu. Un Achievement de synthèse (« niveau 10 sur 5 tables ») pourra venir plus tard si le niveau du joueur paraît trop pauvre. Le temps est plus juste que le nombre de parties ; il est déjà suivi par Profile (<code>plays[configId].seconds</code>). Les noms éventuels passent par <code>lang/</code>. Remontée le 01/10/2026 avant l'écran d'accueil.</p>
+            <p class="ctx">Fusion du « Féru d'une table » et de l'idée d'XP par table (30/09/2026). Un Achievement de synthèse (« niveau 10 sur 5 tables ») pourra venir plus tard si le niveau du joueur paraît trop pauvre.</p>
           </details>
         </div>
       </li>
@@ -544,6 +544,15 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
+          <summary>03/10 <span class="count">(2)</span></summary>
+          <ol>
+            <li><strong>Table Mastery : le temps des Plays, 10 niveaux chiffrés</strong>
+              <span>Le temps est plus juste que le nombre de parties ; des chiffres de plus en plus brillants se lisent d'un coup d'œil, là où dix noms ne se classent pas d'instinct. Un toast seulement au passage d'un niveau, des confettis au 10.</span></li>
+            <li><strong>Mastery Bar sous la Challenge Card, dessinée d'avance</strong>
+              <span>Le coin haut-droit reste groupé. Tous ses états sont dessinés d'avance, en crans de 5 %, pour que la roue ne saccade jamais (ADR 0010).</span></li>
+          </ol>
+        </details>
+        <details>
           <summary>02/10 <span class="count">(3)</span></summary>
           <ol>
             <li><strong>Confettis : la physique de react-confetti, en papier recto-verso</strong>

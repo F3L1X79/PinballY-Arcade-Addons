@@ -116,6 +116,24 @@ _Avoid_: challenge filter, eligible tables
 A toast like the Achievement Toast, but with its own colour and no trophy, that announces that the active Profile completed the week's Challenge.
 _Avoid_: challenge popup, challenge achievement
 
+### Table Mastery
+
+**Table Mastery**:
+How well a Profile knows one table, measured only by the time its Plays on that table have lasted (a game shorter than a minute adds nothing). A progression of its own, with no Achievement, started over by a Profile Reset. Shown as "Maîtrise" in French.
+_Avoid_: XP, table level, experience
+
+**Mastery Level**:
+The step of Table Mastery a Profile has reached on a table, from 1 at its first Play up to 10, each step taking longer to reach than the one before. Shown as a number, never a title, more and more brilliant from one level to the next.
+_Avoid_: level (alone: the player's level is another thing), rank (an Achievement Rank is how hard an Achievement is), tier
+
+**Mastery Bar**:
+The thin bar at the top right of the wheel screen, under the Challenge Card or in its place when there is none, that keeps in view the active Profile's Table Mastery of the selected table: it fills toward the next Mastery Level, with the level reached in a square at its end. For a table never played it stays empty, with no number. It lights up once when a Play has moved it forward, and is hidden while a game runs.
+_Avoid_: level bar, progress bar (alone), mastery widget, Mastery Card
+
+**Mastery Toast**:
+A toast like the Achievement Toast, but with its own colour and no trophy, that announces the Mastery Level the active Profile has just reached on a table; one only per Play, for the highest level reached.
+_Avoid_: level-up popup, mastery achievement (Table Mastery has no Achievement)
+
 ### Achievements
 
 **Achievement**:
@@ -147,7 +165,7 @@ How hard an Achievement is: Bronze, Silver, Gold or Platinum. Every Achievement 
 _Avoid_: tier, level, difficulty, grade
 
 **Confetti Shower**:
-A shower of coloured confetti released all at once from above the wheel screen, falling down across all of it, in front of everything, toasts and menus included, to celebrate along with the toast of a completed Challenge or of a Platinum Achievement; one shower only when the same return to the wheel brings several. It never waits for the player nor takes their input, and vanishes at once when a table launches or attract mode starts. Shown as "Pluie de confettis" in French.
+A shower of coloured confetti released all at once from above the wheel screen, falling down across all of it, in front of everything, toasts and menus included, to celebrate along with the toast of a completed Challenge, of a Platinum Achievement or of Mastery Level 10; one shower only when the same return to the wheel brings several. It never waits for the player nor takes their input, and vanishes at once when a table launches or attract mode starts. Shown as "Pluie de confettis" in French.
 _Avoid_: celebration, party, fireworks
 
 **Unlock Rate**:
