@@ -127,7 +127,7 @@ The step of Table Mastery a Profile has reached on a table, from 1 at its first 
 _Avoid_: level (alone: the player's level is another thing), rank (an Achievement Rank is how hard an Achievement is), tier
 
 **Mastery Bar**:
-The thin bar at the top right of the wheel screen, under the Challenge Card or in its place when there is none, that keeps in view the active Profile's Table Mastery of the selected table: it fills toward the next Mastery Level, with the level reached in a square at its end. For a table never played it stays empty, with no number. It lights up once when a Play has moved it forward, and is hidden while a game runs.
+The small panel at the top right of the wheel screen, under the Challenge Card or in its place when there is none, that keeps in view the active Profile's Table Mastery of the selected table: its bar fills toward the next Mastery Level in the colour of the level reached, shown in a square at the bar's end. For a table never played it stays empty, with no number. It lights up once when a Play has moved it forward, and is hidden while a game runs.
 _Avoid_: level bar, progress bar (alone), mastery widget, Mastery Card
 
 **Mastery Toast**:
