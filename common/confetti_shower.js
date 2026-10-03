@@ -2,8 +2,9 @@
 // Confetti Shower: about 8 s of confetti across the wheel screen, on
 // main-window layers above toasts and menus, started with a celebrated toast.
 // Each confetto (front and back) is drawn ahead, then only moved, stretched
-// and shown or hidden. Vanishes on "prelaunch", "gamestarted" and
-// "attractmodestart". CONFETTI=false prepares and draws nothing.
+// and shown or hidden. An optional sound plays once as a shower starts.
+// Vanishes on "prelaunch", "gamestarted" and "attractmodestart".
+// CONFETTI=false prepares, draws and plays nothing.
 // ============================================================
 
 import { safeHandler } from "./safe_handler.js";
@@ -109,10 +110,13 @@ function drawPaper(dc, rgb, angle) {
     }
 }
 
-export function createConfettiShower(host, { enabled = true, drawingAhead } = {}) {
+// soundFile: absolute path played once per shower, empty for none.
+export function createConfettiShower(host, { enabled = true, soundFile = "", drawingAhead } = {}) {
     if (!enabled) return { start() {} };
 
     const log = text => host.log(`[${SCRIPT_NAME}] ${text}`);
+    // A sound that cannot play is logged and never stops the shower.
+    const playSound = safeHandler(SCRIPT_NAME, () => { if (soundFile) host.playSound(soundFile); });
     // One entry per confetto drawn so far: its front layer and its darker
     // back layer, reused from one shower to the next.
     const pool = [];
@@ -248,6 +252,7 @@ export function createConfettiShower(host, { enabled = true, drawingAhead } = {}
         shower = { pieces: [], count: pool.length, startMs: host.now().getTime(), lastFrameMs: null };
         log(`Started with ${shower.count} confetti.`);
         frameTimer = host.setInterval(safeHandler(SCRIPT_NAME, step), FRAME_MS);
+        playSound();
     }
 
     // Fire when a table launches or attract mode starts: the confetti vanish at once.
@@ -264,6 +269,7 @@ export function getConfettiShower() {
     if (!sharedConfettiShower) {
         sharedConfettiShower = createConfettiShower(createPinballYHost(), {
             enabled: config.confetti,
+            soundFile: config.confettiSoundFile,
             drawingAhead: getDrawingAhead(),
         });
     }

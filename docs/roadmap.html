@@ -226,8 +226,8 @@
   <section>
     <p class="eyebrow">En cours <span class="count">(1)</span></p>
     <div class="panel now" id="now">
-      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import, borne basculée. <strong>Tour du monde et Secret Achievements</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/124">#124</a>) : le tour d'une traite de « Toutes les tables », Rage Quit, Grand Return et Tour du monde en « ??? » avec leur indice, à essayer sur la borne. <strong>Profile Reset avec message</strong> livrée (tickets <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/128">#128</a> et <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/129">#129</a>) : un message avec « OK » dit si c'est fait, et « Tous les profils » les remet tous à zéro d'un coup, à essayer sur la borne. <strong>Barre de défilement de l'Achievement List</strong> livrée (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/130">#130</a>) : une barre fine et dorée dans la marge droite, qui glisse avec les lignes, à juger sur la borne.</p>
-      <span class="next">Ensuite : <code>/implement</code> de la <a href="#challenge-confetti">Confetti Shower</a>, ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/133">#133</a> (#132 fait)</span>
+      <p><strong>Profiles marqués</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/97">#97</a>) : Admin Profile, Child Profile et « Réinitialiser un profil » dans le menu Exit, à essayer sur la borne. <strong>Menus allégés</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/103">#103</a>) : sections du menu principal, nouveaux noms et Add-on Menu Cleanup, à essayer sur la borne. <strong>Play Log</strong> livré (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/110">#110</a>) : chaque Play dans <code>play-log-&lt;année&gt;.json</code>, mis de côté par la Profile Reset, à essayer sur la borne. <strong>Règle d'une minute</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/113">#113</a>) : seules les Plays comptent (cumuls, Period Tables, Random Games, session stats, Challenges), le Rage Quit mis à part, à essayer sur la borne. <strong>Challenges rééquilibrés</strong> (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/119">#119</a>) : chaque modèle tire son objectif dans sa propre plage, à essayer sur la borne. <strong>Installation non invasive</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/120">#120</a>) : le pack vit dans <code>Scripts\ExpansionPack</code> et s'installe par une ligne d'import, borne basculée. <strong>Tour du monde et Secret Achievements</strong> livrés (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/124">#124</a>) : le tour d'une traite de « Toutes les tables », Rage Quit, Grand Return et Tour du monde en « ??? » avec leur indice, à essayer sur la borne. <strong>Profile Reset avec message</strong> livrée (tickets <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/128">#128</a> et <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/129">#129</a>) : un message avec « OK » dit si c'est fait, et « Tous les profils » les remet tous à zéro d'un coup, à essayer sur la borne. <strong>Barre de défilement de l'Achievement List</strong> livrée (ticket <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/130">#130</a>) : une barre fine et dorée dans la marge droite, qui glisse avec les lignes, à juger sur la borne. <strong>Confetti Shower</strong> livrée (spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/131">#131</a>) : une pluie de confettis avec le toast d'un Challenge réussi ou d'un Achievement Platinum, son au choix (<code>CONFETTI_SOUND_FILE</code>), à essayer sur la borne.</p>
+      <span class="next">Ensuite : <code>/grill-with-docs</code> des <a href="#new-secrets">Nouveaux Secret Achievements</a></span>
     </div>
   </section>
 
@@ -271,29 +271,6 @@
         </div>
       </li>
 
-      <li draggable="true" tabindex="0" class="item tr-play" id="challenge-confetti" data-track="play" data-rank="silver">
-        <div class="handle"><div class="num"></div><div class="move"><button type="button" data-move="-1" aria-label="Monter">▲</button><button type="button" data-move="1" aria-label="Descendre">▼</button></div></div>
-        <div class="emblem"></div>
-        <div class="content">
-          <div class="item-head">
-            <h3>Confetti Shower : un Challenge réussi ou un Platinum</h3>
-            <div class="tags"><span class="tag track">Jeu et succès</span><span class="tag">moyen</span><span class="tag">UI</span></div>
-          </div>
-          <p>Avec le toast d'un Challenge réussi ou d'un Achievement Platinum, une averse d'environ 8 s : 342 confettis en papier recto-verso lâchés du haut de la roue, devant tout (toast et menus compris). Le toast dit ce qui est fêté, les confettis le fêtent. Une seule averse même s'il y a plusieurs raisons ; elle disparaît net au lancement d'une table ou en mode attract.</p>
-          <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="done">spec</span><i>›</i><span class="done">tickets</span><i>›</i><span class="here">implement</span></div>
-          <div class="links">Spec <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/131">#131</a>, tickets <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/132">#132</a> et <a href="https://github.com/F3L1X79/PinballY-Expansion-Pack/issues/133">#133</a>. Flow Matt : <code>/implement</code>. Prototype validé sur la borne : branche <code>prototype/confetti-shower</code> (verdict dans son dernier commit). Pourra resservir pour un titre de Grand Maître (<a href="#table-mastery">Maîtrise des tables, n° <span data-ref="table-mastery"></span></a>) ou le <a href="#year-in-pinball">Year in Pinball (n° <span data-ref="year-in-pinball"></span>)</a></div>
-          <details>
-            <summary>Grillé et prototypé le 02/10/2026</summary>
-            <ul>
-              <li>Le mouvement est celui de react-confetti (réglages par défaut) : lâcher le long du bord haut sur une courbe en cloche (3,3 s), gravité, frottement de l'air, retournement ; ramené à la hauteur de l'écran. Environ 3,8 s de chute, 8 s en tout.</li>
-              <li>Chaque confetti : un papier incliné dessiné d'avance, bord clair et bord foncé, avec un dos plus foncé quand il se retourne (le plus fluide des deux essais). Couleurs : bleu ciel, violet, rose, vert, jaune, orange, magenta et l'or Steamball.</li>
-              <li><code>CONFETTI=false</code> dans <code>.env.local</code> coupe l'averse (activée par défaut) ; <code>CONFETTI_SOUND_FILE</code> donne le cri, vide par défaut, aucun son livré.</li>
-              <li>La roue seulement, pas le backglass. Guest compris.</li>
-              <li>Écartés au prototype : carrés plats et droits (laids), départ en bande étroite (un mur de confettis), mouvements maison (feuille morte, vitesses en cloche).</li>
-            </ul>
-          </details>
-        </div>
-      </li>
               <li>Quel bruitage, et d'où vient-il : un son libre de droits livré dans <code>assets/</code> (licence à vérifier avant la Distribution), ou un son de PinballY ?</li>
               <li>Réglable : confettis et son désactivables dans <code>.env.local</code>, comme le son des toasts (borne jouée la nuit) ?</li>
               <li>Sur quel écran : la roue seulement, ou aussi le backglass ?</li>
@@ -693,7 +670,6 @@
           <div class="ax row">Moyen</div>
           <div class="cell sweet">
             <a class="chip tr-play" href="#new-secrets"><b></b>Nouveaux secrets</a>
-            <a class="chip tr-play" href="#challenge-confetti"><b></b>Confettis</a>
           </div>
           <div class="cell">
             <a class="chip tr-profiles" href="#stats"><b></b>Stats des autres</a>

@@ -15,10 +15,10 @@
 // locked in cabinet.json with the previous one; each Profile, Guest
 // included, follows it in its own profile.json ("challenge"), where the
 // games that count are kept with their facts, progress being recomputed
-// from them. The game
-// that first reaches the target completes the Challenge: the Profile's
-// completed count goes up and a Challenge Toast is submitted. When a
-// Profile first shows up in a later week, the previous Challenge is judged
+// from them. The game that first reaches the target completes the
+// Challenge: the Profile's completed count goes up and a Challenge Toast is
+// submitted, celebrated with the Confetti Shower. When a Profile first
+// shows up in a later week, the previous Challenge is judged
 // once and the verdict kept in its history. It also selects the Challenge
 // Tables among the tables the active Profile can see, for the templates
 // where some tables move the Challenge forward, and reads a Profile's
@@ -428,6 +428,7 @@ export function createChallenges(host, profileStore, { tableOfTheDay, tableOfThe
             kind: TOAST_KIND.CHALLENGE,
             title: lang.challenges.titles[challenge.template](challenge.target, challenge.param),
             description: lang.challenges.toastDescription(completedCount),
+            celebrate: true,
             onShown() {},
         });
     }));

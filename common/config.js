@@ -19,6 +19,8 @@ const DEFAULTS = {
     achievementSoundFile: "",
     // ABSOLUTE path to the sound played with each Profile Greeting. Empty = no sound.
     profileGreetingSoundFile: "",
+    // ABSOLUTE path to the sound played once when a Confetti Shower starts. Empty = no sound.
+    confettiSoundFile: "",
     // Manufacturer name you gave fictional/community VPX tables in PinballY.
     // Used by the status line and the "Original Tables" filter.
     communityTablesManufacturer: "VPX Community",
@@ -35,8 +37,9 @@ const DEFAULTS = {
     achievementToastSeconds: 4,
     // Size of an Achievement Toast: 1 = the original card, 2 = twice as large (from 0.5 to 3).
     achievementToastScale: 1.0,
-    // false = no Confetti Shower with the toast of a Platinum Achievement
-    // (nothing is drawn ahead for it either), for a PC that struggles with it.
+    // false = no Confetti Shower with the toast of a completed Challenge or a
+    // Platinum Achievement (nothing is drawn ahead for it, no sound plays),
+    // for a PC that struggles with it.
     confetti: true,
     // true = every PinballY menu title shown without a translation is written
     // to the PinballY log (for a new PinballY version or a new language).

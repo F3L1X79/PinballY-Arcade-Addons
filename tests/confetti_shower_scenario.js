@@ -1,8 +1,9 @@
 // ============================================================
 // Confetti Shower tests' scenario: main.js on the fake globals, 26 Williams
 // tables of the 1990s, 25 played by Guest. Playing the last one unlocks
-// three Platinums at once (collection, Williams, 1990s). Reads the confetti
-// layers. Never loaded by PinballY.
+// three Platinums at once (collection, Williams, 1990s). Optionally, a
+// week's Challenge that one more Williams table completes. Reads the
+// confetti layers. Never loaded by PinballY.
 // ============================================================
 
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
@@ -10,10 +11,15 @@ import { CONFETTI_Z_INDEX } from "../common/confetti_shower.js";
 import config from "../common/config.js";
 
 const NOW = new Date(2026, 8, 23, 10, 0, 0);
-const GUEST_PROFILE_FILE = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles\\guest\\profile.json";
+const PROFILES_FOLDER = "C:\\PinballY\\Scripts\\ExpansionPack\\profiles";
+const GUEST_PROFILE_FILE = `${PROFILES_FOLDER}\\guest\\profile.json`;
+// The week of NOW: any Williams table played completes it.
+const WILLIAMS_CHALLENGE = { week: "2026-09-21", template: "manufacturerTables", param: "Williams", target: 1 };
 const TABLE_COUNT = 26;
 // Longer than a Play's minimum.
 const GAME_MS = 2 * 60 * 1000;
+// Drawing ahead and every toast of a batch, rise, hold and fade.
+export const ALL_TOASTS_MS = 30000;
 
 export const TABLES = Array.from({ length: TABLE_COUNT }, (_, index) => ({
     id: index + 1, configId: `Table ${index + 1} (Williams 1995)`, title: `Table ${index + 1}`,
@@ -21,23 +27,43 @@ export const TABLES = Array.from({ length: TABLE_COUNT }, (_, index) => ({
     playCount: 0, playTime: 0, lastPlayed: null, rating: -1, isHidden: false,
 }));
 export const LAST_TABLE = TABLES[TABLE_COUNT - 1];
+// Imported late: i18n reads the language the scenario sets.
+export async function challengeTitle() {
+    const { default: lang } = await import("../common/i18n.js");
+    return lang.challenges.titles.manufacturerTables(WILLIAMS_CHALLENGE.target, WILLIAMS_CHALLENGE.param);
+}
+// Already played: playing it again unlocks no Platinum.
+export const PLAYED_TABLE = TABLES[0];
 
 // The main-window layers of the Confetti Shower.
 export const confettiLayers = fake => fake.drawingLayers().filter(layer => layer.zIndex === CONFETTI_Z_INDEX);
 export const visibleConfettiCount = fake => confettiLayers(fake).filter(layer => layer.alpha > 0).length;
 export const showerStartLogs = fake => fake.logLines().filter(line => line.startsWith("[ConfettiShower] Started"));
 
-// confetti: the CONFETTI setting.
-export async function startScenario({ confetti = true } = {}) {
+// confetti, confettiSoundFile, achievementSoundFile: the settings;
+// soundFiles: the files that exist; challenge: with the Challenges Add-on
+// and the Williams Challenge.
+export async function startScenario({
+    confetti = true, confettiSoundFile = "", achievementSoundFile = "", soundFiles = [], challenge = false,
+} = {}) {
     const fake = createFakePinballYHost({ now: NOW, tables: TABLES });
     const plays = Object.fromEntries(TABLES.slice(0, TABLE_COUNT - 1).map(table =>
         [table.configId, { count: 1, seconds: 600, lastPlayed: "2026-09-01T20:00:00" }]));
     fake.addFile(GUEST_PROFILE_FILE, JSON.stringify({ version: 1, plays, notified: [] }));
+    if (challenge) {
+        fake.addFile(`${PROFILES_FOLDER}\\cabinet.json`, JSON.stringify({
+            version: 1, activeProfile: "guest", challenge: { current: WILLIAMS_CHALLENGE, previous: null },
+        }));
+    }
+    for (const file of soundFiles) fake.addFile(file);
     // Never uninstalled: node --test runs each test file in its own process.
     fake.installGlobals();
-    for (const key of Object.keys(config.addOns)) config.addOns[key] = key === "achievements";
+    const addOns = challenge ? ["achievements", "challenges"] : ["achievements"];
+    for (const key of Object.keys(config.addOns)) config.addOns[key] = addOns.includes(key);
     config.language = "en";
     config.confetti = confetti;
+    config.confettiSoundFile = confettiSoundFile;
+    config.achievementSoundFile = achievementSoundFile;
 
     await import("../main.js");
     await settle();
@@ -58,11 +84,15 @@ export function advanceUntil(fake, { stepMs, maxMs }, onStep) {
 // Platinum Achievements are checked once the deferred check has run.
 // duringGame runs while the game is on, after its time has passed.
 export async function playLastTable(fake, duringGame = () => {}) {
-    fake.playGame(LAST_TABLE);
-    fake.gameStarted(LAST_TABLE);
+    await playTable(fake, LAST_TABLE, duringGame);
+}
+
+export async function playTable(fake, table, duringGame = () => {}) {
+    fake.playGame(table);
+    fake.gameStarted(table);
     await settle();
     fake.advanceTime(GAME_MS);
     duringGame();
-    fake.gameOver(LAST_TABLE);
+    fake.gameOver(table);
     await settle();
 }

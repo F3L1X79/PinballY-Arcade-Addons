@@ -41,7 +41,7 @@ Chaque jour une table jamais jouée ou oubliée, chaque semaine une table au has
 
 <img src="docs/images/challenges.png" alt="La carte du Défi de la semaine sous le badge du Profil" width="376">
 
-Chaque lundi arrive un nouveau Défi, le même pour toute la maison : cinq tables Stern différentes, trois tables jamais jouées, une heure sur une même table… Sa carte suit votre progression sur l'écran de la roue. **Tables du défi**, juste sous « Toutes les tables » dans le menu principal, ne garde que les tables qui le font avancer.
+Chaque lundi arrive un nouveau Défi, le même pour toute la maison : cinq tables Stern différentes, trois tables jamais jouées, une heure sur une même table… Sa carte suit votre progression sur l'écran de la roue. **Tables du défi**, juste sous « Toutes les tables » dans le menu principal, ne garde que les tables qui le font avancer. Le réussir fait pleuvoir des confettis sur tout l'écran de la roue.
 
 ### Succès
 
@@ -107,9 +107,10 @@ ADD_ON_CLOCK=false
 | `LAUNCH_SOUND_FILE` | *(aucun)* | Chemin complet d'un son joué au lancement d'une table. |
 | `ACHIEVEMENT_SOUND_FILE` | *(aucun)* | Son joué avec chaque annonce de Succès. |
 | `PROFILE_GREETING_SOUND_FILE` | *(aucun)* | Son joué quand un joueur est accueilli. |
+| `CONFETTI_SOUND_FILE` | *(aucun)* | Son joué une fois au début d'une pluie de confettis. |
 | `ACHIEVEMENT_TOAST_SECONDS` | `4` | Secondes d'affichage d'une annonce de Succès (60 au plus). |
 | `ACHIEVEMENT_TOAST_SCALE` | `1.0` | Taille de l'annonce, de `0.5` à `3` : à augmenter sur un grand écran. |
-| `CONFETTI` | `true` | `false` coupe la pluie de confettis qui accompagne l'annonce d'un Succès Platine, si votre PC peine. |
+| `CONFETTI` | `true` | `false` coupe la pluie de confettis qui accompagne l'annonce d'un Défi réussi ou d'un Succès Platine, si votre PC peine. |
 | `SKIP_RANDOM_GAME_ANIMATION` | `false` | `true` saute la roue de la fortune et lance la table au hasard aussitôt. |
 | `ASK_TO_RATE_AFTER_MINUTES_PLAYED` | `60` | Minutes jouées sur une table avant qu'on vous demande de la noter. |
 | `LOG_UNTRANSLATED_MENU_TITLES` | `false` | `true` écrit chaque titre de menu PinballY non traduit dans `PinballY.log`. |

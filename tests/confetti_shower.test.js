@@ -3,7 +3,8 @@
 // confetti for the Gold Achievements announced at startup, none while a
 // game runs, then a single shower in front of everything with the toasts
 // of the three Platinum Achievements the game unlocked, gone after about
-// 8 s with no frame timer left running, and never on the backglass.
+// 8 s with no frame timer left running, never on the backglass, and with
+// no sound while CONFETTI_SOUND_FILE is empty.
 // ============================================================
 
 import { test } from "node:test";
@@ -52,6 +53,7 @@ test("a Platinum Achievement's toast brings a single Confetti Shower, gone after
 
     assert.ok(toastDrawings(fake).length - startupToastCount >= 3, "the three Platinum toasts showed");
     assert.equal(showerStartLogs(fake).length, 1, "one shower for several Platinum toasts");
+    assert.deepEqual(fake.soundsPlayed(), [], "no sound with an empty CONFETTI_SOUND_FILE");
     assert.deepEqual(fake.logLines().filter(line => line.includes("ERROR")), [],
         "no error, so no draw on the backglass, which the fake host does not offer");
 });
