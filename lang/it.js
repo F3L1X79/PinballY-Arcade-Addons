@@ -468,5 +468,7 @@ export default {
         // TODO: translation pass
         levelNames: ["Rookie", "Apprentice", "Regular", "Adept", "Specialist", "Ace", "Virtuoso", "Prodigy", "Legend", "Pinball Wizard"],
         toDiscover: "To discover",
+        toastHeader: "Table Mastery",
+        toastTitle: (name, level) => `${name} (${level})`,
     },
 };

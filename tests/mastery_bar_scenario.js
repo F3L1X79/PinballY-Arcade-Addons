@@ -3,11 +3,13 @@
 // the chosen Add-ons and Profiles, each Profile's earlier Plays seeded in
 // its profile.json. Reads what the Mastery Bar shows: its visible layers'
 // texts (the level's name, its number, "To discover"), how full its bar
-// is, and where it sits. Never loaded by PinballY.
+// is, whether it is lit and where it sits; and the Mastery Toasts and
+// Confetti Shower starts. Never loaded by PinballY.
 // ============================================================
 
 import { createFakePinballYHost, settle } from "./fake_pinbally_host.js";
 import { MASTERY_BAR_Z_INDEX } from "../common/mastery_bar.js";
+import { toastDrawings } from "./achievement_toast_reader.js";
 import config from "../common/config.js";
 
 export const NOW = new Date(2026, 8, 23, 10, 0, 0);
@@ -89,6 +91,14 @@ export function shownTop(fake) {
     if (positions.some(({ x, y, align }) => x !== 0 || align !== "top right" || y !== positions[0].y)) return null;
     return Math.round(-positions[0].y * REFERENCE_HEIGHT);
 }
+
+// Every Mastery Toast drawn so far, its texts joined: number | header | title | description.
+export const masteryToasts = fake => toastDrawings(fake)
+    .map(drawing => drawing.texts.join(" | "))
+    .filter(texts => texts.includes("TABLE MASTERY"));
+export const showerStarts = fake => fake.logLines().filter(line => line.startsWith("[ConfettiShower] Started")).length;
+// Longer than a toast's whole life (rise, hold, fade).
+export const ONE_TOAST_MS = 6000;
 
 export const errorLines = fake => fake.logLines().filter(line => line.includes("ERROR"));
 

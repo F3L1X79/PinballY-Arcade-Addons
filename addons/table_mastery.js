@@ -6,7 +6,8 @@
 // picker is on. Follows "gameselect", hides on "gamestarted", comes back
 // on "wheelmode" and follows Profile switches. After a Play that moved a
 // table's bar forward (onPlay, ADR 0008), lights it up once on the return
-// to the wheel.
+// to the wheel; after one that reached a new Mastery Level, submits a
+// Mastery Toast for the highest one, with the Confetti Shower at level 10.
 // ============================================================
 
 import { createPinballYHost } from "../common/pinbally_host.js";
@@ -15,7 +16,9 @@ import { getDrawingAhead } from "../common/drawing_ahead.js";
 import { getChallenges } from "../common/challenge.js";
 import { BADGE_HEIGHT, CHALLENGE_CARD_CANVAS_HEIGHT } from "../common/challenge_card.js";
 import { createMasteryBar } from "../common/mastery_bar.js";
-import { masteryOf, movedByPlay } from "../common/table_mastery.js";
+import { masteryOf, movedByPlay, levelReachedByPlay, metalOf, MAX_MASTERY_LEVEL } from "../common/table_mastery.js";
+import { getAchievementToasts, TOAST_KIND } from "../common/achievement_toast.js";
+import lang from "../common/i18n.js";
 import { safeHandler } from "../common/safe_handler.js";
 import config from "../common/config.js";
 
@@ -32,6 +35,9 @@ export default function init() {
     const cardShown = () => withChallenges && getChallenges().getActiveView() !== null;
     const topOf = () => (underBadge ? BADGE_HEIGHT : 0) + (cardShown() ? CHALLENGE_CARD_CANVAS_HEIGHT : 0);
     const bar = createMasteryBar(host, getDrawingAhead(), { topOf });
+    // Got at startup, so the Confetti Shower it starts at level 10 is drawn
+    // ahead by then.
+    const toasts = getAchievementToasts();
     let gameRunning = false;
     // The Play that moved its table's bar forward, until the next return
     // to the wheel: { profileName, configId }.
@@ -53,16 +59,47 @@ export default function init() {
         const moved = movedTable;
         movedTable = null;
         const game = host.getCurrentTable();
-        if (moved && game && game.configId === moved.configId && store.getActiveProfile().name === moved.profileName) {
-            bar.lightUp(masteryOf(store.getPlay(game.configId)));
+        // A Profile Reset since the Play leaves no mastery to light up.
+        const mastery = game && masteryOf(store.getPlay(game.configId));
+        if (moved && mastery && game.configId === moved.configId && store.getActiveProfile().name === moved.profileName) {
+            bar.lightUp(mastery);
         } else {
             showTable(game);
         }
     }
 
+    // Profile Resets so far, by Profile name in lower case (Profile names
+    // ignore case): a toast submitted before its Profile's reset is stale.
+    const resetCounts = new Map();
+    const resetCountOf = profileKey => resetCounts.get(profileKey) || 0;
+    store.onUpdate(safeHandler(SCRIPT_NAME, (profileName, { isReset }) => {
+        if (isReset) resetCounts.set(profileName.toLowerCase(), resetCountOf(profileName.toLowerCase()) + 1);
+    }));
+
+    function announce(profileName, configId, level) {
+        const profileKey = profileName.toLowerCase();
+        const resetCount = resetCountOf(profileKey);
+        const table = host.getGameInfo(configId);
+        const TEXT = lang.tableMastery;
+        toasts.submit({
+            kind: TOAST_KIND.MASTERY,
+            accent: metalOf(level),
+            tileNumber: level,
+            title: TEXT.toastTitle(TEXT.levelNames[level - 1], level),
+            description: table ? table.title : configId,
+            celebrate: level === MAX_MASTERY_LEVEL,
+            onShown() {},
+            isStale: () => resetCountOf(profileKey) !== resetCount
+                || store.getActiveProfile().name.toLowerCase() !== profileKey,
+        });
+    }
+
     // The totals already count the Play when it is announced.
     store.onPlay(safeHandler(SCRIPT_NAME, ({ profileName, configId, seconds }) => {
-        if (movedByPlay(store.getPlaysOf(profileName)[configId], seconds)) movedTable = { profileName, configId };
+        const play = store.getPlaysOf(profileName)[configId];
+        if (movedByPlay(play, seconds)) movedTable = { profileName, configId };
+        const level = levelReachedByPlay(play, seconds);
+        if (level !== null) announce(profileName, configId, level);
     }));
 
     // Fires on every wheel move, the player's and attract mode's alike.

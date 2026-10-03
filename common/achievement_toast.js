@@ -9,8 +9,10 @@
 // waiting ones start on "wheelmode". The hold duration and an optional
 // sound played with each card and the card's scale come from the player
 // settings. A Challenge Toast shares the queue and the card, with its own
-// accent colour, header and target icon instead of the trophy. A
-// celebrated toast starts the Confetti Shower when it starts.
+// accent colour, header and target icon instead of the trophy; a Mastery
+// Toast its own header, the reached level's metal as its accent and the
+// level's number drawn in its tile. A celebrated toast starts the
+// Confetti Shower when it starts.
 // ============================================================
 
 import lang from "./i18n.js";
@@ -59,6 +61,8 @@ const MIN_TOAST_SCALE = 0.5;
 const MAX_TOAST_SCALE = 3;
 const GLOW_MAX_ALPHA = 0x38;
 const FONT = STEAMBALL_FONTS.body;
+// The number drawn in place of an icon, as a share of the tile.
+const TILE_NUMBER_SHARE = 0.5;
 const COLORS = Object.freeze({
     gradientTop: STEAMBALL_COLORS.panelTop,
     gradientBottom: STEAMBALL_COLORS.panel,
@@ -69,7 +73,7 @@ const COLORS = Object.freeze({
     transparent: STEAMBALL_COLORS.transparent,
 });
 
-export const TOAST_KIND = Object.freeze({ ACHIEVEMENT: "achievement", CHALLENGE: "challenge" });
+export const TOAST_KIND = Object.freeze({ ACHIEVEMENT: "achievement", CHALLENGE: "challenge", MASTERY: "mastery" });
 
 // Icons in the pack's assets folder, drawn by absolute path: drawImage
 // resolves relative paths from the PinballY folder, not the pack's.
@@ -84,6 +88,10 @@ const KIND_LOOKS = Object.freeze({
         accent: STEAMBALL_COLORS.challengeAccent,
         iconFile: "assets\\challenge_target.png",
         header: () => lang.challenges.toastHeader,
+    },
+    // No icon: each toast brings its accent and the number its tile shows.
+    [TOAST_KIND.MASTERY]: {
+        header: () => lang.tableMastery.toastHeader,
     },
 });
 
@@ -107,8 +115,9 @@ function fillGradient(dc, x, y, width, height, topColor, bottomColor) {
 const scaleLook = scale => Object.freeze(Object.fromEntries(
     Object.entries(BASE_LOOK).map(([name, size]) => [name, Math.round(size * scale)])));
 
-// Dark tile with an accent frame, a soft accent glow made of fading frames, and the icon.
-function drawTile(dc, look, x, y, accent, iconPath) {
+// Dark tile with an accent frame, a soft accent glow made of fading
+// frames, and the icon, or else the number in the accent.
+function drawTile(host, dc, look, x, y, accent, { iconPath, number }) {
     const { tileSize, glowRings, iconInset } = look;
     const accentRgb = accent & 0xFFFFFF;
     for (let ring = glowRings; ring >= 1; ring--) {
@@ -117,7 +126,17 @@ function drawTile(dc, look, x, y, accent, iconPath) {
     }
     dc.fillRect(x, y, tileSize, tileSize, COLORS.tile);
     dc.frameRect(x, y, tileSize, tileSize, look.tileFrame, accent);
-    dc.drawImage(iconPath, x + iconInset, y + iconInset, tileSize - 2 * iconInset, tileSize - 2 * iconInset);
+    if (iconPath) {
+        dc.drawImage(iconPath, x + iconInset, y + iconInset, tileSize - 2 * iconInset, tileSize - 2 * iconInset);
+        return;
+    }
+    const text = host.createStyledText({
+        textAlign: "center",
+        textStyle: { font: STEAMBALL_FONTS.display, size: Math.round(tileSize * TILE_NUMBER_SHARE), weight: 700, color: accent },
+    });
+    text.add(String(number));
+    const height = text.measure(tileSize).height;
+    text.draw(dc, { x, y: y + (tileSize - height) / 2, width: tileSize, height });
 }
 
 // Draws the card flush with the bottom-right corner of the layer's layout
@@ -127,11 +146,12 @@ function drawTile(dc, look, x, y, accent, iconPath) {
 function drawCard(host, dc, look, toast, projectFolder) {
     const { cardWidth, edgeMargin, accentBarWidth, tileSize, tileGap, smallFont } = look;
     const kindLook = KIND_LOOKS[toast.kind || TOAST_KIND.ACHIEVEMENT];
+    const accent = toast.accent || kindLook.accent;
     const size = dc.getSize();
     const textLeft = accentBarWidth + tileGap + tileSize + tileGap;
     const textWidth = cardWidth - textLeft - look.paddingRight;
     const text = host.createStyledText({ textStyle: { font: FONT, size: smallFont, color: COLORS.description } });
-    text.add({ size: smallFont, weight: 600, color: kindLook.accent, text: kindLook.header().toLocaleUpperCase() + "\n" });
+    text.add({ size: smallFont, weight: 600, color: accent, text: kindLook.header().toLocaleUpperCase() + "\n" });
     text.add({ size: look.titleFont, weight: 600, color: COLORS.title, text: toast.title + "\n" });
     text.add(toast.description);
     const textHeight = text.measure(textWidth).height;
@@ -141,9 +161,10 @@ function drawCard(host, dc, look, toast, projectFolder) {
 
     fillGradient(dc, x, y, cardWidth, height, COLORS.gradientTop, COLORS.gradientBottom);
     dc.frameRect(x, y, cardWidth, height, look.border, COLORS.border);
-    dc.fillRect(x, y, accentBarWidth, height, kindLook.accent);
-    drawTile(dc, look, x + accentBarWidth + tileGap, y + (height - tileSize) / 2,
-        kindLook.accent, `${projectFolder}\\${kindLook.iconFile}`);
+    dc.fillRect(x, y, accentBarWidth, height, accent);
+    drawTile(host, dc, look, x + accentBarWidth + tileGap, y + (height - tileSize) / 2, accent, kindLook.iconFile
+        ? { iconPath: `${projectFolder}\\${kindLook.iconFile}` }
+        : { number: toast.tileNumber });
     text.draw(dc, { x: x + textLeft, y: y + (height - textHeight) / 2, width: textWidth, height: textHeight });
     return { height, layoutHeight: size.height };
 }
@@ -278,11 +299,12 @@ export function createAchievementToasts(host, {
     // Fires on every return to the wheel: starts the toasts that waited for a game.
     host.on("wheelmode", safeShowNext);
 
-    // toast: { kind, title, description, onShown, isStale, celebrate }, kind
-    // a TOAST_KIND (an Achievement when missing), onShown running when the
-    // toast starts, isStale (optional) dropping it unshown when it returns
-    // true at its turn, celebrate (optional) starting the Confetti Shower
-    // with it.
+    // toast: { kind, title, description, onShown, isStale, celebrate,
+    // accent, tileNumber }, kind a TOAST_KIND (an Achievement when
+    // missing), onShown running when the toast starts, isStale (optional)
+    // dropping it unshown when it returns true at its turn, celebrate
+    // (optional) starting the Confetti Shower with it; a Mastery Toast
+    // gives its accent and the number its tile shows.
     function submit(toast) {
         waiting.push(toast);
         safeShowNext();

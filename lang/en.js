@@ -349,11 +349,14 @@ export default {
         toastDescription: (count) => (count === 1 ? "First Challenge completed" : `${count} Challenges completed`),
     },
 
-    // The Mastery Bar, under the Challenge Card (see common/mastery_bar.js).
+    // The Mastery Bar, under the Challenge Card (see common/mastery_bar.js), and the Mastery Toast.
     tableMastery: {
         // The Mastery Levels' names, from level 1 to 10.
         levelNames: ["Rookie", "Apprentice", "Regular", "Adept", "Specialist", "Ace", "Virtuoso", "Prodigy", "Legend", "Pinball Wizard"],
         // A table the active Profile never played.
         toDiscover: "To discover",
+        // The Mastery Toast, when a Play reaches a new Mastery Level.
+        toastHeader: "Table Mastery",
+        toastTitle: (name, level) => `${name} (${level})`,
     },
 };

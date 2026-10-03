@@ -471,5 +471,7 @@ export default {
     tableMastery: {
         levelNames: ["Novice", "Élève", "Adepte", "Disciple", "Spécialiste", "As", "Virtuose", "Prodige", "Légende", "Mage du flipper"],
         toDiscover: "À découvrir",
+        toastHeader: "Maîtrise",
+        toastTitle: (name, level) => `${name} (${level})`,
     },
 };

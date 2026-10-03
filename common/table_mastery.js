@@ -1,7 +1,8 @@
 // ============================================================
 // Table Mastery: the Mastery Level a Profile has reached on a table,
 // computed from that Profile's table totals (the time and number of its
-// Plays, ADR 0008), and the metal each level shows in. No data of its own
+// Plays, ADR 0008), what a Play changed (a step further, a new level),
+// and the metal each level shows in. No data of its own
 // and no side effect: a Profile Reset starts mastery over with the totals.
 // ============================================================
 
@@ -30,12 +31,22 @@ export function masteryOf(play) {
     return { level, step: Math.floor(MASTERY_STEPS * (play.seconds - from) / (to - from)) };
 }
 
-// Whether a Play of these seconds, already in the table's totals, moved
-// its bar forward: to a higher level, or a higher step on the same one.
+// The mastery before a Play of these seconds, already in the table's totals.
+const beforePlay = (play, seconds) => masteryOf({ count: play.count - 1, seconds: play.seconds - seconds });
+
+// Whether that Play moved the bar forward: to a higher level, or a higher
+// step on the same one.
 export function movedByPlay(play, seconds) {
-    const before = masteryOf({ count: play.count - 1, seconds: play.seconds - seconds });
+    const before = beforePlay(play, seconds);
     const after = masteryOf(play);
     return !before || after.level > before.level || (after.level === before.level && after.step > before.step);
+}
+
+// The highest Mastery Level that Play reached, null when it reached none.
+export function levelReachedByPlay(play, seconds) {
+    const before = beforePlay(play, seconds);
+    const { level } = masteryOf(play);
+    return level > (before ? before.level : 0) ? level : null;
 }
 
 // Bronze 1-3, silver 4-6, gold 7-9, platinum 10.
