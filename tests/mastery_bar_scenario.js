@@ -62,9 +62,9 @@ export const masteryLayers = fake => fake.drawingLayers().filter(isMasteryLayer)
 const shownLayers = fake => masteryLayers(fake).filter(layer => layer.alpha > 0);
 const shownOn = (fake, zIndex) => shownLayers(fake).filter(layer => layer.zIndex === zIndex);
 
-// Everything the Mastery Bar shows, null when it is hidden: the head of
-// its panel, the number in its square (null without one) and how full its
-// bar is, from 0 to 1.
+// Everything the resting Mastery Bar shows, null when it is hidden: the
+// head of its panel, the number in its square (null without one) and how
+// full its bar is, from 0 to 1. Not while it is lit.
 export function shownMastery(fake) {
     if (shownLayers(fake).length === 0) return null;
     const [panel] = shownOn(fake, MASTERY_BAR_Z_INDEX.panel);
@@ -79,6 +79,9 @@ export function shownMastery(fake) {
     };
 }
 
+// Whether the lit state shows over the bar.
+export const isLit = fake => shownOn(fake, MASTERY_BAR_Z_INDEX.lit).length > 0;
+
 // How far below the top of the window the bar's layers sit, in reference
 // px; null when they don't all sit at the top right at the same height.
 export function shownTop(fake) {
@@ -89,14 +92,19 @@ export function shownTop(fake) {
 
 export const errorLines = fake => fake.logLines().filter(line => line.includes("ERROR"));
 
-// A whole game on this table, back on the wheel when it ends.
-export async function play(fake, game, seconds) {
+// How long the bar stays lit after a Play that moved it.
+export const LIT_MS = 1200;
+
+// A whole game on this table, back on the wheel when it ends, and once
+// the bar is resting again unless watchLight.
+export async function play(fake, game, seconds, { watchLight = false } = {}) {
     fake.playGame(game);
     fake.gameStarted(game);
     await settle();
     fake.advanceTime(seconds * 1000);
     fake.gameOver(game);
     await settle();
+    if (!watchLight) fake.advanceTime(LIT_MS);
 }
 
 // The player moves the wheel onto this table.

@@ -6,21 +6,26 @@
 // bar for a table never played. Every state is drawn ahead on its own
 // layer through the Drawing ahead module (ADR 0010), then only shown or
 // hidden; a state still missing is drawn on the spot. Its place (under
-// the Challenge Card or in its place) is asked for on each show.
+// the Challenge Card or in its place) is asked for on each show. Lights
+// up on demand for about 1.2 s, drawn on the spot on a layer of its own.
 // ============================================================
 
 import lang from "./i18n.js";
 import { STEAMBALL_COLORS, STEAMBALL_FONTS } from "./steamball_palette.js";
 import { CHALLENGE_CARD_Z_INDEX, CARD_REFERENCE_HEIGHT } from "./challenge_card.js";
-import { MASTERY_STEPS, MAX_MASTERY_LEVEL, METAL_TIER_COUNT, tierOf, metalOf, tierMetalOf, withAlpha } from "./table_mastery.js";
+import { MASTERY_STEPS, MAX_MASTERY_LEVEL, METAL_TIER_COUNT, tierOf, metalOf, tierMetalOf, withAlpha, mix, WHITE } from "./table_mastery.js";
+import { safeHandler } from "./safe_handler.js";
+
+const SCRIPT_NAME = "MasteryBar";
 
 // Just above the Challenge Card, under popups and menus. One plane each,
-// panel under bar under square: layers on one plane overlap in creation
-// order, which the drawing ahead doesn't keep.
+// panel under bar under square under the lit state: layers on one plane
+// overlap in creation order, which the drawing ahead doesn't keep.
 export const MASTERY_BAR_Z_INDEX = Object.freeze({
     panel: CHALLENGE_CARD_Z_INDEX + 1,
     bar: CHALLENGE_CARD_Z_INDEX + 2,
     square: CHALLENGE_CARD_Z_INDEX + 3,
+    lit: CHALLENGE_CARD_Z_INDEX + 4,
 });
 // On the Challenge Card's 1920 px reference, with its width and right
 // edge; the canvas leaves room for the widest halo.
@@ -31,6 +36,8 @@ const BAR = Object.freeze({ x: 24, y: 48, width: 262, height: 10 });
 const SQUARE = Object.freeze({ x: 312, y: 22, size: 48, border: 2, thickBorderFrom: 7, bandShare: 0.45, numberShare: 0.55 });
 // From level 1 to 10: 6 to 18 rings, peak alpha 0x60 to 0xF0.
 const HALO = Object.freeze({ minRings: 6, extraRings: 12, minPeak: 0x60, extraPeak: 0x90 });
+// Like the Challenge Card's highlight.
+const LIT = Object.freeze({ ms: 1200, glowRings: 8, glowMaxAlpha: 0x60, fillLightening: 0.5 });
 const NEVER_PLAYED = 0;
 
 const panelKey = level => `panel:${level}`;
@@ -57,10 +64,28 @@ function drawPanel(host, dc, level) {
 }
 
 // tier: null for the empty bar.
-function drawBar(dc, tier, step) {
+function drawBar(dc, tier, step, lit = false) {
     dc.fillRect(BAR.x, BAR.y, BAR.width, BAR.height, STEAMBALL_COLORS.track);
     const filled = Math.round(BAR.width * step / MASTERY_STEPS);
-    if (tier !== null && filled > 0) dc.fillRect(BAR.x, BAR.y, filled, BAR.height, tierMetalOf(tier));
+    if (tier === null || filled === 0) return;
+    const metal = tierMetalOf(tier);
+    dc.fillRect(BAR.x, BAR.y, filled, BAR.height, lit ? mix(metal, WHITE, LIT.fillLightening) : metal);
+}
+
+// Fading one-pixel frames around the panel, widening outwards.
+function drawPanelGlow(dc, color) {
+    for (let ring = LIT.glowRings; ring >= 1; ring--) {
+        const alpha = Math.round(LIT.glowMaxAlpha * (1 - ring / (LIT.glowRings + 1)));
+        dc.frameRect(PANEL.x - ring, PANEL.y - ring, PANEL.width + 2 * ring, PANEL.height + 2 * ring, 1, withAlpha(color, alpha));
+    }
+}
+
+// The whole bar lit up, in place of the resting one.
+function drawLit(host, dc, { level, step }) {
+    drawPanelGlow(dc, metalOf(level));
+    drawPanel(host, dc, level);
+    drawBar(dc, tierOf(level), step, true);
+    drawSquare(host, dc, level);
 }
 
 // A see-through halo in the metal, fading outwards, wider and stronger
@@ -116,6 +141,9 @@ export function createMasteryBar(host, drawingAhead, { topOf }) {
     // Drawn layers by state key.
     const layers = new Map();
     let shown = [];
+    // Created on the first light-up: most sessions start with no Play.
+    let litLayer = null;
+    let litTimer = null;
 
     function place(layer) {
         layer.setScale({ ySpan: CANVAS.height / CARD_REFERENCE_HEIGHT });
@@ -142,7 +170,17 @@ export function createMasteryBar(host, drawingAhead, { topOf }) {
 
     const layerOf = key => layers.get(key) || drawState(statesByKey.get(key));
 
+    // The resting bar back in place of the lit one.
+    function putOut() {
+        if (litTimer === null) return;
+        host.clearTimeout(litTimer);
+        litTimer = null;
+        litLayer.alpha = 0;
+        for (const layer of shown) layer.alpha = 1;
+    }
+
     function hide() {
+        putOut();
         for (const layer of shown) layer.alpha = 0;
         shown = [];
     }
@@ -160,5 +198,19 @@ export function createMasteryBar(host, drawingAhead, { topOf }) {
         }
     }
 
-    return { show, hide };
+    // Shows this mastery lit up for a moment, then the resting bar.
+    function lightUp(mastery) {
+        show(mastery);
+        if (!litLayer) litLayer = host.createDrawingLayer(MASTERY_BAR_Z_INDEX.lit);
+        place(litLayer);
+        litLayer.clear(STEAMBALL_COLORS.transparent);
+        litLayer.draw(dc => drawLit(host, dc, mastery), CANVAS.width, CANVAS.height);
+        // The lit layer holds the whole bar: the resting one under it would
+        // double its translucent panel and its halo.
+        for (const layer of shown) layer.alpha = 0;
+        litLayer.alpha = 1;
+        litTimer = host.setTimeout(safeHandler(SCRIPT_NAME, putOut), LIT.ms);
+    }
+
+    return { show, hide, lightUp };
 }

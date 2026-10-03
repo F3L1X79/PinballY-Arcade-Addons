@@ -16,7 +16,7 @@ export const MAX_MASTERY_LEVEL = LEVEL_SECONDS.length;
 const LEVELS_PER_TIER = 3;
 const TIERS = [ACHIEVEMENT_RANK.BRONZE, ACHIEVEMENT_RANK.SILVER, ACHIEVEMENT_RANK.GOLD, ACHIEVEMENT_RANK.PLATINUM];
 export const METAL_TIER_COUNT = TIERS.length;
-const WHITE = 0xFFFFFFFF;
+export const WHITE = 0xFFFFFFFF;
 
 // { level, step } from a table's totals, step being the fill toward the
 // next level (full at level 10); null for a table never played.
@@ -30,13 +30,21 @@ export function masteryOf(play) {
     return { level, step: Math.floor(MASTERY_STEPS * (play.seconds - from) / (to - from)) };
 }
 
+// Whether a Play of these seconds, already in the table's totals, moved
+// its bar forward: to a higher level, or a higher step on the same one.
+export function movedByPlay(play, seconds) {
+    const before = masteryOf({ count: play.count - 1, seconds: play.seconds - seconds });
+    const after = masteryOf(play);
+    return !before || after.level > before.level || (after.level === before.level && after.step > before.step);
+}
+
 // Bronze 1-3, silver 4-6, gold 7-9, platinum 10.
 export const tierOf = level => Math.min(METAL_TIER_COUNT - 1, Math.floor((level - 1) / LEVELS_PER_TIER));
 
 function channel(color, shift) { return (color >>> shift) & 0xFF; }
 
 // Opaque ARGB, from color toward other by t (0 to 1).
-function mix(color, other, t) {
+export function mix(color, other, t) {
     const part = shift => Math.round(channel(color, shift) + (channel(other, shift) - channel(color, shift)) * t);
     return 0xFF * 2 ** 24 + (part(16) << 16) + (part(8) << 8) + part(0);
 }
