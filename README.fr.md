@@ -54,7 +54,7 @@ Des dizaines de Succès, du Bronze au Platine :
 - Défis ;
 - tour complet de la roue…
 
-Chacun est annoncé par un petit encart dans un coin, sans interrompre vos parties. « Succès personnels » montre où vous en êtes de chaque Succès manquant, et quels avatars de la maison l'ont déjà. Quelques-uns restent secrets : vous ne voyez que « ??? » et un indice, jusqu'à ce que vous tombiez dessus.
+Chacun est annoncé par un petit encart dans un coin, sans interrompre vos parties ; un Succès Platine fait aussi pleuvoir des confettis sur tout l'écran de la roue. « Succès personnels » montre où vous en êtes de chaque Succès manquant, et quels avatars de la maison l'ont déjà. Quelques-uns restent secrets : vous ne voyez que « ??? » et un indice, jusqu'à ce que vous tombiez dessus.
 
 ### Pour le propriétaire de la borne
 
@@ -109,6 +109,7 @@ ADD_ON_CLOCK=false
 | `PROFILE_GREETING_SOUND_FILE` | *(aucun)* | Son joué quand un joueur est accueilli. |
 | `ACHIEVEMENT_TOAST_SECONDS` | `4` | Secondes d'affichage d'une annonce de Succès (60 au plus). |
 | `ACHIEVEMENT_TOAST_SCALE` | `1.0` | Taille de l'annonce, de `0.5` à `3` : à augmenter sur un grand écran. |
+| `CONFETTI` | `true` | `false` coupe la pluie de confettis qui accompagne l'annonce d'un Succès Platine, si votre PC peine. |
 | `SKIP_RANDOM_GAME_ANIMATION` | `false` | `true` saute la roue de la fortune et lance la table au hasard aussitôt. |
 | `ASK_TO_RATE_AFTER_MINUTES_PLAYED` | `60` | Minutes jouées sur une table avant qu'on vous demande de la noter. |
 | `LOG_UNTRANSLATED_MENU_TITLES` | `false` | `true` écrit chaque titre de menu PinballY non traduit dans `PinballY.log`. |

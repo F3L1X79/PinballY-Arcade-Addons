@@ -4,8 +4,8 @@
 // switch and when the World Tour tracker, started here, completes a tour,
 // and hands each newly unlocked one to the Achievement Toast
 // module, which announces it with a card in the bottom-right corner once no
-// game is running; an Achievement becomes Notified, for the Profile that
-// unlocked it, when its toast starts. A Profile Reset forgets what was
+// game is running, with a Confetti Shower for a Platinum; an Achievement
+// becomes Notified, for the Profile that unlocked it, when its toast starts. A Profile Reset forgets what was
 // announced to that Profile and drops its toasts still waiting.
 // Also adds the Achievement List entry to the main menu, right after "Play",
 // and the Profile Stats entry right after it. The Challenges family and the
@@ -13,7 +13,7 @@
 // Challenges Add-on is enabled.
 // ============================================================
 
-import { evaluateAchievements, markNotified } from "../common/achievements.js";
+import { evaluateAchievements, markNotified, ACHIEVEMENT_RANK } from "../common/achievements.js";
 import { buildDayManufacturersAchievements } from "../achievements/day_manufacturers.js";
 import { buildManufacturerCompletionAchievements } from "../achievements/manufacturer_completion.js";
 import { buildCollectionCompletionAchievements } from "../achievements/collection_completion.js";
@@ -115,6 +115,7 @@ export default function init() {
             achievementToasts.submit({
                 title: achievement.getTitle(),
                 description: achievement.getDescription(),
+                celebrate: achievement.rank === ACHIEVEMENT_RANK.PLATINUM,
                 onShown: () => markNotified(profileStore, profileName, achievement.id),
                 isStale: () => resetCountOf(profileKey) !== resetCount,
             });

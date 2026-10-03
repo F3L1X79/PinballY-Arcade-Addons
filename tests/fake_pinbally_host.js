@@ -9,7 +9,7 @@
 // to the wheel selection and a filter's games, enter and leave attract
 // mode, open the Exit menu
 // or main menu with their native items, pick menu items, play launched games, and inspect shown menus, launches, written settings keys,
-// drawing layers, what was drawn, sounds played (and on which player), the
+// drawing layers, what was drawn, running intervals, sounds played (and on which player), the
 // backglass window shown or hidden, and the lower status line (which can
 // start with the player's own messages, and get a temporary one as
 // PinballY's show() puts it); script filters are shown with selectFilter().
@@ -646,6 +646,8 @@ export function createFakePinballYHost({
         // Moves the date without running the timers.
         setNow(date) { nowMs = date.getTime(); },
         advanceTime,
+        // Intervals still running (a frame timer left on keeps redrawing).
+        runningIntervalCount: () => timers.filter(timer => timer.intervalMs !== undefined).length,
         setLayoutSize(size) { currentLayoutSize = { ...size }; },
         drawingLayers: () => [...layers],
         drawings: () => drawingList.map(drawing => ({ ...drawing, texts: [...drawing.texts], images: [...drawing.images] })),

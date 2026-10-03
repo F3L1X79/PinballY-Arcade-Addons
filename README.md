@@ -28,7 +28,7 @@ A new Challenge comes every Monday, the same for the whole household: five diffe
 
 <img src="docs/images/achievements.png" alt="The Achievement List" width="380">
 
-There are dozens of Achievements, from Bronze to Platinum: manufacturers and decades completed, hours played, Streaks, Challenges, a full tour of the wheel... Each one is announced by a small toast in a corner, without interrupting your games. The Achievement List shows how far you are from each missing one, and which of the household's Avatars already have it. A few stay secret, shown as "???" with a hint, until you stumble upon them.
+There are dozens of Achievements, from Bronze to Platinum: manufacturers and decades completed, hours played, Streaks, Challenges, a full tour of the wheel... Each one is announced by a small toast in a corner, without interrupting your games; a Platinum also brings a shower of confetti across the wheel screen. The Achievement List shows how far you are from each missing one, and which of the household's Avatars already have it. A few stay secret, shown as "???" with a hint, until you stumble upon them.
 
 ### PinballY in 6 languages
 
@@ -89,6 +89,7 @@ ADD_ON_CLOCK=false
 | `PROFILE_GREETING_SOUND_FILE` | *(none)* | Sound played when a player is greeted. |
 | `ACHIEVEMENT_TOAST_SECONDS` | `4` | Seconds an Achievement toast stays on screen (up to 60). |
 | `ACHIEVEMENT_TOAST_SCALE` | `1.0` | Size of the toast, from `0.5` to `3`. Raise it on a large screen. |
+| `CONFETTI` | `true` | `false` turns off the Confetti Shower that falls with the toast of a Platinum Achievement, if your PC struggles with it. |
 | `SKIP_RANDOM_GAME_ANIMATION` | `false` | `true` skips the wheel of fortune and launches the Random Game at once. |
 | `ASK_TO_RATE_AFTER_MINUTES_PLAYED` | `60` | Minutes played on a table before you are asked to rate it. |
 | `LOG_UNTRANSLATED_MENU_TITLES` | `false` | `true` writes each untranslated PinballY menu title to `PinballY.log`. |

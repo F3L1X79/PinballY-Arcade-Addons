@@ -9,7 +9,8 @@
 // waiting ones start on "wheelmode". The hold duration and an optional
 // sound played with each card and the card's scale come from the player
 // settings. A Challenge Toast shares the queue and the card, with its own
-// accent colour, header and target icon instead of the trophy.
+// accent colour, header and target icon instead of the trophy. A
+// celebrated toast starts the Confetti Shower when it starts.
 // ============================================================
 
 import lang from "./i18n.js";
@@ -17,6 +18,7 @@ import { safeHandler } from "./safe_handler.js";
 import { createPinballYHost } from "./pinbally_host.js";
 import config from "./config.js";
 import { STEAMBALL_COLORS, STEAMBALL_FONTS } from "./steamball_palette.js";
+import { getConfettiShower } from "./confetti_shower.js";
 
 const SCRIPT_NAME = "AchievementToast";
 
@@ -163,13 +165,16 @@ function toScale(scale) {
 }
 
 // soundFile: absolute path played at the start of each card, empty for none.
+// confettiShower: started by a celebrated toast; the tests may leave it out.
 export function createAchievementToasts(host, {
-    toastSeconds = DEFAULT_TOAST_SECONDS, soundFile = "", scale = DEFAULT_TOAST_SCALE,
+    toastSeconds = DEFAULT_TOAST_SECONDS, soundFile = "", scale = DEFAULT_TOAST_SCALE, confettiShower = { start() {} },
 } = {}) {
     const holdMs = toHoldMs(toastSeconds);
     const look = scaleLook(toScale(scale));
     // A sound that cannot play is logged and never stops the card.
     const playSound = safeHandler(SCRIPT_NAME, () => { if (soundFile) host.playSound(soundFile); });
+    // A shower that fails is logged and never stops the card.
+    const celebrate = safeHandler(SCRIPT_NAME, () => confettiShower.start());
     const waiting = [];
     const projectFolder = host.getProjectFolder();
     // Cards on screen, oldest first. Each one: its layer, its height, the
@@ -263,6 +268,7 @@ export function createAchievementToasts(host, {
         host.setTimeout(safeHandler(SCRIPT_NAME, openArrival), ARRIVAL_GAP_MS);
         // Animated before onShown, so a failing callback never leaves the card stuck on screen.
         startFrames();
+        if (toast.celebrate) celebrate();
         playSound();
         toast.onShown();
     }
@@ -272,10 +278,11 @@ export function createAchievementToasts(host, {
     // Fires on every return to the wheel: starts the toasts that waited for a game.
     host.on("wheelmode", safeShowNext);
 
-    // toast: { kind, title, description, onShown, isStale }, kind a
-    // TOAST_KIND (an Achievement when missing), onShown running when the
+    // toast: { kind, title, description, onShown, isStale, celebrate }, kind
+    // a TOAST_KIND (an Achievement when missing), onShown running when the
     // toast starts, isStale (optional) dropping it unshown when it returns
-    // true at its turn.
+    // true at its turn, celebrate (optional) starting the Confetti Shower
+    // with it.
     function submit(toast) {
         waiting.push(toast);
         safeShowNext();
@@ -292,6 +299,7 @@ export function getAchievementToasts() {
             toastSeconds: config.achievementToastSeconds,
             soundFile: config.achievementSoundFile,
             scale: config.achievementToastScale,
+            confettiShower: getConfettiShower(),
         });
     }
     return sharedAchievementToasts;

@@ -6,6 +6,7 @@
 // configured scale enlarges the whole card (1 when out of range, logged)
 // and the configured sound plays once per card, a failing one only logged.
 // A Challenge Toast shares the queue, with its own header and target icon.
+// A celebrated toast starts the Confetti Shower, unless it went stale.
 // ============================================================
 
 import { test } from "node:test";
@@ -133,4 +134,19 @@ test("a Challenge Toast shares the queue with the Achievement Toasts, with its o
     const [target] = byTitle("challenge").images();
     assert.equal(trophy, "C:\\PinballY\\Scripts\\ExpansionPack\\assets\\achievement_trophy.png");
     assert.equal(target, "C:\\PinballY\\Scripts\\ExpansionPack\\assets\\challenge_target.png");
+});
+
+test("a celebrated toast starts the Confetti Shower when it starts, never when it went stale", () => {
+    const fake = createFakePinballYHost();
+    fake.installGlobals();
+    const starts = [];
+    const toasts = createAchievementToasts(fake, { confettiShower: { start: () => starts.push(fake.now().getTime()) } });
+    submitOne(toasts, "plain");
+    toasts.submit({ title: "stale", description: "", celebrate: true, isStale: () => true, onShown() {} });
+    toasts.submit({ title: "celebrated", description: "", celebrate: true, onShown() {} });
+    assert.deepEqual(starts, [], "not before its turn");
+
+    fake.advanceTime(SETTLE_MS);
+    assert.deepEqual(cardsOnScreen(fake), ["plain", "celebrated"]);
+    assert.deepEqual(starts, [fake.now().getTime() - SETTLE_MS + ARRIVAL_GAP_MS], "once, when its card arrives");
 });
