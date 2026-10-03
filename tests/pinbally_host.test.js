@@ -94,6 +94,16 @@ for (const { name, createHost, usesGlobals } of ADAPTERS) {
             assert.deepEqual(host.getWheelTables().map(game => game.title), ["Attack from Mars", "Medieval Madness"]);
         });
 
+        test("gives the wheel's current table, or null with an empty wheel selection", () => {
+            assert.equal(host.getCurrentTable().title, "Medieval Madness");
+
+            fake.setWheelTables(["Attack from Mars (Bally 1995)", "Medieval Madness (Williams 1997)"]);
+            assert.equal(host.getCurrentTable().title, "Attack from Mars");
+
+            fake.setWheelTables([]);
+            assert.equal(host.getCurrentTable(), null);
+        });
+
         test("moves the wheel's current table by an offset, wrapping around", () => {
             fake.setTables([...TABLES, { id: 4, configId: "Whirlwind (Williams 1990)", title: "Whirlwind" }]);
 

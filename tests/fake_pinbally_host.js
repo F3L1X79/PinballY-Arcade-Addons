@@ -288,7 +288,7 @@ export function createFakePinballYHost({
         let scale = { xSpan: 1, ySpan: 1 };
         const dc = {
             getSize: () => ({ ...canvasSize }),
-            fillRect: (x, y, width, height, color) => { strokes.push({ fill: color }); },
+            fillRect: (x, y, width, height, color) => { strokes.push({ fill: color, rect: { x, y, width, height } }); },
             frameRect: (x, y, width, height) => { frames.push({ x, y, width, height }); },
             drawImage: (path) => { images.push(path); },
             // Like PinballY: throws on a missing or unreadable image.
@@ -325,7 +325,7 @@ export function createFakePinballYHost({
             images: () => [...images],
             frames: () => frames.map(frame => ({ ...frame })),
             fills: () => strokes.filter(stroke => "fill" in stroke).map(stroke => stroke.fill),
-            // Fills ({ fill: color }) and texts ({ text }) in drawing order.
+            // Fills ({ fill: color, rect }) and texts ({ text, rect }) in drawing order.
             strokes: () => strokes.map(stroke => ({ ...stroke })),
             canvasSize: () => ({ ...canvasSize }),
             position: () => ({ ...position }),
@@ -610,6 +610,7 @@ export function createFakePinballYHost({
         getWheelTables: () => unfilteredWheel()
             .filter(configId => !ruledOutConfigIds.has(configId))
             .map(getGameInfo),
+        getCurrentTable: () => host.getWheelTables()[0] || null,
         getGameInfo,
         setCurrentFilter,
         createFilter,

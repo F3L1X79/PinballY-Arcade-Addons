@@ -466,4 +466,10 @@ export default {
         toastHeader: "Défi réussi",
         toastDescription: (count) => (count === 1 ? "Premier défi réussi" : `${count} défis réussis`),
     },
+
+    // The Mastery Bar, under the Challenge Card (see common/mastery_bar.js).
+    tableMastery: {
+        levelNames: ["Novice", "Élève", "Adepte", "Disciple", "Spécialiste", "As", "Virtuose", "Prodige", "Légende", "Mage du flipper"],
+        toDiscover: "À découvrir",
+    },
 };

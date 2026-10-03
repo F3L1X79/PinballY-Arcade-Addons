@@ -1,0 +1,164 @@
+// ============================================================
+// Mastery Bar: the selected table's Table Mastery at the top right of the
+// wheel screen, a Steamball panel headed by the Mastery Level's name in
+// its metal, a bar filling toward the next level and the level's number
+// in a square with a halo at the bar's end; "To discover" over an empty
+// bar for a table never played. Every state is drawn ahead on its own
+// layer through the Drawing ahead module (ADR 0010), then only shown or
+// hidden; a state still missing is drawn on the spot. Its place (under
+// the Challenge Card or in its place) is asked for on each show.
+// ============================================================
+
+import lang from "./i18n.js";
+import { STEAMBALL_COLORS, STEAMBALL_FONTS } from "./steamball_palette.js";
+import { CHALLENGE_CARD_Z_INDEX, CARD_REFERENCE_HEIGHT } from "./challenge_card.js";
+import { MASTERY_STEPS, MAX_MASTERY_LEVEL, METAL_TIER_COUNT, tierOf, metalOf, tierMetalOf, withAlpha } from "./table_mastery.js";
+
+// Just above the Challenge Card, under popups and menus. One plane each,
+// panel under bar under square: layers on one plane overlap in creation
+// order, which the drawing ahead doesn't keep.
+export const MASTERY_BAR_Z_INDEX = Object.freeze({
+    panel: CHALLENGE_CARD_Z_INDEX + 1,
+    bar: CHALLENGE_CARD_Z_INDEX + 2,
+    square: CHALLENGE_CARD_Z_INDEX + 3,
+});
+// On the Challenge Card's 1920 px reference, with its width and right
+// edge; the canvas leaves room for the widest halo.
+const CANVAS = Object.freeze({ width: 400, height: 96 });
+const PANEL = Object.freeze({ x: 10, y: 14, width: 360, height: 64, border: 1 });
+const HEAD = Object.freeze({ y: 24, size: 13, weight: 600 });
+const BAR = Object.freeze({ x: 24, y: 48, width: 262, height: 10 });
+const SQUARE = Object.freeze({ x: 312, y: 22, size: 48, border: 2, thickBorderFrom: 7, bandShare: 0.45, numberShare: 0.55 });
+// From level 1 to 10: 6 to 18 rings, peak alpha 0x60 to 0xF0.
+const HALO = Object.freeze({ minRings: 6, extraRings: 12, minPeak: 0x60, extraPeak: 0x90 });
+const NEVER_PLAYED = 0;
+
+const panelKey = level => `panel:${level}`;
+const squareKey = level => `square:${level}`;
+const EMPTY_BAR_KEY = "bar:empty";
+const tierBarKey = (tier, step) => `bar:${tier}:${step}`;
+const barKey = mastery => (mastery && mastery.step > 0 ? tierBarKey(tierOf(mastery.level), mastery.step) : EMPTY_BAR_KEY);
+
+function drawText(host, dc, text, { x, y, width, size, weight, color, font = STEAMBALL_FONTS.body, textAlign = "left", height }) {
+    const styled = host.createStyledText({ textAlign, textStyle: { font, size, weight, color } });
+    styled.add(text);
+    const measured = styled.measure(width).height;
+    const top = height === undefined ? y : y + (height - measured) / 2;
+    styled.draw(dc, { x, y: top, width, height: measured });
+}
+
+function drawPanel(host, dc, level) {
+    dc.fillRect(PANEL.x, PANEL.y, PANEL.width, PANEL.height, STEAMBALL_COLORS.panelTranslucent);
+    dc.frameRect(PANEL.x, PANEL.y, PANEL.width, PANEL.height, PANEL.border, STEAMBALL_COLORS.border);
+    const TEXT = lang.tableMastery;
+    const head = level === NEVER_PLAYED ? TEXT.toDiscover : TEXT.levelNames[level - 1];
+    const color = level === NEVER_PLAYED ? STEAMBALL_COLORS.dim : metalOf(level);
+    drawText(host, dc, head, { ...HEAD, x: BAR.x, width: SQUARE.x - BAR.x, color });
+}
+
+// tier: null for the empty bar.
+function drawBar(dc, tier, step) {
+    dc.fillRect(BAR.x, BAR.y, BAR.width, BAR.height, STEAMBALL_COLORS.track);
+    const filled = Math.round(BAR.width * step / MASTERY_STEPS);
+    if (tier !== null && filled > 0) dc.fillRect(BAR.x, BAR.y, filled, BAR.height, tierMetalOf(tier));
+}
+
+// A see-through halo in the metal, fading outwards, wider and stronger
+// from one level to the next.
+function drawHalo(dc, level, metal) {
+    const glow = (level - 1) / (MAX_MASTERY_LEVEL - 1);
+    const rings = HALO.minRings + Math.round(HALO.extraRings * glow);
+    const peak = HALO.minPeak + Math.round(HALO.extraPeak * glow);
+    for (let ring = rings; ring >= 1; ring--) {
+        const fade = 1 - (ring - 1) / rings;
+        dc.frameRect(SQUARE.x - ring, SQUARE.y - ring, SQUARE.size + 2 * ring, SQUARE.size + 2 * ring, 1,
+            withAlpha(metal, Math.round(peak * fade)));
+    }
+}
+
+function drawSquare(host, dc, level) {
+    const metal = metalOf(level);
+    const { x, y, size } = SQUARE;
+    drawHalo(dc, level, metal);
+    dc.fillRect(x, y, size, size, STEAMBALL_COLORS.tile);
+    // A lighter band on top, like polished metal.
+    dc.fillRect(x, y, size, Math.round(size * SQUARE.bandShare), withAlpha(metal, 0x18 + level * 4));
+    dc.frameRect(x, y, size, size, SQUARE.border + (level >= SQUARE.thickBorderFrom ? 1 : 0), metal);
+    drawText(host, dc, String(level), {
+        x, y, width: size, height: size, size: Math.round(size * SQUARE.numberShare), weight: 700, color: metal,
+        font: STEAMBALL_FONTS.display, textAlign: "center",
+    });
+}
+
+// Every state, in the order the drawing ahead draws them: the panels,
+// the squares, then the bars.
+function plannedStates() {
+    const states = [];
+    for (let level = NEVER_PLAYED; level <= MAX_MASTERY_LEVEL; level++) {
+        states.push({ key: panelKey(level), zIndex: MASTERY_BAR_Z_INDEX.panel, draw: (host, dc) => drawPanel(host, dc, level) });
+    }
+    for (let level = 1; level <= MAX_MASTERY_LEVEL; level++) {
+        states.push({ key: squareKey(level), zIndex: MASTERY_BAR_Z_INDEX.square, draw: (host, dc) => drawSquare(host, dc, level) });
+    }
+    states.push({ key: EMPTY_BAR_KEY, zIndex: MASTERY_BAR_Z_INDEX.bar, draw: (host, dc) => drawBar(dc, null, 0) });
+    for (let tier = 0; tier < METAL_TIER_COUNT; tier++) {
+        for (let step = 1; step <= MASTERY_STEPS; step++) {
+            states.push({ key: tierBarKey(tier, step), zIndex: MASTERY_BAR_Z_INDEX.bar, draw: (host, dc) => drawBar(dc, tier, step) });
+        }
+    }
+    return states;
+}
+
+// topOf: how far below the window's top the bar sits, in reference px.
+export function createMasteryBar(host, drawingAhead, { topOf }) {
+    const states = plannedStates();
+    const statesByKey = new Map(states.map(state => [state.key, state]));
+    // Drawn layers by state key.
+    const layers = new Map();
+    let shown = [];
+
+    function place(layer) {
+        layer.setScale({ ySpan: CANVAS.height / CARD_REFERENCE_HEIGHT });
+        layer.setPos(0, -topOf() / CARD_REFERENCE_HEIGHT, "top right");
+    }
+
+    function drawState(state) {
+        const layer = host.createDrawingLayer(state.zIndex);
+        // Placed before it is drawn: drawn first, the layer never showed.
+        place(layer);
+        layer.alpha = 0;
+        layer.clear(STEAMBALL_COLORS.transparent);
+        layer.draw(dc => state.draw(host, dc), CANVAS.width, CANVAS.height);
+        layers.set(state.key, layer);
+        return layer;
+    }
+
+    drawingAhead.add(() => {
+        const missing = states.find(state => !layers.has(state.key));
+        if (!missing) return false;
+        drawState(missing);
+        return true;
+    });
+
+    const layerOf = key => layers.get(key) || drawState(statesByKey.get(key));
+
+    function hide() {
+        for (const layer of shown) layer.alpha = 0;
+        shown = [];
+    }
+
+    // mastery: { level, step }, or null for a table never played.
+    function show(mastery) {
+        hide();
+        const keys = mastery
+            ? [panelKey(mastery.level), barKey(mastery), squareKey(mastery.level)]
+            : [panelKey(NEVER_PLAYED), EMPTY_BAR_KEY];
+        shown = keys.map(layerOf);
+        for (const layer of shown) {
+            place(layer);
+            layer.alpha = 1;
+        }
+    }
+
+    return { show, hide };
+}

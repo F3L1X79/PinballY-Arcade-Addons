@@ -463,4 +463,11 @@ export default {
         toastHeader: "Desafío superado",
         toastDescription: (count) => (count === 1 ? "Primer desafío superado" : `${count} desafíos superados`),
     },
+
+    // The Mastery Bar, under the Challenge Card (see common/mastery_bar.js).
+    tableMastery: {
+        // TODO: translation pass
+        levelNames: ["Rookie", "Apprentice", "Regular", "Adept", "Specialist", "Ace", "Virtuoso", "Prodigy", "Legend", "Pinball Wizard"],
+        toDiscover: "To discover",
+    },
 };

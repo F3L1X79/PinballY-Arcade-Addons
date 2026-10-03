@@ -65,6 +65,7 @@ const DEFAULTS = {
         profilePicker: true,
         clock: true,
         challenges: true,
+        tableMastery: true,
         menuCleanup: false,
     },
 };

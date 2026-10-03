@@ -26,10 +26,11 @@ export const CHALLENGE_CARD_Z_INDEX = 4500;
 // drawn at startup, before the window is laid out, would be stretched out
 // of shape. Sizes are on the cabinet's 1920 px high playfield; the card's
 // right edge lines up with the badge's Avatar, and the canvas leaves room
-// for the glow.
-const CARD_REFERENCE_HEIGHT = 1920;
-const BADGE_HEIGHT = 170;
+// for the glow. The Mastery Bar lines up under it with the same sizes.
+export const CARD_REFERENCE_HEIGHT = 1920;
+export const BADGE_HEIGHT = 170;
 const CANVAS = Object.freeze({ width: 400, height: 124 });
+export const CHALLENGE_CARD_CANVAS_HEIGHT = CANVAS.height;
 const CARD = Object.freeze({ x: 10, y: 8, width: 360, height: 106, padding: 14, border: 1, accentHeight: 3 });
 const HEADER = Object.freeze({ y: 14, size: 11 });
 const TITLE = Object.freeze({ y: 34, size: 16 });
