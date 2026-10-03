@@ -123,15 +123,15 @@ How well a Profile knows one table, measured only by the time its Plays on that 
 _Avoid_: XP, table level, experience
 
 **Mastery Level**:
-The step of Table Mastery a Profile has reached on a table, from 1 at its first Play up to 10, each step taking longer to reach than the one before. Shown as a number, never a title, more and more brilliant from one level to the next.
+The step of Table Mastery a Profile has reached on a table, from 1 at its first Play up to 10, each step taking longer to reach than the one before. Shown as a number with a name that suits any player, from Novice (Rookie) at 1 to Mage du flipper (Pinball Wizard) at 10, both more and more brilliant from one level to the next.
 _Avoid_: level (alone: the player's level is another thing), rank (an Achievement Rank is how hard an Achievement is), tier
 
 **Mastery Bar**:
-The small panel at the top right of the wheel screen, under the Challenge Card or in its place when there is none, that keeps in view the active Profile's Table Mastery of the selected table: its bar fills toward the next Mastery Level in the colour of the level reached, shown in a square at the bar's end. For a table never played it stays empty, with no number. It lights up once when a Play has moved it forward, and is hidden while a game runs.
+The small panel at the top right of the wheel screen, under the Challenge Card or in its place when there is none, that keeps in view the active Profile's Table Mastery of the selected table: its bar fills toward the next Mastery Level in the colour of the level reached, whose name heads the panel and whose number sits in a square at the bar's end. For a table never played it stays empty, with no number, under "À découvrir" ("To discover"). It lights up once when a Play has moved it forward, and is hidden while a game runs.
 _Avoid_: level bar, progress bar (alone), mastery widget, Mastery Card
 
 **Mastery Toast**:
-A toast like the Achievement Toast, but with its own colour and no trophy, that announces the Mastery Level the active Profile has just reached on a table; one only per Play, for the highest level reached.
+A toast like the Achievement Toast, but with its own colour and no trophy, that announces the Mastery Level, by its name and number, that the active Profile has just reached on a table; one only per Play, for the highest level reached.
 _Avoid_: level-up popup, mastery achievement (Table Mastery has no Achievement)
 
 ### Achievements

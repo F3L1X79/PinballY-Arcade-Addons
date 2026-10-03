@@ -279,7 +279,7 @@
             <h3>Maîtrise des tables : un niveau de 1 à 10 par table</h3>
             <div class="tags"><span class="tag track">Profiles</span><span class="tag">moyen-gros</span><span class="tag">UI</span></div>
           </div>
-          <p>Une grosse nouvelle fonctionnalité : chaque table a un Mastery Level de 1 à 10 par Profile, qui monte avec le temps de ses Plays sur la table. Sous la Challenge Card (ou à sa place), une <strong>Mastery Bar</strong> (un petit bandeau « Maîtrise ») se remplit vers le niveau suivant pour la table sélectionnée, dans la couleur du niveau atteint, affiché dans un carré au bout, de plus en plus brillant. Une progression à part, <strong>sans Achievement</strong> : un Mastery Toast annonce chaque niveau atteint, avec une Confetti Shower au niveau 10.</p>
+          <p>Une grosse nouvelle fonctionnalité : chaque table a un Mastery Level de 1 à 10 par Profile, qui monte avec le temps de ses Plays sur la table. Sous la Challenge Card (ou à sa place), une <strong>Mastery Bar</strong> (un petit bandeau titré du nom du niveau, de Novice à Mage du flipper) se remplit vers le niveau suivant pour la table sélectionnée, dans la couleur du niveau atteint, dont le chiffre brille dans un carré au bout, entouré d'un halo de plus en plus visible. Une progression à part, <strong>sans Achievement</strong> : un Mastery Toast annonce chaque niveau atteint, avec une Confetti Shower au niveau 10.</p>
           <div class="stepper"><span class="done">idée</span><i>›</i><span class="done">grill</span><i>›</i><span class="here">spec</span><i>›</i><span>tickets</span><i>›</i><span>implement</span></div>
           <div class="links">Flow Matt : <code>/to-spec</code> → <code>/to-tickets</code> → <code>/implement</code>. Passe avant la <a href="#stats-drawn">fiche joueur (n° <span data-ref="stats-drawn"></span>)</a>, qui reprendra le détail par table. Voir ADR 0010</div>
           <details>
@@ -287,11 +287,11 @@
             <ul>
               <li>Seul compte le temps des Plays du Profile (une minute minimum), ni le nombre de parties ni le temps compté par PinballY. Tous les Profiles, Guest et Child Profile compris ; une Profile Reset la remet à zéro.</li>
               <li>10 niveaux : 1 à la première Play, puis 30 min, 1 h, 1 h 45, 2 h 30, 3 h 30, 5 h, 6 h 30, 9 h et 12 h cumulées.</li>
-              <li>Des chiffres seuls, sans noms. Matière selon le niveau (bronze 1–3, argent 4–6, or 7–9, platine 10) et halo croissant, dessin fixe.</li>
+              <li>Un chiffre et un nom épicène par niveau : Novice, Élève, Adepte, Disciple, Spécialiste, As, Virtuose, Prodige, Légende, Mage du flipper (Rookie, Apprentice, Regular, Adept, Specialist, Ace, Virtuoso, Prodigy, Legend, Pinball Wizard). Matière selon le niveau (bronze 1–3, argent 4–6, or 7–9, platine 10) et halo croissant, dessin fixe.</li>
               <li>Mastery Bar : barre par niveau, chiffre atteint dans un carré collé au bout ; vide et sans chiffre pour une table jamais jouée ; monte à la place de la Challenge Card quand il n'y en a pas ; s'allume une fois après une Play qui l'a fait avancer ; cachée pendant une partie.</li>
               <li>Tout dessiné d'avance (le bandeau, 10 carrés, la barre en 20 crans de 5 % pour chacune des 4 matières) : la roue défile sans aucun dessin (ADR 0010).</li>
-              <li>Prototype (branche <code>prototype/mastery-bar</code>) : variante G retenue, un bandeau titré « Maîtrise », une barre unie de 10 px couleur du niveau, et autour du carré un halo transparent de la couleur du chiffre, de plus en plus large et visible (6 px au niveau 1, 18 px au 10) ; pas d'étincelles. Écartés : barre hachurée, lueur sur le chiffre, tache de lumière. Environ 1,3 s de dessin d'avance pour une centaine de calques ; un carré coûte environ 100 ms (son chiffre).</li>
-              <li>Mastery Toast seulement quand un niveau est atteint, un seul par Play (le plus haut). Rien de plus dans les Profile Stats ni dans la ligne d'état. Add-on à part, désactivable dans <code>addOns</code>.</li>
+              <li>Prototype (branche <code>prototype/mastery-bar</code>) : variante G retenue, un bandeau titré du nom du niveau dans sa couleur (« À découvrir » en gris pour une table jamais jouée), une barre unie de 10 px couleur du niveau, et autour du carré un halo transparent de la couleur du chiffre, de plus en plus large et visible (6 px au niveau 1, 18 px au 10) ; pas d'étincelles. Écartés : barre hachurée, lueur sur le chiffre, tache de lumière. Environ 1,3 s de dessin d'avance pour une centaine de calques ; un carré coûte environ 100 ms (son chiffre).</li>
+              <li>Mastery Toast seulement quand un niveau est atteint, un seul par Play (le plus haut), avec le nom et le chiffre (« Prodige (8) sur Medieval Madness »). Rien de plus dans les Profile Stats ni dans la ligne d'état. Add-on à part, désactivable dans <code>addOns</code>.</li>
             </ul>
             <p class="ctx">Fusion du « Féru d'une table » et de l'idée d'XP par table (30/09/2026). Un Achievement de synthèse (« niveau 10 sur 5 tables ») pourra venir plus tard si le niveau du joueur paraît trop pauvre.</p>
           </details>
@@ -545,8 +545,10 @@
       <p class="eyebrow">Décisions <span class="count">(la plus récente dépliée)</span></p>
       <div class="panel decisions">
         <details open>
-          <summary>03/10 <span class="count">(3)</span></summary>
+          <summary>03/10 <span class="count">(4)</span></summary>
           <ol>
+            <li><strong>Des noms de niveau, finalement, épicènes</strong>
+              <span>Le nom du niveau remplace « Maîtrise » en tête de la Mastery Bar et figure dans le Mastery Toast. Des noms qui valent pour une joueuse comme pour un joueur, de Novice à Mage du flipper (Pinball Wizard).</span></li>
             <li><strong>Mastery Bar : un bandeau « Maîtrise », une barre couleur du niveau, un halo autour du carré</strong>
               <span>Choisi sur la borne parmi six variantes. Le halo, de la couleur du chiffre, grandit avec le niveau ; les étincelles du 10 et la barre hachurée n'ont pas convaincu.</span></li>
             <li><strong>Table Mastery : le temps des Plays, 10 niveaux chiffrés</strong>
